@@ -34,7 +34,6 @@ lazy val library =
 
 lazy val settings =
   commonSettings ++
-  gitSettings ++
   headerSettings
 
 lazy val commonSettings =
@@ -59,11 +58,6 @@ lazy val commonSettings =
       s"[$project]> "
     }
 )
-
-lazy val gitSettings =
-  Seq(
-    git.useGitDescribe := true
-  )
 
 import de.heikoseeberger.sbtheader.HeaderPattern
 import de.heikoseeberger.sbtheader.license._
