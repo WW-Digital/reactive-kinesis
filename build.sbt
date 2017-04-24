@@ -41,7 +41,7 @@ lazy val commonSettings =
   Seq(
     // scalaVersion from .travis.yml via sbt-travisci
     // scalaVersion := "2.12.2",
-    organization := "default",
+    organization := "WeightWatchers",
     licenses += ("Apache 2.0",
                  url("http://www.apache.org/licenses/LICENSE-2.0")),
     mappings.in(Compile, packageBin) += baseDirectory.in(ThisBuild).value / "LICENSE" -> "LICENSE",
@@ -69,5 +69,5 @@ import de.heikoseeberger.sbtheader.HeaderPattern
 import de.heikoseeberger.sbtheader.license._
 lazy val headerSettings =
   Seq(
-    headers := Map("scala" -> Apache2_0("2017", "markharrison"))
+    headers := Map("scala" -> Apache2_0("2017", "markglh"))
   )
