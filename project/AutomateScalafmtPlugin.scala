@@ -4,6 +4,9 @@ import sbt._
 import sbt.Keys._
 import sbt.inc.Analysis
 
+// Auto format files on compile
+// From https://gist.github.com/hseeberger/03677ef75bfadb7663c3b41bb58c702b
+// Thank you @hseeberger!
 object AutomateScalafmtPlugin extends AutoPlugin {
 
   object autoImport {
