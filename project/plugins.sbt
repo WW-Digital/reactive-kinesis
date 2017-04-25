@@ -7,4 +7,6 @@ addSbtPlugin("de.heikoseeberger" % "sbt-header"     % "1.8.0")
 addSbtPlugin("org.scoverage"     % "sbt-scoverage"  % "1.5.0")
 addSbtPlugin("org.scoverage"     % "sbt-coveralls"  % "1.1.0")
 
+addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.4.0")
+
 libraryDependencies += "org.slf4j" % "slf4j-nop" % "1.7.25" // Needed by sbt-git

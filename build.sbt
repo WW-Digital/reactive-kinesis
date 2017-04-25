@@ -32,17 +32,28 @@ lazy val library =
 // Settings
 // *****************************************************************************
 
+
+inThisBuild(publishSettings)
+
+lazy val publishSettings = 
+  Seq(
+  // scalaVersion from .travis.yml via sbt-travisci
+  organization := "com.weightwatchers",
+  pomIncludeRepository := { _ => false }, //remove optional dependencies from our pom
+  licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
+  homepage := Some(url("http://www.weightwatchers.com")),
+  scmInfo := Some(ScmInfo(url("https://github.com/WW-Digital/reactive-kinesis"), "scm:git@github.com:WW-Digital/reactive-kinesis.git")),
+  developers := List(Developer("markglh", "Mark Harrison", "markglh@gmail.com", url("https://github.com/markglh"))),
+  publishArtifact in Test := false,
+  bintrayReleaseOnPublish := false
+)
+
 lazy val settings =
   commonSettings ++
   headerSettings
 
 lazy val commonSettings =
   Seq(
-    // scalaVersion from .travis.yml via sbt-travisci
-    // scalaVersion := "2.12.2",
-    organization := "WeightWatchers",
-    licenses += ("Apache 2.0",
-                 url("http://www.apache.org/licenses/LICENSE-2.0")),
     mappings.in(Compile, packageBin) += baseDirectory.in(ThisBuild).value / "LICENSE" -> "LICENSE",
     scalacOptions ++= Seq(
       "-unchecked",
