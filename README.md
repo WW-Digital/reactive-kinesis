@@ -1,4 +1,4 @@
-# reactive-kinesis #
+# reactive-kinesis # [![Build Status](https://travis-ci.org/WW-Digital/reactive-kinesis.svg?branch=master)](https://travis-ci.org/WW-Digital/reactive-kinesis)
 
 Welcome to reactive-kinesis!
 
