@@ -1,4 +1,4 @@
-# reactive-kinesis # [![Build Status](https://travis-ci.org/WW-Digital/reactive-kinesis.svg?branch=master)](https://travis-ci.org/WW-Digital/reactive-kinesis) [![Coverage Status](https://coveralls.io/repos/github/WW-Digital/reactive-kinesis/badge.svg)](https://coveralls.io/github/WW-Digital/reactive-kinesis)
+# reactive-kinesis [![Build Status](https://travis-ci.org/WW-Digital/reactive-kinesis.svg?branch=master)](https://travis-ci.org/WW-Digital/reactive-kinesis) [![Coverage Status](https://coveralls.io/repos/github/WW-Digital/reactive-kinesis/badge.svg?branch=master)](https://coveralls.io/github/WW-Digital/reactive-kinesis?branch=master)
 
 Welcome to reactive-kinesis!
 
