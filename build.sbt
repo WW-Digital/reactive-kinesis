@@ -32,7 +32,7 @@ lazy val library =
 // Settings
 // *****************************************************************************
 
-publishTo := {
+/*publishTo := {
   if (isSnapshot.value){
     bintrayReleaseOnPublish := false //TODO remove after testing to automatically release
     Some("snapshots" at "http://oss.jfrog.org/artifactory/oss-snapshot-local")
@@ -42,7 +42,7 @@ publishTo := {
     publishMavenStyle := false
     Some("releases" at "http://dl.bintray.com/weightwatchers/maven")
   }
-}
+}*/
 
 inThisBuild(publishSettings)
 
