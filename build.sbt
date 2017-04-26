@@ -32,6 +32,17 @@ lazy val library =
 // Settings
 // *****************************************************************************
 
+publishTo := {
+  if (isSnapshot.value){
+    bintrayReleaseOnPublish := false //TODO remove after testing to automatically release
+    Some("snapshots" at "http://oss.jfrog.org/artifactory/oss-snapshot-local")
+  }
+  else {
+    resolvers += Resolver.url("supler ivy resolver", url("http://dl.bintray.com/weightwatchers/maven"))(Resolver.ivyStylePatterns)
+    publishMavenStyle := false
+    Some("releases" at "http://dl.bintray.com/weightwatchers/maven")
+  }
+}
 
 inThisBuild(publishSettings)
 
@@ -44,9 +55,8 @@ lazy val publishSettings =
   homepage := Some(url("http://www.weightwatchers.com")),
   scmInfo := Some(ScmInfo(url("https://github.com/WW-Digital/reactive-kinesis"), "scm:git@github.com:WW-Digital/reactive-kinesis.git")),
   developers := List(Developer("markglh", "Mark Harrison", "markglh@gmail.com", url("https://github.com/markglh"))),
-  publishArtifact in Test := false,
-  bintrayReleaseOnPublish := false
-)
+  publishArtifact in Test := false
+) //++ bintrayPublish
 
 lazy val settings =
   commonSettings ++
