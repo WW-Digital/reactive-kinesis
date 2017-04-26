@@ -5,7 +5,7 @@
 lazy val `reactive-kinesis` =
   project
     .in(file("."))
-    .enablePlugins(AutomateHeaderPlugin, GitVersioning)
+    .enablePlugins(AutomateHeaderPlugin)
     .settings(settings)
     .settings(
       libraryDependencies ++= Seq(
@@ -32,22 +32,20 @@ lazy val library =
 // Settings
 // *****************************************************************************
 
-/*publishTo := {
+publishTo := {
   if (isSnapshot.value){
     bintrayReleaseOnPublish := false //TODO remove after testing to automatically release
     Some("snapshots" at "http://oss.jfrog.org/artifactory/oss-snapshot-local")
   }
   else {
-    resolvers += Resolver.url("supler ivy resolver", url("http://dl.bintray.com/weightwatchers/maven"))(Resolver.ivyStylePatterns)
-    publishMavenStyle := false
-    Some("releases" at "http://dl.bintray.com/weightwatchers/maven")
+    publishTo.value
   }
-}*/
-
-inThisBuild(publishSettings)
+}
 
 lazy val publishSettings = 
   Seq(
+  version := "0.1.4", //TODO remove this - it will be calculated automatically by dynver
+  isSnapshot := false, //TODO remove this - it will be calculated automatically by dynver
   // scalaVersion from .travis.yml via sbt-travisci
   organization := "com.weightwatchers",
   pomIncludeRepository := { _ => false }, //remove optional dependencies from our pom
@@ -55,12 +53,17 @@ lazy val publishSettings =
   homepage := Some(url("http://www.weightwatchers.com")),
   scmInfo := Some(ScmInfo(url("https://github.com/WW-Digital/reactive-kinesis"), "scm:git@github.com:WW-Digital/reactive-kinesis.git")),
   developers := List(Developer("markglh", "Mark Harrison", "markglh@gmail.com", url("https://github.com/markglh"))),
-  publishArtifact in Test := false
-) //++ bintrayPublish
+  publishArtifact in Test := false,
+
+  bintrayReleaseOnPublish := false,
+  publishMavenStyle := true,
+  bintrayRepository := "oss",
+  bintrayOrganization in bintray := None
+)
 
 lazy val settings =
   commonSettings ++
-  headerSettings
+  headerSettings ++ publishSettings
 
 lazy val commonSettings =
   Seq(
