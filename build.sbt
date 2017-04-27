@@ -46,7 +46,7 @@ lazy val publishSettings =
   Seq(
   version := "0.1.5", //TODO remove this - it will be calculated automatically by dynver
   isSnapshot := false, //TODO remove this - it will be calculated automatically by dynver
-  // scalaVersion from .travis.yml via sbt-travisci
+  // scalaVersion from .travis.yml via sbt-travisci //TODO
   organization := "com.weightwatchers",
   pomIncludeRepository := { _ => false }, //remove optional dependencies from our pom
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
