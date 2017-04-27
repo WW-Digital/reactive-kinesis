@@ -44,7 +44,7 @@ publishTo := {
 
 lazy val publishSettings = 
   Seq(
-  version := "0.1.4", //TODO remove this - it will be calculated automatically by dynver
+  version := "0.1.5", //TODO remove this - it will be calculated automatically by dynver
   isSnapshot := false, //TODO remove this - it will be calculated automatically by dynver
   // scalaVersion from .travis.yml via sbt-travisci
   organization := "com.weightwatchers",
