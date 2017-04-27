@@ -42,6 +42,8 @@ publishTo := {
   }
 }
 
+//credentials := List(Path.userHome / ".bintray" / ".artifactory").filter(_.exists).map(Credentials(_)) //TODO
+
 lazy val publishSettings = 
   Seq(
   version := "0.1.5", //TODO remove this - it will be calculated automatically by dynver
