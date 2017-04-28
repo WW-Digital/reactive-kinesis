@@ -37,7 +37,7 @@ lazy val library =
 lazy val settings =
   commonSettings ++
     headerSettings ++
-    gitSettings
+    versioningSettings
 
 lazy val commonSettings =
   Seq(
@@ -70,7 +70,7 @@ lazy val commonSettings =
  * ELSE the version is "0.0.0-commitHash-SNAPSHOT"
  */
 val VersionRegex = "v([0-9]+.[0-9]+.[0-9]+)-?(.*)?".r
-lazy val gitSettings =
+lazy val versioningSettings =
   Seq(
     git.baseVersion := "0.0.0",
     git.useGitDescribe := true,
