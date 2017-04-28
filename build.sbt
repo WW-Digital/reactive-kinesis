@@ -5,12 +5,12 @@
 lazy val `reactive-kinesis` =
   project
     .in(file("."))
-    .enablePlugins(AutomateHeaderPlugin)
+    .enablePlugins(AutomateHeaderPlugin, GitVersioning)
     .settings(settings)
     .settings(
       libraryDependencies ++= Seq(
         library.scalaCheck % Test,
-        library.scalaTest  % Test
+        library.scalaTest % Test
       )
     )
 
@@ -20,12 +20,14 @@ lazy val `reactive-kinesis` =
 
 lazy val library =
   new {
+
     object Version {
       val scalaCheck = "1.13.5"
-      val scalaTest  = "3.0.3"
+      val scalaTest = "3.0.3"
     }
+
     val scalaCheck = "org.scalacheck" %% "scalacheck" % Version.scalaCheck
-    val scalaTest  = "org.scalatest"  %% "scalatest"  % Version.scalaTest
+    val scalaTest = "org.scalatest" %% "scalatest" % Version.scalaTest
   }
 
 // *****************************************************************************
@@ -34,7 +36,8 @@ lazy val library =
 
 lazy val settings =
   commonSettings ++
-  headerSettings
+    headerSettings ++
+    gitSettings
 
 lazy val commonSettings =
   Seq(
@@ -56,10 +59,32 @@ lazy val commonSettings =
       val project = Project.extract(state).currentRef.project
       s"[$project]> "
     }
-)
+  )
+
+/* This allows to derive an sbt version string from the git information.
+ * The logic goes as follows :
+ *
+ * IF the current commit is tagged with "vX.Y.Z" (ie semantic-versioning), the version is "X.Y.Z"
+ * ELSE IF the current commit is tagged with "vX.Y.Z-SNAPSHOT", the version is "X.Y.Z-commitsSinceVersion-SNAPSHOT"
+ * ELSE IF the latest found tag is "vX.Y.Z", the version is "X.Y.Z-commitsSinceVersion-gCommitHash-SNAPSHOT"
+ * ELSE the version is "0.0.0-commitHash-SNAPSHOT"
+ */
+val VersionRegex = "v([0-9]+.[0-9]+.[0-9]+)-?(.*)?".r
+lazy val gitSettings =
+  Seq(
+    git.baseVersion := "0.0.0",
+    git.useGitDescribe := true,
+    git.gitTagToVersionNumber := {
+      case VersionRegex(v, "")         => Some("222"+v)
+      case VersionRegex(v, "SNAPSHOT") => Some(s"$v-SNAPSHOT2")
+      case VersionRegex(v, s)          => Some(s"$v-$s-SNAPSHOT3")
+      case _                           => Some("serewre")
+    }
+  )
 
 import de.heikoseeberger.sbtheader.HeaderPattern
 import de.heikoseeberger.sbtheader.license._
+
 lazy val headerSettings =
   Seq(
     headers := Map("scala" -> Apache2_0("2017", "WeightWatchers"))
