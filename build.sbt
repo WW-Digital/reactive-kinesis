@@ -6,7 +6,6 @@ lazy val `reactive-kinesis` =
   project
     .in(file("."))
     .enablePlugins(AutomateHeaderPlugin)
-    .disablePlugins(BintrayPlugin)
     .settings(settings)
     .settings(
       libraryDependencies ++= Seq(
