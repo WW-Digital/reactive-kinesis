@@ -14,7 +14,7 @@ script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage scalafmtTest test
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coverageReport coveralls
-- '[ ( "$TRAVIS_BRANCH" = "master" -o "$TRAVIS_TAG" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?(-[A-Za-z0-9-]+)? ) -a "$TRAVIS_PULL_REQUEST" = "false" ] && echo "Publishing Release $TRAVIS_BRANCH:$TRAVIS_TAG" && tar xf secrets.tar && mkdir ~/.bintray && cp publishing/.credentials ~/.bintray/ && cp publishing/.artifactory ~/.bintray/ && sbt publish'
+- '[ "$TRAVIS_BRANCH" = "master" -o "$TRAVIS_TAG" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?(-[A-Za-z0-9-]+)? ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] && echo "Publishing Release $TRAVIS_BRANCH:$TRAVIS_TAG" && tar xf secrets.tar && mkdir ~/.bintray && cp publishing/.credentials ~/.bintray/ && cp publishing/.artifactory ~/.bintray/ && sbt publish'
 before_cache:
 - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
 - find $HOME/.sbt        -name "*.lock"               -print -delete
