@@ -1,16 +1,15 @@
 
-/*publishTo := {
+publishTo := {
   if (isSnapshot.value){
     bintrayReleaseOnPublish := false //TODO remove after testing to automatically release
-    Some("snapshots" at "http://oss.jfrog.org/artifactory/oss-snapshot-local")
+    Some("Artifactory Realm" at "http://oss.jfrog.org/artifactory/oss-snapshot-local")
   }
   else {
     publishTo.value
   }
-}*/
+}
 
-//credentials := List(Path.userHome / ".bintray" / ".artifactory").filter(_.exists).map(Credentials(_)) //TODO
-
+credentials ++= List(Path.userHome / ".bintray" / ".artifactory").filter(_.exists).map(Credentials(_))
 organization := "com.weightwatchers"
 pomIncludeRepository := { _ => false } //remove optional dependencies from our pom
 licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html"))
