@@ -82,6 +82,7 @@ lazy val gitSettings =
     }
   )
 
+
 import de.heikoseeberger.sbtheader.HeaderPattern
 import de.heikoseeberger.sbtheader.license._
 
