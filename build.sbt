@@ -76,9 +76,9 @@ lazy val gitSettings =
     git.useGitDescribe := true,
     git.gitTagToVersionNumber := {
       case VersionRegex(v, "")         => Some("222"+v)
-      case VersionRegex(v, "SNAPSHOT") => Some(s"$v-SNAPSHOT2")
-      case VersionRegex(v, s)          => Some(s"$v-$s-SNAPSHOT3")
-      case _                           => Some("serewre")
+      case VersionRegex(v, "SNAPSHOT") => Some(s"$v-SNAPSHOT")
+      case VersionRegex(v, s)          => Some(s"$v-$s-SNAPSHOT")
+      case _                           => None
     }
   )
 
