@@ -3,15 +3,26 @@
 Welcome to reactive-kinesis!
 
 ## Tag Requirements
-Uses [sbt-dynver](https://github.com/dwijnand/sbt-dynver) for dynamic git based versioning.
+Uses tags and [sbt-git](https://github.com/sbt/sbt-git) to determine the current version.
 
-See: https://github.com/dwijnand/sbt-dynver#tag-requirements
-In order to be recognized by sbt-dynver, tags must begin with the lowercase letter 'v' followed by a digit.
+* IF the current commit is tagged with "vX.Y.Z" (ie semantic-versioning), the version is "X.Y.Z"
+* ELSE IF the current commit is tagged with "vX.Y.Z-Mx", the version is "X.Y.Z-Mx"
+* ELSE IF the current commit is tagged with "vX.Y.Z-SNAPSHOT", the version is "X.Y.Z-commitsSinceVersion-SNAPSHOT"
+* ELSE IF the latest found tag is "vX.Y.Z", the version is "X.Y.Z-commitsSinceVersion-gCommitHash-SNAPSHOT"
+* ELSE the version is "0.0.0-commitHash-SNAPSHOT"
 
-If you're not seeing what you expect, then start with this:
+### Valid Release Tag Examples:
+v1.2.3 (version=1.2.3)
+v1.2.3-M1 (version=1.2.3-M1)
 
-`git tag -a v0.0.1 -m "Initial version tag for sbt-dynver"`
+### Invalid Release Tag Examples:
+v1.2.3-SNAPSHOT
+v1.2.3-M1-SNAPSHOT
+v1.2.3-X1
+1.2.3
 
+If the current version on master is a snapshot (release tag + x commits), 
+then the artifact will be deployed to the [JFrog OSS repository](https://oss.jfrog.org/webapp/#/artifacts/browse/simple/General/oss-snapshot-local/com/weightwatchers): 
 
 ## Contribution policy ##
 
