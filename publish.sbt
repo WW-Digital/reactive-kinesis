@@ -8,7 +8,7 @@ publishTo := {
   }
 }
 
-credentials ++= List(Path.userHome / ".bintray" / ".artifactory").filter(_.exists).map(Credentials(_))
+credentials ++= List(Path.userHome / ".bintray" / ".artifactory").filter(_.exists).map(Credentials(_)) //For snapshots
 organization := "com.weightwatchers"
 pomIncludeRepository := { _ => false } //remove optional dependencies from our pom
 licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html"))
