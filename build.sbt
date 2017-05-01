@@ -79,7 +79,7 @@ lazy val versioningSettings =
     git.gitTagToVersionNumber := {
       case VersionRegex(v, "")                      => Some(v) //e.g. 1.0.0
       case VersionRegex(v, s)
-        if MilestoneRegex.findFirstIn(s).isDefined  => Some(s"$v-$s") //e.g. 1.0.0-M1
+        if MilestoneRegex.findFirstIn(s).isDefined  => Some(s"$v-$s-zzz") //e.g. 1.0.0-M1
       case VersionRegex(v, s)
         if s.endsWith("SNAPSHOT")                   => Some(s"$v-xxx-SNAPSHOT") //e.g. 1.0.0-SNAPSHOT
       case VersionRegex(v, s)                       => Some(s"$v-$s-yyy-SNAPSHOT") //e.g. 1.0.0-2-commithash-SNAPSHOT
