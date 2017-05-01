@@ -65,6 +65,7 @@ lazy val commonSettings =
  * The logic goes as follows :
  *
  * IF the current commit is tagged with "vX.Y.Z" (ie semantic-versioning), the version is "X.Y.Z"
+ * ELSE IF the current commit is tagged with "vX.Y.Z-Mx", the version is "X.Y.Z-Mx"
  * ELSE IF the current commit is tagged with "vX.Y.Z-SNAPSHOT", the version is "X.Y.Z-commitsSinceVersion-SNAPSHOT"
  * ELSE IF the latest found tag is "vX.Y.Z", the version is "X.Y.Z-commitsSinceVersion-gCommitHash-SNAPSHOT"
  * ELSE the version is "0.0.0-commitHash-SNAPSHOT"
@@ -75,15 +76,15 @@ lazy val versioningSettings =
     git.baseVersion := "0.0.0",
     git.useGitDescribe := true,
     git.gitTagToVersionNumber := {
-      case VersionRegex(v, "")         => Some(v)
+      case VersionRegex(v, "") => Some(v)
+      case VersionRegex(v, s) if s.startsWith("M") => Some(s"$v-$s")
       case VersionRegex(v, "SNAPSHOT") => Some(s"$v-SNAPSHOT")
-      case VersionRegex(v, s)          => Some(s"$v-$s-SNAPSHOT")
-      case _                           => None
+      case VersionRegex(v, s) => Some(s"$v-$s-SNAPSHOT")
+      case _ => None
     }
   )
 
 
-import de.heikoseeberger.sbtheader.HeaderPattern
 import de.heikoseeberger.sbtheader.license._
 
 lazy val headerSettings =
