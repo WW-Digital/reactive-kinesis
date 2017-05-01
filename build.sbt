@@ -41,9 +41,8 @@ lazy val settings =
 
 lazy val commonSettings =
   Seq(
-    //version := "0.1.14", //TODO remove this - it will be calculated automatically by dynver
-    //isSnapshot := false, //TODO remove this - it will be calculated automatically by dynver
-    //scalaVersion from .travis.yml via sbt-travisci //TODO
+    //version := "0.1.14", //automatically calculated by sbt-git
+    //scalaVersion // taken from .travis.yml via sbt-travisci
     organization := "com.weightwatchers",
     mappings.in(Compile, packageBin) += baseDirectory.in(ThisBuild).value / "LICENSE" -> "LICENSE",
     scalacOptions ++= Seq(
