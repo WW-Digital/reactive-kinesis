@@ -71,16 +71,19 @@ lazy val commonSettings =
  * ELSE the version is "0.0.0-commitHash-SNAPSHOT"
  */
 val VersionRegex = "v([0-9]+.[0-9]+.[0-9]+)-?(.*)?".r
+val MilestoneRegex = "^M[0-9]$".r
 lazy val versioningSettings =
   Seq(
     git.baseVersion := "0.0.0",
     git.useGitDescribe := true,
     git.gitTagToVersionNumber := {
-      case VersionRegex(v, "") => Some(v)
-      case VersionRegex(v, s) if s.startsWith("M") => Some(s"$v-$s")
-      case VersionRegex(v, "SNAPSHOT") => Some(s"$v-SNAPSHOT")
-      case VersionRegex(v, s) => Some(s"$v-$s-SNAPSHOT")
-      case _ => None
+      case VersionRegex(v, "")                      => Some(v) //e.g. 1.0.0
+      case VersionRegex(v, s)
+        if MilestoneRegex.findFirstIn(s).isDefined  => Some(s"$v-$s") //e.g. 1.0.0-M1
+      case VersionRegex(v, s)
+        if s.endsWith("SNAPSHOT")                   => Some(s"$v-SNAPSHOT") //e.g. 1.0.0-SNAPSHOT
+      case VersionRegex(v, s)                       => Some(s"$v-$s-SNAPSHOT") //e.g. 1.0.0-2-commithash-SNAPSHOT
+      case _                                        => None
     }
   )
 
