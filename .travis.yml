@@ -12,7 +12,7 @@ cache:
   - "$HOME/.ivy2"
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage scalafmtTest test
-- if [ $TRAVIS_TEST_RESULT -eq 0 -a "$TRAVIS_PULL_REQUEST" = "false" ] && [[ "$TRAVIS_TAG" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?(-M[A-Za-z0-9]+)?$ ]]; then
+- if [ $TRAVIS_TEST_RESULT -eq 0 -a "$TRAVIS_PULL_REQUEST" = "false" ] && [[ "$TRAVIS_TAG" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?(-M[0-9]+)?$ ]]; then
   echo "** Publishing Release $TRAVIS_TAG **"
     && tar xf secrets.tar && mkdir ~/.bintray
     && cp publishing/.credentials ~/.bintray/
