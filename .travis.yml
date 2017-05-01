@@ -14,11 +14,13 @@ script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage scalafmtTest test
 - if [ $TRAVIS_TEST_RESULT -eq 0 -a "$TRAVIS_PULL_REQUEST" = "false" ] && [[ "$TRAVIS_TAG" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?(-[A-Za-z0-9-]+)? ]]; then
   echo "** Publishing Release $TRAVIS_TAG **"
-    && tar xf secrets.tar && mkdir ~/.bintray && cp publishing/.credentials ~/.bintray/
+    && tar xf secrets.tar && mkdir ~/.bintray
+    && cp publishing/.credentials ~/.bintray/
     && sbt ++$TRAVIS_SCALA_VERSION publish bintrayRelease bintraySyncMavenCentral; fi
 - if [ $TRAVIS_TEST_RESULT -eq 0 -a "$TRAVIS_PULL_REQUEST" = "false" -a "$TRAVIS_BRANCH" = "master" ]; then
   echo "** Publishing Snapshot from master **"
-    && tar xf secrets.tar && mkdir ~/.bintray && cp publishing/.artifactory ~/.bintray/
+    && tar xf secrets.tar && mkdir ~/.bintray
+    && cp publishing/.credentials ~/.bintray/ && cp publishing/.artifactory ~/.bintray/
     && sbt ++$TRAVIS_SCALA_VERSION publish; fi
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coverageReport coveralls
