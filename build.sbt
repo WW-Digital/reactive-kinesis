@@ -77,7 +77,7 @@ lazy val versioningSettings =
     git.baseVersion := "0.0.0",
     git.useGitDescribe := true,
     git.gitTagToVersionNumber := {
-      case VersionRegex(v, "")                      => Some(v) //e.g. 1.0.0
+      case VersionRegex(v, "")                      => Some(v+"vvv") //e.g. 1.0.0
       case VersionRegex(v, s)
         if MilestoneRegex.findFirstIn(s).isDefined  => Some(s"$v-$s-zzz") //e.g. 1.0.0-M1
       case VersionRegex(v, s)
