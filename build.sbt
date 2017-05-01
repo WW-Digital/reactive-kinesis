@@ -75,15 +75,15 @@ lazy val versioningSettings =
     git.baseVersion := "0.0.0",
     git.useGitDescribe := true,
     git.gitTagToVersionNumber := {
-      case VersionRegex(v, "")         => Some(v)
+      case VersionRegex(v, "") => Some(v)
       case VersionRegex(v, "SNAPSHOT") => Some(s"$v-SNAPSHOT")
-      case VersionRegex(v, s)          => Some(s"$v-$s-SNAPSHOT")
-      case _                           => None
+      case VersionRegex(v, s) if s.startsWith("M") => Some(s"$v-$s")
+      case VersionRegex(v, s) => Some(s"$v-$s-SNAPSHOT")
+      case _ => None
     }
   )
 
 
-import de.heikoseeberger.sbtheader.HeaderPattern
 import de.heikoseeberger.sbtheader.license._
 
 lazy val headerSettings =
