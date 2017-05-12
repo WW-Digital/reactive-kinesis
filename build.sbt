@@ -8,10 +8,9 @@ lazy val `reactive-kinesis` =
     .enablePlugins(AutomateHeaderPlugin, GitVersioning)
     .settings(settings)
     .settings(
-      libraryDependencies ++= Seq(
-        library.scalaCheck % Test,
-        library.scalaTest % Test
-      )
+      libraryDependencies ++=
+        library.jackson ++ library.amazon ++ library.lightbend ++
+          library.logback ++ library.joda ++ library.scalactic ++ library.testing
     )
 
 // *****************************************************************************
@@ -24,10 +23,59 @@ lazy val library =
     object Version {
       val scalaCheck = "1.13.5"
       val scalaTest = "3.0.3"
+      val kamon = "0.6.6"
+      val jackson = "2.8.7"
+      val akka = "2.5.1"
     }
 
-    val scalaCheck = "org.scalacheck" %% "scalacheck" % Version.scalaCheck
-    val scalaTest = "org.scalatest" %% "scalatest" % Version.scalaTest
+    val jackson = Seq(
+      //We need jackson versions to be consistent, KCL&KPL pull in slightly older versions which often get evicted
+      //See: https://github.com/aws/aws-sdk-java/issues/999
+      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor" % Version.jackson    % Compile,
+      "com.fasterxml.jackson.core" % "jackson-databind"              % Version.jackson    % Compile,
+      "com.fasterxml.jackson.core" % "jackson-core"                  % Version.jackson    % Compile,
+      "com.fasterxml.jackson.core" % "jackson-annotations"           % "2.8.0"            % Compile,
+      "com.fasterxml.uuid"         % "java-uuid-generator"           % "3.1.4"            % Compile)
+
+    val amazon = Seq(
+      "com.amazonaws"              % "amazon-kinesis-client"         % "1.7.5"            % Compile
+        excludeAll(
+          ExclusionRule(organization = "com.fasterxml.jackson.core"),
+          ExclusionRule(organization = "com.fasterxml.jackson.dataformat")),
+      "com.amazonaws"              % "amazon-kinesis-producer"       % "0.12.3"           % Compile
+        excludeAll(
+          ExclusionRule(organization = "com.fasterxml.jackson.core"),
+          ExclusionRule(organization = "com.fasterxml.jackson.dataformat"))
+    )
+
+    val lightbend = Seq(
+      "com.typesafe"               % "config"                        % "1.3.1"            % Compile,
+      "com.typesafe.akka"          %% "akka-actor"                   % Version.akka       % Compile,
+      "com.typesafe.scala-logging" %% "scala-logging"                % "3.5.0"            % Compile
+      )
+
+    val logback = Seq(
+      "ch.qos.logback"             % "logback-classic"               % "1.2.3"            % Compile
+    )
+
+    val joda = Seq(
+      "org.joda"                   % "joda-convert"                  % "1.2"              % Compile
+    )
+
+    val scalactic = Seq(
+      "org.scalactic"              %% "scalactic"                    % Version.scalaTest  % Compile)
+
+    val testing = Seq(
+      "org.scalatest"              %% "scalatest"                    % Version.scalaTest  % Test,
+      "org.scalacheck"             %% "scalacheck"                   % Version.scalaCheck % Test,
+      "com.typesafe.akka"          %% "akka-testkit"                 % Version.akka       % Test,
+      "org.mockito"                % "mockito-core"                  % "2.7.15"           % Test,
+      "io.kamon"                   %% "kamon-core"                   % Version.kamon      % Test,
+      "io.kamon"                   %% "kamon-akka-2.4"               % Version.kamon      % Test,
+      "io.kamon"                   %% "kamon-statsd"                 % Version.kamon      % Test,
+      "io.kamon"                   %% "kamon-log-reporter"           % Version.kamon      % Test,
+      "io.kamon"                   %% "kamon-system-metrics"         % Version.kamon      % Test
+    )
   }
 
 // *****************************************************************************
@@ -42,7 +90,7 @@ lazy val settings =
 lazy val commonSettings =
   Seq(
     //version := "0.1.14", //automatically calculated by sbt-git
-    //scalaVersion // taken from .travis.yml via sbt-travisci
+    //scalaVersion := "2.11.11", // taken from .travis.yml via sbt-travisci
     organization := "com.weightwatchers",
     mappings.in(Compile, packageBin) += baseDirectory.in(ThisBuild).value / "LICENSE" -> "LICENSE",
     scalacOptions ++= Seq( //http://tpolecat.github.io/2017/04/25/scalac-flags.html
@@ -60,7 +108,6 @@ lazy val commonSettings =
       "-Xfuture",                          // Turn on future language features.
       "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
       "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
-      "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
       "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
       "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
       "-Xlint:inaccessible",               // Warn about inaccessible types in method signatures.
@@ -78,19 +125,11 @@ lazy val commonSettings =
       "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
       "-Ypartial-unification",             // Enable partial unification in type constructor inference
       "-Ywarn-dead-code",                  // Warn when dead code is identified.
-      "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
       "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
       "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
       "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
       "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-      "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-      "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
-      "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
-      "-Ywarn-unused:locals",              // Warn if a local definition is unused.
-      "-Ywarn-unused:params",              // Warn if a value parameter is unused.
-      "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
-      "-Ywarn-unused:privates",            // Warn if a private member is unused.
-      "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
+      "-Ywarn-numeric-widen"               // Warn when numerics are widened.
     ),
     scalacOptions in (Compile, console) ~= (_.filterNot(Set(
       "-Ywarn-unused:imports",
@@ -101,7 +140,8 @@ lazy val commonSettings =
     shellPrompt in ThisBuild := { state =>
       val project = Project.extract(state).currentRef.project
       s"[$project]> "
-    }
+    },
+    parallelExecution in Test := false
   )
 
 /* This allows to derive an sbt version string from the git information.
@@ -132,6 +172,7 @@ lazy val versioningSettings =
 
 
 import de.heikoseeberger.sbtheader.license._
+import sbt.Keys.parallelExecution
 
 lazy val headerSettings =
   Seq(
