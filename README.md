@@ -1,8 +1,9 @@
-# core-kinesis-client
+# reactive-kinesis [![Build Status](https://travis-ci.org/WW-Digital/reactive-kinesis.svg?branch=master)](https://travis-ci.org/WW-Digital/reactive-kinesis) [![Coverage Status](https://coveralls.io/repos/github/WW-Digital/reactive-kinesis/badge.svg?branch=master)](https://coveralls.io/github/WW-Digital/reactive-kinesis?branch=master)
 
-Kinesis client common to all services using Amazon's KCL ([Kinesis Client Library](http://docs.aws.amazon.com/streams/latest/dev/developing-consumers-with-kcl.html)) & KPL ([Kinesis Producer Library](http://docs.aws.amazon.com/streams/latest/dev/developing-producers-with-kpl.html)).
 
-It's also worth familiarising yourself with [Sequence numbers and Sub sequence numbers](http://docs.aws.amazon.com/streams/latest/dev/kinesis-kpl-consumer-deaggregation.html).
+Kinesis client built upon Amazon's KCL ([Kinesis Client Library](http://docs.aws.amazon.com/streams/latest/dev/developing-consumers-with-kcl.html)) & KPL ([Kinesis Producer Library](http://docs.aws.amazon.com/streams/latest/dev/developing-producers-with-kpl.html)).
+
+It's worth familiarising yourself with [Sequence numbers and Sub sequence numbers](http://docs.aws.amazon.com/streams/latest/dev/kinesis-kpl-consumer-deaggregation.html).
 
 ## Considerations When Using Kinesis in a Distributed Environment
 
@@ -143,9 +144,9 @@ It is perfectly valid to use a router to spread the work amongst many `Event Pro
 import akka.actor.{Actor, Props}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
-import com.weightwatchers.eventing.consumer.ConsumerWorker.{ConsumerShutdown, ConsumerWorkerFailure, EventProcessed, ProcessEvent}
-import com.weightwatchers.eventing.consumer.KinesisConsumer
-import com.weightwatchers.eventing.consumer.KinesisConsumer.ConsumerConf
+import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{ConsumerShutdown, ConsumerWorkerFailure, EventProcessed, ProcessEvent}
+import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer
+import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 
 class TestEventProcessor() extends Actor with LazyLogging {
 
@@ -182,7 +183,7 @@ object Consumer extends App {
 The following types must be handled:
 
 ```scala
-import com.weightwatchers.eventing.consumer.ConsumerWorker.{ConsumerShutdown, ConsumerWorkerFailure, EventProcessed, ProcessEvent}
+import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{ConsumerShutdown, ConsumerWorkerFailure, EventProcessed, ProcessEvent}
 
 /**
   * Sent to the eventProcessor for each message in the batch.
@@ -250,7 +251,7 @@ Each future is handled within the actor and a message will be returned to the se
 The following messages are supported:
 
 ```scala
-import com.weightwatchers.eventing.producer.KinesisProducerActor.{SendFailed, SendSuccessful, SendWithCallback}
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{SendFailed, SendSuccessful, SendWithCallback}
 
 /**
   * Send a message to Kinesis, registering a callback response of [[SendSuccessful]] or [[SendFailed]] accordingly.
@@ -288,9 +289,9 @@ import java.util.UUID
 
 import akka.actor.Actor
 import com.typesafe.config.Config
-import com.weightwatchers.eventing.models.ProducerEvent
-import com.weightwatchers.eventing.producer.KinesisProducerActor
-import com.weightwatchers.eventing.producer.KinesisProducerActor.{SendFailed, SendSuccessful, SendWithCallback}
+import com.weightwatchers.reactive.kinesis.models.ProducerEvent
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{SendFailed, SendSuccessful, SendWithCallback}
 import samples.SomeActor.DoSomething
 
 object SomeActor {
@@ -323,9 +324,9 @@ class SomeActor(kinesisConfig: Config) extends Actor {
 ```scala
 import java.util.UUID
 import com.typesafe.config._
-import com.weightwatchers.eventing.models._
-import com.weightwatchers.eventing.producer.KinesisProducerActor
-import com.weightwatchers.eventing.producer.KinesisProducerActor.Send
+import com.weightwatchers.reactive.kinesis.models._
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.Send
 
 implicit val system = akka.actor.ActorSystem.create()
 
@@ -346,8 +347,8 @@ kpa ! Send(producerEvent) //Send without a callback confirmation
 import java.util.UUID
 import com.amazonaws.services.kinesis.producer.{UserRecordFailedException, UserRecordResult}
 import com.typesafe.config._
-import com.weightwatchers.eventing.models._
-import com.weightwatchers.eventing.producer.KinesisProducerKPL
+import com.weightwatchers.reactive.kinesis.models._
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducerKPL
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global //Not for production
 
@@ -375,12 +376,12 @@ callback onFailure {
 ```
 
 
-# Running the core-kinesis-client reliability test
+# Running the reliability test
 
 ### Delete & recreate kinesisstreams and dynamo table
 Execute this command in a shell.  If you don't have access to WW AWS resources, you'll need it:
 ```
-aws kinesis delete-stream --stream-name core-test-kinesis-reliability && aws dynamodb delete-table --table-name CoreKinesisReliabilitySpec && sleep 90 && aws kinesis create-stream --stream-name core-test-kinesis-reliability --shard-count 2
+aws kinesis delete-stream --stream-name test-kinesis-reliability && aws dynamodb delete-table --table-name KinesisReliabilitySpec && sleep 90 && aws kinesis create-stream --stream-name test-kinesis-reliability --shard-count 2
 ```
 
 ### Running the producer-consumer test
@@ -428,6 +429,48 @@ You'll see some stats logged regarding messages/sec processed, near that line.
   * Sequence numbers for the same partition key generally increase over time, but **NOT** necessarily in a continuous sequence. The longer the time period between records, the bigger the gap between the sequence numbers.
   * To uniquely identify a record on a shard, you need to use **BOTH** the `sequence number` and the `sub-sequence number`. This is because messages that are aggregated together have the same sequence number (they are treated as one messages by Kinesis). Therefore it is important to also use the sub-sequence number to distinguish between them. 
 
+
+# Contributor Guide
+
+## Tag Requirements
+Uses tags and [sbt-git](https://github.com/sbt/sbt-git) to determine the current version.
+* Each merge into master will automatically build a snapshot (**snapshot publishing is temporarily disabled**).
+* Tagging the master branch will automatically build and publish both Scala 2.11 & Scala 2.12 artifacts (to bintray and maven central).
+* Tags are in the format vX.X.X
+ 
+### Version information
+* IF the current commit is tagged with "vX.Y.Z" (ie semantic-versioning), the version is "X.Y.Z"
+* ELSE IF the current commit is tagged with "vX.Y.Z-Mx", the version is "X.Y.Z-Mx"
+* ELSE IF the current commit is tagged with "vX.Y.Z-SNAPSHOT", the version is "X.Y.Z-commitsSinceVersion-SNAPSHOT"
+* ELSE IF the latest found tag is "vX.Y.Z", the version is "X.Y.Z-commitsSinceVersion-gCommitHash-SNAPSHOT"
+* ELSE the version is "0.0.0-commitHash-SNAPSHOT"
+
+### Valid Release Tag Examples:
+v1.2.3 (version=1.2.3)
+v1.2.3-M1 (version=1.2.3-M1)
+
+### Invalid Release Tag Examples:
+v1.2.3-SNAPSHOT
+v1.2.3-M1-SNAPSHOT
+v1.2.3-X1
+1.2.3
+
+If the current version on master is a snapshot (release tag + x commits), 
+then the artifact will be deployed to the [JFrog OSS repository](https://oss.jfrog.org/webapp/#/artifacts/browse/simple/General/oss-snapshot-local/com/weightwatchers): 
+
+## Contribution policy ##
+
+Contributions via GitHub pull requests are gladly accepted from their original author. Along with
+any pull requests, please state that the contribution is your original work and that you license
+the work to the project under the project's open source license. Whether or not you state this
+explicitly, by submitting any copyrighted material via pull request, email, or other means you
+agree to license the material under the project's open source license and warrant that you have the
+legal authority to do so.
+
+## License ##
+
+This code is open source software licensed under the
+[Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) license.
 
 
 
