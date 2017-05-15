@@ -1,9 +1,24 @@
 # reactive-kinesis [![Build Status](https://travis-ci.org/WW-Digital/reactive-kinesis.svg?branch=master)](https://travis-ci.org/WW-Digital/reactive-kinesis) [![Coverage Status](https://coveralls.io/repos/github/WW-Digital/reactive-kinesis/badge.svg?branch=master)](https://coveralls.io/github/WW-Digital/reactive-kinesis?branch=master)
 
-
 Kinesis client built upon Amazon's KCL ([Kinesis Client Library](http://docs.aws.amazon.com/streams/latest/dev/developing-consumers-with-kcl.html)) & KPL ([Kinesis Producer Library](http://docs.aws.amazon.com/streams/latest/dev/developing-producers-with-kpl.html)).
 
 It's worth familiarising yourself with [Sequence numbers and Sub sequence numbers](http://docs.aws.amazon.com/streams/latest/dev/kinesis-kpl-consumer-deaggregation.html).
+
+## Usage
+SBT
+```
+"com.weightwatchers" %% "reactive-kinesis" % 0.5.0
+```
+
+Maven
+```
+<dependency>
+  <groupId>com.weightwatchers</groupId>
+  <artifactId>reactive-kinesis_2.11</artifactId>
+  <version>0.5.0</version>
+  <type>pom</type>
+</dependency>
+```
 
 ## Considerations When Using Kinesis in a Distributed Environment
 
@@ -431,6 +446,11 @@ You'll see some stats logged regarding messages/sec processed, near that line.
 
 
 # Contributor Guide
+
+## Code Formatting
+This project uses [scalafmt](http://scalameta.org/scalafmt/) and will automatically fail the build if any files do not match the expected formatting.
+
+Please run `sbt scalafmt` before committing and pushing changes.
 
 ## Tag Requirements
 Uses tags and [sbt-git](https://github.com/sbt/sbt-git) to determine the current version.

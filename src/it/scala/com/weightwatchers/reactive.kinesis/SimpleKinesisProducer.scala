@@ -6,7 +6,12 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
 import com.weightwatchers.reactive.kinesis.SimpleKinesisProducer._
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
-import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{Send, SendFailed, SendSuccessful, SendWithCallback}
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{
+  Send,
+  SendFailed,
+  SendSuccessful,
+  SendWithCallback
+}
 import com.weightwatchers.reactive.kinesis.producer.{KinesisProducerActor, KinesisProducerKPL}
 
 import scala.collection.mutable
@@ -47,15 +52,15 @@ class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
 
   protected def kinesisConfig = kConfig
 
-  var current: Int = 0
+  var current: Int  = 0
   val totalMessages = kinesisConfig.getInt("test.expectedNumberOfMessages")
-  val batchSize = kinesisConfig.getInt("test.producer.batchSize")
+  val batchSize     = kinesisConfig.getInt("test.producer.batchSize")
   //Delay between batches of messages
   val batchDelay = kinesisConfig.getInt("test.producer.batchDelayMillis")
 
   //We're creating the producer the hard way to get access to the underlying KPL
-  val kpaProps = KinesisProducerActor.props(kinesisConfig, "testProducer")
-  val kpa = context.actorOf(kpaProps)
+  val kpaProps           = KinesisProducerActor.props(kinesisConfig, "testProducer")
+  val kpa                = context.actorOf(kpaProps)
   val kinesisProducerKPL = kpaProps.args.head.asInstanceOf[KinesisProducerKPL]
 
   /* producer without actor:
@@ -63,10 +68,10 @@ class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
   val streamName = producerConfig.getString("stream-name")
   val kinesisProducer = KinesisProducerKPL(
   producerConfig.getConfig("kpl"), kinesisConfig.getString("aws.profile"), streamName)
-  */
+   */
 
   val outstandingMessages = mutable.AnyRefMap[String, Int]()
-  val failedMessages = mutable.AnyRefMap[String, Int]()
+  val failedMessages      = mutable.AnyRefMap[String, Int]()
 
   val SECONDS_IN_NANO = 1000000000
   var startTime: Long = 0
@@ -78,7 +83,6 @@ class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
       self ! ProduceWithBatch(Math.min(totalMessages, current + batchSize))
 
     case DrainBatch =>
-
       kpa ! Send(ProducerEvent(UUID_GENERATOR.generate().toString, IGNORE_MSG.toString))
       //kinesisProducer.addUserRecord(ProducerEvent(UUID.randomUUID.toString, IGNORE_MSG.toString))
       // give some time for messages to drain, then signal to finish the test
@@ -88,7 +92,7 @@ class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
       kpa ! Send(ProducerEvent(UUID_GENERATOR.generate().toString, END_TEST_SIG_MSG.toString))
       logger.info(s"************************************")
       logger.info(s"***Finished sending batch to Actor****")
-      val endTime = System.nanoTime()
+      val endTime      = System.nanoTime()
       val durationSecs = (endTime - startTime) / SECONDS_IN_NANO
       logger.info(s"***Time sending all messages to ProducerActor: $durationSecs Seconds****")
       logger.info(s"************************************")
@@ -99,7 +103,9 @@ class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
     case LogResults =>
       logger.info(s"***ProducerActor with ${outstandingMessages.size} unconfirmed sends***")
       logger.info(s"***ProducerActor with ${failedMessages.size} failed sends***")
-      logger.info(s"***KPL Has ${kinesisProducerKPL.outstandingRecordsCount()} Outstanding Concurrent Requests***")
+      logger.info(
+        s"***KPL Has ${kinesisProducerKPL.outstandingRecordsCount()} Outstanding Concurrent Requests***"
+      )
       logger.info(s"************************************")
       //Keep logging incase we're not yet done processing....
 
@@ -108,7 +114,7 @@ class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
       } else {
         logger.info(s"************************************")
         logger.info(s"****Finished Producer****")
-        val endTime = System.nanoTime()
+        val endTime      = System.nanoTime()
         val durationSecs = (endTime - startTime) / SECONDS_IN_NANO
         logger.info(s"****Total time to completion: $durationSecs Seconds****")
         logger.info(s"************************************")
@@ -135,14 +141,12 @@ class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
         context.system.scheduler.scheduleOnce(3.seconds, self, DrainBatch)
 
     case SendSuccessful(messageId, _) =>
-      logger.trace(
-        s"Successfully sent $messageId")
+      logger.trace(s"Successfully sent $messageId")
       outstandingMessages -= messageId
 
     case SendFailed(messageId, reason) =>
       val failedPayload = outstandingMessages(messageId)
-      logger.info(
-        s"""Failed to send ProducerEvent($messageId, $failedPayload""".stripMargin)
+      logger.info(s"""Failed to send ProducerEvent($messageId, $failedPayload""".stripMargin)
       outstandingMessages -= messageId
       failedMessages += (messageId, failedPayload)
   }

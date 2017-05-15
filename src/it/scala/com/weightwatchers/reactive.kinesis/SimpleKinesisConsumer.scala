@@ -4,7 +4,12 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.typesafe.config._
 import com.typesafe.scalalogging.LazyLogging
 import com.weightwatchers.reactive.kinesis.SimpleKinesisConsumer._
-import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{ConsumerShutdown, ConsumerWorkerFailure, EventProcessed, ProcessEvent}
+import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{
+  ConsumerShutdown,
+  ConsumerWorkerFailure,
+  EventProcessed,
+  ProcessEvent
+}
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.models.CompoundSequenceNumber
@@ -70,8 +75,8 @@ class SimpleKinesisConsumer(kinesisConfig: Config) extends Actor with LazyLoggin
   }
 
   private var expectedNumberOfMessages = kinesisConfig.getInt("test.expectedNumberOfMessages")
-  private val PITSTOP_COUNT = kinesisConfig.getInt("test.consumer.pitstopCount")
-  private val PITSTOP_COEFF = 0.5
+  private val PITSTOP_COUNT            = kinesisConfig.getInt("test.consumer.pitstopCount")
+  private val PITSTOP_COEFF            = 0.5
 
   private var totalReceived = 0
   private var totalVerified = 0
@@ -162,18 +167,20 @@ class SimpleKinesisConsumer(kinesisConfig: Config) extends Actor with LazyLoggin
   //scalastyle:on
 
   private def isHealthy(expectedNum: Int, section: Seq[Int]): Boolean = {
-    val expectedRange: Iterator[Int] = Range(totalVerified, totalVerified + expectedNum).iterator
+    val expectedRange: Iterator[Int]      = Range(totalVerified, totalVerified + expectedNum).iterator
     val actualSortedResult: Iterator[Int] = section.iterator
     def compare(actual: Iterator[Int], expected: Iterator[Int]): Boolean = {
       logger.info(s"\nMATCHING    : $totalVerified to ${totalVerified + expectedNum}")
-      val allMatch = actual.zip(expected).forall(x => {
-        val matchSucceeded = x._1 == x._2
+      val allMatch = actual
+        .zip(expected)
+        .forall(x => {
+          val matchSucceeded = x._1 == x._2
 
-        if (!matchSucceeded)
-          logger.info(s"MATCH FAILED: actual ${x._1} == ${x._2} expected")
+          if (!matchSucceeded)
+            logger.info(s"MATCH FAILED: actual ${x._1} == ${x._2} expected")
 
-        matchSucceeded
-      })
+          matchSucceeded
+        })
       val lengthsMatch = actual.length == expected.length
       logger.warn(s"isHealthy allMatch $allMatch, lengthsMatch $lengthsMatch\n")
       allMatch && lengthsMatch
@@ -189,7 +196,9 @@ class SimpleKinesisConsumer(kinesisConfig: Config) extends Actor with LazyLoggin
 
     if (healthy) {
       state = TestSucceeded
-      logger.info(s">>> SimpleConsumer: ♡♡♡ Test Succeeded: Found ${messagesConsumed.length} entries, no duplicates ♡♡♡")
+      logger.info(
+        s">>> SimpleConsumer: ♡♡♡ Test Succeeded: Found ${messagesConsumed.length} entries, no duplicates ♡♡♡"
+      )
     } else {
 
       state = TestFailed
@@ -198,7 +207,7 @@ class SimpleKinesisConsumer(kinesisConfig: Config) extends Actor with LazyLoggin
   }
 
   private def logTiming() = {
-    val now = new DateTime(DateTimeZone.UTC)
+    val now              = new DateTime(DateTimeZone.UTC)
     val processingPeriod = new Period(timeStarted.get, now)
     logger.warn(s"\n- $totalReceived records received in ${processingPeriod.toStandardMinutes}")
     val secondsElapsed = processingPeriod.toStandardSeconds.getSeconds

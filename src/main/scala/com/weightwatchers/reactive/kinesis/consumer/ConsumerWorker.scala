@@ -483,13 +483,13 @@ private[consumer] class ConsumerWorker(eventProcessor: ActorRef,
           finaliseShutdown(outerSender, false)
       }
 
-      /**
-        * Complete graceful shutdown:
-        * * Notify the manager of completion
-        * * Notify the  eventProcessor in the consuming application of the imminent shutdown,
-        * * Kill the checkpointer
-        * * Kill self
-        */
+      /*
+       * Complete graceful shutdown:
+       * * Notify the manager of completion
+       * * Notify the  eventProcessor in the consuming application of the imminent shutdown,
+       * * Kill the checkpointer
+       * * Kill self
+       */
       def finaliseShutdown(manager: ActorRef, checkpointed: Boolean): Unit = {
         manager ! ShutdownComplete(checkpointed)
         eventProcessor ! ConsumerShutdown(latestShardId.getOrElse("-"))
