@@ -20,6 +20,11 @@ Maven
 </dependency>
 ```
 
+Snapshots will be published [here](https://oss.jfrog.org/webapp/#/artifacts/browse/simple/General/oss-snapshot-local/com/weightwatchers)
+
+You will need the following resolver for snapshots:
+`https://oss.jfrog.org/artifactory/oss-snapshot-local`
+
 ## Considerations When Using Kinesis in a Distributed Environment
 
 #### Required Minimum Sharding for Read-Based Applications
@@ -454,7 +459,7 @@ Please run `sbt scalafmt` before committing and pushing changes.
 
 ## Tag Requirements
 Uses tags and [sbt-git](https://github.com/sbt/sbt-git) to determine the current version.
-* Each merge into master will automatically build a snapshot (**snapshot publishing is temporarily disabled**).
+* Each merge into master will automatically build a snapshot and publish to [bintray OSS artifactory](https://www.jfrog.com/confluence/display/RTF/Deploying+Snapshots+to+oss.jfrog.org).
 * Tagging the master branch will automatically build and publish both Scala 2.11 & Scala 2.12 artifacts (to bintray and maven central).
 * Tags are in the format vX.X.X
  
