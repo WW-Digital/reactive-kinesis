@@ -115,11 +115,11 @@ object KinesisConsumer {
                                 dispatcher: Option[String] = None)
 
   /**
-    * Creates an instance of the [[KinesisConsumer]] along with a [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker]]
+    * Creates an instance of the [[KinesisConsumer]] along with a ConsumerWorker
     * which will be shared among shards.
     *
     * @param consumerConf   The consumer specific configuration, containing all configuration required for this consumer instance.
-    * @param eventProcessor see [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker]].
+    * @param eventProcessor see ConsumerWorker.
     */
   def apply(consumerConf: ConsumerConf,
             eventProcessor: ActorRef,
@@ -138,16 +138,20 @@ object KinesisConsumer {
   }
 
   /**
-    * Creates an instance of the [[KinesisConsumer]] along with a [[ConsumerWorker]]
+    * Creates an instance of the [[KinesisConsumer]] along with a ConsumerWorker
     * which will be shared among shards.
-    * - The eventProcessor MUST handle [[ProcessEvent]] messages (for each message)
-    * - The eventProcesser MUST respond with [[EventProcessed]] after processing of the [[ProcessEvent]]
+    * - The eventProcessor MUST handle
+    *     [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.ProcessEvent]] messages (for each message)
+    * - The eventProcesser MUST respond with [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.EventProcessed]] after
+    *     processing of the [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.ProcessEvent]]
     * - The eventProcessor may set `successful` to false to indicate the message can be skipped
-    * - The eventProcesser SHOULD handle [[ConsumerWorkerFailure]] messages which signal a critical failure in the Consumer.
-    * - The eventProcessor SHOULD handle [[ConsumerShutdown]] messages which siganl a graceful shutdown of the Consumer.
+    * - The eventProcesser SHOULD handle [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.ConsumerWorkerFailure]]
+    *     messages which signal a critical failure in the Consumer.
+    * - The eventProcessor SHOULD handle [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.ConsumerShutdown]]
+    *     messages which siganl a graceful shutdown of the Consumer.
     *
     * @param consumerConf   The consumer specific configuration, containing all configuration required for this consumer instance.
-    * @param eventProcessor see [[ConsumerWorker]] for more information.
+    * @param eventProcessor see ConsumerWorker for more information.
     */
   def apply(consumerConf: ConsumerConf,
             eventProcessor: ActorRef,
@@ -179,7 +183,7 @@ object KinesisConsumer {
   * @param context             This will be used to create the actor hierarchy.
   *                            So all Actors created will be children/grandchildren of this context.
   *                            This can be the same value as the `system` but we don't want to force the user
-  *                            into using an [[akka.actor.ActorSystem]] vs [[ActorContext]].
+  *                            into using an ActorSystem vs ActorContext.
   *
   */
 class KinesisConsumer(consumerConf: ConsumerConf,
@@ -204,7 +208,7 @@ class KinesisConsumer(consumerConf: ConsumerConf,
 
       /**
         * Creates an instance of [[ConsumerProcessingManager]].
-        * Passing a newly created [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker]] Actor specific to this shard (and manager).
+        * Passing a newly created ConsumerWorker Actor specific to this shard (and manager).
         */
       override def createProcessor(): IRecordProcessor = {
         logger.debug(s"Creating ConsumerWorker: ${consumerWorkerProps.args}")
@@ -229,7 +233,7 @@ class KinesisConsumer(consumerConf: ConsumerConf,
   java.security.Security.setProperty("networkaddress.cache.ttl", "60")
 
   /**
-    * The [[scala.concurrent.Future]] returned is long running, completion of the future indicates we're no
+    * The Future returned is long running, completion of the future indicates we're no
     * longer processing messages and should be handled accordingly by the callee.
     */
   def start(): Future[Unit] = {

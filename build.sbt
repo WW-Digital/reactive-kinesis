@@ -131,6 +131,9 @@ lazy val commonSettings =
       "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
       "-Ywarn-numeric-widen"              // Warn when numerics are widened.
     ),
+    scalacOptions in (Compile, doc) ++= Seq(
+      "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
+    ),
     scalacOptions in (Compile, console) ~= (_.filterNot(Set(
       "-Ywarn-unused:imports",
       "-Xfatal-warnings"

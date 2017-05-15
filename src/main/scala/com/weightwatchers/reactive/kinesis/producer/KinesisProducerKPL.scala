@@ -36,7 +36,7 @@ trait KinesisProducer {
     *
     * @return On success: Future{UserRecordResult}
     *         On failure: Future.failed(...): Any Throwable related to put.
-    * @see Callee `KafkaProducer.addUserRecord` [[AWSKinesisProducer]]
+    * @see Callee `com.amazonaws.services.kinesis.producer.KinesisProducer.addUserRecord`
     * @see UserRecordResult
     * @see KinesisProducerConfiguration#setRecordTtl(long)
     * @see UserRecordFailedException
