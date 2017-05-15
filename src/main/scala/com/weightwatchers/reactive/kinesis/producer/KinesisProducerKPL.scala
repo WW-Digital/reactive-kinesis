@@ -35,7 +35,7 @@ trait KinesisProducer {
     * Adds a message to the next batch to be sent to the configured stream.
     *
     * @return On success: Future{UserRecordResult}
-    *         On failure: Future.failed(...): Any [[Throwable]] related to put.
+    *         On failure: Future.failed(...): Any Throwable related to put.
     * @see Callee `KafkaProducer.addUserRecord` [[AWSKinesisProducer]]
     * @see UserRecordResult
     * @see KinesisProducerConfiguration#setRecordTtl(long)
@@ -137,7 +137,7 @@ class KinesisProducerKPL(kinesis: AWSKinesisProducer, streamName: String)
   //TODO seems difficult to get access to stream specific operations from producer
 
   /**
-    * @see [[KinesisProducer.addUserRecord]]
+    * @see [[KinesisProducer]].addUserRecord
     */
   override def addUserRecord(
       event: ProducerEvent
@@ -148,14 +148,15 @@ class KinesisProducerKPL(kinesis: AWSKinesisProducer, streamName: String)
   }
 
   /**
-    * @see [[KinesisProducer.outstandingRecordsCount()]]
+    * @see [[KinesisProducer]].outstandingRecordsCount()
     */
   override def outstandingRecordsCount(): Int = {
     kinesis.getOutstandingRecordsCount
   }
 
   /**
-    * @see [[KinesisProducer.stop()]]
+    * @see [[KinesisProducer]].stop()sbt publish
+    *
     */
   override def stop(): Unit = {
     kinesis.flushSync() //This blocks until all records are flushed
@@ -164,7 +165,7 @@ class KinesisProducerKPL(kinesis: AWSKinesisProducer, streamName: String)
   }
 
   /**
-    * @see [[KinesisProducer.destroyed()]]
+    * @see [[KinesisProducer]]destroyed()
     */
   override def destroyed(): Boolean = _destroyed
 }

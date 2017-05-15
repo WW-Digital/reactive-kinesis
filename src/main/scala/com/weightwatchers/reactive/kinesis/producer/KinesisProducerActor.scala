@@ -138,7 +138,8 @@ object KinesisProducerActor {
     * Sent to the sender in event of a failed completion.
     *
     * @param messageId The id of the event that failed.
-    * @param reason    The exception causing the failure. Likely to be of type [[UserRecordFailedException]]
+    * @param reason    The exception causing the failure.
+    *                  Likely to be of type [[com.amazonaws.services.kinesis.producer.UserRecordFailedException]]
     */
   case class SendFailed(messageId: String, reason: Throwable)
 
@@ -194,10 +195,12 @@ object KinesisProducerActor {
 /**
   * This ``Actor`` wraps the [[KinesisProducerKPL]] to provide reliable handling and throttling of requests.
   *
-  * Upon completion of a [[SendWithCallback]], a [[SendSuccessful]] or [[SendFailed]] will be returned to the original sender,
+  * Upon completion of a [[com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.SendWithCallback]],
+  * a [[com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.SendSuccessful]]
+  * or [[com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.SendFailed]] will be returned to the original sender,
   * this allows asynchronous tracking of requests.
   *
-  * Internally, for each request a new [[Future]] is created to track the completion. These concurrently created Futures
+  * Internally, for each request a new Future is created to track the completion. These concurrently created Futures
   * can be throttled by specifying the maxOutstandingRequests.
   *
   * This causes subsequent requests to be queued up until the outstanding messages have been processed.

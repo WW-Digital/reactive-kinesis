@@ -22,8 +22,8 @@ import java.nio.charset.StandardCharsets
 object ProducerEvent {
 
   /**
-    * Creates a [[ProducerEvent]] by converting the provided [[String]] to an INDIRECT [[ByteBuffer]].
-    * For large [[String]] payloads you may be able to improve performance by using a DIRECT [[ByteBuffer]].
+    * Creates a [[ProducerEvent]] by converting the provided String to an INDIRECT [[ByteBuffer]].
+    * For large String payloads you may be able to improve performance by using a DIRECT [[ByteBuffer]].
     */
   def apply(partitionKey: String, payload: String): ProducerEvent = {
     val bytes = payload.getBytes(StandardCharsets.UTF_8)

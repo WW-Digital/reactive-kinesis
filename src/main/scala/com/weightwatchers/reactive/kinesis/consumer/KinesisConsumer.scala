@@ -115,11 +115,11 @@ object KinesisConsumer {
                                 dispatcher: Option[String] = None)
 
   /**
-    * Creates an instance of the [[KinesisConsumer]] along with a [[ConsumerWorker]]
+    * Creates an instance of the [[KinesisConsumer]] along with a [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker]]
     * which will be shared among shards.
     *
     * @param consumerConf   The consumer specific configuration, containing all configuration required for this consumer instance.
-    * @param eventProcessor see [[ConsumerWorker]].
+    * @param eventProcessor see [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker]].
     */
   def apply(consumerConf: ConsumerConf,
             eventProcessor: ActorRef,
@@ -179,7 +179,7 @@ object KinesisConsumer {
   * @param context             This will be used to create the actor hierarchy.
   *                            So all Actors created will be children/grandchildren of this context.
   *                            This can be the same value as the `system` but we don't want to force the user
-  *                            into using an [[ActorSystem]] vs [[ActorContext]].
+  *                            into using an [[akka.actor.ActorSystem]] vs [[ActorContext]].
   *
   */
 class KinesisConsumer(consumerConf: ConsumerConf,
@@ -203,8 +203,8 @@ class KinesisConsumer(consumerConf: ConsumerConf,
     new IRecordProcessorFactory {
 
       /**
-        * Creates an instance of [[ConsumerProcessingManager]]. Passing a newly created [[ConsumerWorker]] Actor
-        * specific to this shard (and manager).
+        * Creates an instance of [[ConsumerProcessingManager]].
+        * Passing a newly created [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker]] Actor specific to this shard (and manager).
         */
       override def createProcessor(): IRecordProcessor = {
         logger.debug(s"Creating ConsumerWorker: ${consumerWorkerProps.args}")
@@ -229,7 +229,7 @@ class KinesisConsumer(consumerConf: ConsumerConf,
   java.security.Security.setProperty("networkaddress.cache.ttl", "60")
 
   /**
-    * The [[Future]] returned is long running, completion of the future indicates we're no
+    * The [[scala.concurrent.Future]] returned is long running, completion of the future indicates we're no
     * longer processing messages and should be handled accordingly by the callee.
     */
   def start(): Future[Unit] = {
