@@ -18,12 +18,12 @@ script:
     && tar xf secrets.tar && mkdir ~/.bintray
     && cp publishing/.credentials ~/.bintray/
     && sbt ++$TRAVIS_SCALA_VERSION publish bintrayRelease bintraySyncMavenCentral; fi
-# Snapshots (anything merged into master)
-#- if [ $TRAVIS_TEST_RESULT -eq 0 -a "$TRAVIS_PULL_REQUEST" = "false" -a "$TRAVIS_BRANCH" = "master" ]; then
-#  echo "** Publishing Snapshot from master **"
-#    && tar xf secrets.tar && mkdir ~/.bintray
-#    && cp publishing/.credentials ~/.bintray/ && cp publishing/.artifactory ~/.bintray/
-#    && sbt ++$TRAVIS_SCALA_VERSION publish; fi
+ Snapshots (anything merged into master)
+- if [ $TRAVIS_TEST_RESULT -eq 0 -a "$TRAVIS_PULL_REQUEST" = "false" -a "$TRAVIS_BRANCH" = "master" ]; then
+  echo "** Publishing Snapshot from master **"
+    && tar xf secrets.tar && mkdir ~/.bintray
+    && cp publishing/.credentials ~/.bintray/ && cp publishing/.artifactory ~/.bintray/
+    && sbt ++$TRAVIS_SCALA_VERSION publish; fi
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coverageReport coveralls
 before_cache:
