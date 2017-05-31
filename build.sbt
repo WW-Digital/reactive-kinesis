@@ -162,17 +162,16 @@ lazy val versioningSettings =
   Seq(
     git.baseVersion := "0.0.0",
     git.useGitDescribe := true,
+    git.uncommittedSignifier := None,
     git.gitTagToVersionNumber := {
       case VersionRegex(v, "")                      => Some(v) //e.g. 1.0.0
       case VersionRegex(v, s)
         if MilestoneRegex.findFirstIn(s).isDefined  => Some(s"$v-$s") //e.g. 1.0.0-M1
-      case VersionRegex(v, s)
-        if s.endsWith("SNAPSHOT")                   => Some(s"$v-SNAPSHOT") //e.g. 1.0.0-SNAPSHOT
+      case VersionRegex(v, "SNAPSHOT")              => Some(s"$v-SNAPSHOT") //e.g. 1.0.0-SNAPSHOT
       case VersionRegex(v, s)                       => Some(s"$v-$s-SNAPSHOT") //e.g. 1.0.0-2-commithash-SNAPSHOT
       case _                                        => None
     }
   )
-
 
 import de.heikoseeberger.sbtheader.license._
 import sbt.Keys.parallelExecution
