@@ -90,7 +90,7 @@ lazy val settings =
 lazy val commonSettings =
   Seq(
     //version := "0.1.14", //automatically calculated by sbt-git
-    scalaVersion := "2.11.11", // taken from .travis.yml via sbt-travisci
+    //scalaVersion := "2.11.11", // taken from .travis.yml via sbt-travisci
     organization := "com.weightwatchers",
     mappings.in(Compile, packageBin) += baseDirectory.in(ThisBuild).value / "LICENSE" -> "LICENSE",
     scalacOptions ++= Seq( //http://tpolecat.github.io/2017/04/25/scalac-flags.html
