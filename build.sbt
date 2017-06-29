@@ -55,7 +55,7 @@ lazy val library =
       )
 
     val logback = Seq(
-      "ch.qos.logback"             % "logback-classic"               % "1.2.3"            % Compile
+      "ch.qos.logback"             % "logback-classic"               % "1.1.11"            % Compile
     )
 
     val joda = Seq(
