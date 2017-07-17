@@ -17,6 +17,7 @@ import com.weightwatchers.reactive.kinesis.producer.{KinesisProducerActor, Kines
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import com.weightwatchers.eventing.system
 
 object RunSampleProducer extends App {
   val producer = system.actorOf(SimpleKinesisProducer.props)

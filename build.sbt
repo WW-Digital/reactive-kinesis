@@ -7,6 +7,8 @@ lazy val `reactive-kinesis` =
     .in(file("."))
     .enablePlugins(AutomateHeaderPlugin, GitVersioning)
     .settings(settings)
+    .configs(IntegrationTest)
+    .settings(Defaults.itSettings: _*)
     .settings(
       libraryDependencies ++=
         library.jackson ++ library.amazon ++ library.lightbend ++

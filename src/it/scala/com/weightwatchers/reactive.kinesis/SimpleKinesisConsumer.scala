@@ -17,6 +17,7 @@ import kamon.Kamon
 import org.joda.time.{DateTime, DateTimeZone, Period}
 
 import scala.collection.mutable.ListBuffer
+import com.weightwatchers.eventing.system
 
 object RunSimpleConsumer extends App {
   Kamon.start()
