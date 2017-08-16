@@ -79,6 +79,7 @@ class KinesisConsumerSpec
       |      kcl {
       |         AWSCredentialsProvider = EnvironmentVariableCredentialsProvider
       |         regionName = us-east-1
+      |         KinesisEndpoint = "CustomKinesisEndpoint"
       |      }
       |   }
       |
@@ -132,6 +133,8 @@ class KinesisConsumerSpec
         "TestSpec-test-kinesis-reliability"
       )
       consumerConf.kclConfiguration.getStreamName should be("test-kinesis-reliability")
+      consumerConf.kclConfiguration
+        .getKinesisEndpoint() should be("CustomKinesisEndpoint") //validate an override property
 
       val credentialsProvider = consumerConf.kclConfiguration.getKinesisCredentialsProvider
         .asInstanceOf[AWSCredentialsProviderChain]

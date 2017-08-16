@@ -59,6 +59,11 @@ class KinesisProducerActorSpec
       |
       |      kpl {
       |         Region = us-east-1
+      |         KinesisEndpoint = "CustomKinesisEndpoint"
+      |         KinesisPort = 1111
+      |         CloudwatchEndpoint = "CustomCloudWatchEndpoint"
+      |         CloudwatchPort = 2222
+      |         EnableCoreDumps = true
       |      }
       |   }
       |}
@@ -81,8 +86,13 @@ class KinesisProducerActorSpec
       val producerConf = ProducerConf(kinesisConfig, "testProducer")
 
       producerConf.dispatcher should be(Some("kinesis.akka.default-dispatcher"))
-      producerConf.kplConfig.getString("Region") should be("us-east-1")       //validate an override properly
-      producerConf.kplConfig.getBoolean("AggregationEnabled") should be(true) //validate a default property
+      producerConf.kplConfig.getString("Region") should be("us-east-1")                            //validate an override properly
+      producerConf.kplConfig.getBoolean("AggregationEnabled") should be(true)                      //validate a default property
+      producerConf.kplConfig.getString("KinesisEndpoint") should be("CustomKinesisEndpoint")       //validate an override property
+      producerConf.kplConfig.getInt("KinesisPort") should be(1111)                                 //validate an override property
+      producerConf.kplConfig.getString("CloudwatchEndpoint") should be("CustomCloudWatchEndpoint") //validate an override property
+      producerConf.kplConfig.getInt("CloudwatchPort") should be(2222)                              //validate an override property
+      producerConf.kplConfig.getBoolean("EnableCoreDumps") should be(true)                         //validate an override property
       producerConf.throttlingConf.get.maxOutstandingRequests should be(50000)
       producerConf.throttlingConf.get.retryDuration should be(100.millis)
       producerConf.streamName should be("core-test-kinesis-producer")
