@@ -182,3 +182,4 @@ lazy val headerSettings =
     headers := Map("scala" -> Apache2_0("2017", "WeightWatchers"))
   )
 
+coverageExcludedPackages := "reference.conf"
