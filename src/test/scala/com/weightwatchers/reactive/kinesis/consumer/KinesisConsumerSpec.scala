@@ -22,17 +22,8 @@ import java.util
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
-import com.amazonaws.auth.{
-  AWSCredentialsProviderChain,
-  DefaultAWSCredentialsProviderChain,
-  EnvironmentVariableCredentialsProvider
-}
-import com.amazonaws.services.kinesis.clientlibrary.lib.worker.{
-  InitialPositionInStream,
-  InitialPositionInStreamExtended,
-  ShardPrioritization,
-  Worker
-}
+import com.amazonaws.auth.{AWSCredentialsProviderChain, DefaultAWSCredentialsProviderChain, EnvironmentVariableCredentialsProvider}
+import com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker
 import com.typesafe.config.ConfigFactory
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.mockito.Mockito
