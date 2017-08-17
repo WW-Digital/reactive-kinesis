@@ -27,7 +27,12 @@ import com.amazonaws.auth.{
   DefaultAWSCredentialsProviderChain,
   EnvironmentVariableCredentialsProvider
 }
-import com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker
+import com.amazonaws.services.kinesis.clientlibrary.lib.worker.{
+  InitialPositionInStream,
+  InitialPositionInStreamExtended,
+  ShardPrioritization,
+  Worker
+}
 import com.typesafe.config.ConfigFactory
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.mockito.Mockito
@@ -80,6 +85,9 @@ class KinesisConsumerSpec
       |         AWSCredentialsProvider = EnvironmentVariableCredentialsProvider
       |         regionName = us-east-1
       |         KinesisEndpoint = "CustomKinesisEndpoint"
+      |         DynamoDBEndpoint = "CustomDynamoDBEndpoint"
+      |         SkipShardSyncAtStartupIfLeasesExist = true
+      |         TableName = "TableName"
       |      }
       |   }
       |
@@ -133,8 +141,12 @@ class KinesisConsumerSpec
         "TestSpec-test-kinesis-reliability"
       )
       consumerConf.kclConfiguration.getStreamName should be("test-kinesis-reliability")
-      consumerConf.kclConfiguration
-        .getKinesisEndpoint() should be("CustomKinesisEndpoint") //validate an override property
+      consumerConf.kclConfiguration.getKinesisEndpoint should be("CustomKinesisEndpoint")   //validate an override property
+      consumerConf.kclConfiguration.getDynamoDBEndpoint should be("CustomDynamoDBEndpoint") //validate an override property
+      consumerConf.kclConfiguration.getSkipShardSyncAtWorkerInitializationIfLeasesExist should be(
+        true
+      )                                                                 //validate an override property
+      consumerConf.kclConfiguration.getTableName should be("TableName") //validate an override property
 
       val credentialsProvider = consumerConf.kclConfiguration.getKinesisCredentialsProvider
         .asInstanceOf[AWSCredentialsProviderChain]
