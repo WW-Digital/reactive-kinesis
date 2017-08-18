@@ -79,6 +79,10 @@ class KinesisConsumerSpec
       |      kcl {
       |         AWSCredentialsProvider = EnvironmentVariableCredentialsProvider
       |         regionName = us-east-1
+      |         KinesisEndpoint = "CustomKinesisEndpoint"
+      |         DynamoDBEndpoint = "CustomDynamoDBEndpoint"
+      |         SkipShardSyncAtStartupIfLeasesExist = true
+      |         TableName = "TableName"
       |      }
       |   }
       |
@@ -132,6 +136,12 @@ class KinesisConsumerSpec
         "TestSpec-test-kinesis-reliability"
       )
       consumerConf.kclConfiguration.getStreamName should be("test-kinesis-reliability")
+      consumerConf.kclConfiguration.getKinesisEndpoint should be("CustomKinesisEndpoint")   //validate an override property
+      consumerConf.kclConfiguration.getDynamoDBEndpoint should be("CustomDynamoDBEndpoint") //validate an override property
+      consumerConf.kclConfiguration.getSkipShardSyncAtWorkerInitializationIfLeasesExist should be(
+        true
+      )                                                                 //validate an override property
+      consumerConf.kclConfiguration.getTableName should be("TableName") //validate an override property
 
       val credentialsProvider = consumerConf.kclConfiguration.getKinesisCredentialsProvider
         .asInstanceOf[AWSCredentialsProviderChain]
