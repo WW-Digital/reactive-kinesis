@@ -160,7 +160,7 @@ class ConsumerProcessingManagerSpec
 
           Mockito
             .verify(kcl, Mockito.times(1))
-            .requestShutdown() //we failed so shutdown should have been called
+            .startGracefulShutdown() //we failed so shutdown should have been called
         }
       }
 
@@ -175,7 +175,7 @@ class ConsumerProcessingManagerSpec
 
           Mockito
             .verify(kcl, Mockito.times(1))
-            .requestShutdown() //we failed so shutdown should have been called
+            .startGracefulShutdown() //we failed so shutdown should have been called
         }
       }
     }
