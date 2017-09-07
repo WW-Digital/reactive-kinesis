@@ -1,5 +1,3 @@
-# TEST Fork
-
 # reactive-kinesis [![Build Status](https://travis-ci.org/WW-Digital/reactive-kinesis.svg?branch=master)](https://travis-ci.org/WW-Digital/reactive-kinesis) [![Coverage Status](https://coveralls.io/repos/github/WW-Digital/reactive-kinesis/badge.svg?branch=master)](https://coveralls.io/github/WW-Digital/reactive-kinesis?branch=master)
 
 Kinesis client built upon Amazon's KCL ([Kinesis Client Library](http://docs.aws.amazon.com/streams/latest/dev/developing-consumers-with-kcl.html)) & KPL ([Kinesis Producer Library](http://docs.aws.amazon.com/streams/latest/dev/developing-producers-with-kpl.html)).
