@@ -16,6 +16,8 @@
 
 package com.weightwatchers.reactive.kinesis.producer
 
+import java.io.File
+
 import com.amazonaws.services.kinesis.producer.{
   UserRecordResult,
   KinesisProducer => AWSKinesisProducer
@@ -39,38 +41,42 @@ class KinesisProducerKPLSpec
 
   implicit val ece = scala.concurrent.ExecutionContext.global
 
+  val defaultKinesisConfig =
+    ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
+
   val kinesisConfig = ConfigFactory
     .parseString(
       """
-      |kinesis {
-      |
-      |   application-name = "TestSpec"
-      |
-      |   testProducer {
-      |      # The name of the producer stream
-      |      stream-name = "core-test-kinesis-producer"
-      |
-      |      # Can specify settings here as per default-producer, to override those defaults for this producer.
-      |
-      |      kpl {
-      |         Region = us-east-1
-      |      }
-      |   }
-      |}
-    """.stripMargin
+        |kinesis {
+        |
+        |   application-name = "TestSpec"
+        |
+        |   testProducer {
+        |      # The name of the producer stream
+        |      stream-name = "core-test-kinesis-producer"
+        |
+        |      # Can specify settings here as per default-producer, to override those defaults for this producer.
+        |
+        |      kpl {
+        |         Region = us-east-1
+        |      }
+        |   }
+        |}
+      """.stripMargin
     )
     .getConfig("kinesis")
+    .withFallback(defaultKinesisConfig)
 
   "The KinesisProducer" - {
 
     "Should create the KinesisProducerKPL with an underlying AWSKinesisProducer" in {
 
-      val producer = KinesisProducerKPL(
-        kinesisConfig.getConfig("testProducer.kpl"),
-        kinesisConfig.getString("testProducer.stream-name")
-      ).asInstanceOf[KinesisProducerKPL]
+      val producer = KinesisProducerKPL(ProducerConf(kinesisConfig, "testProducer"))
+        .asInstanceOf[KinesisProducerKPL]
 
       producer.underlying should not be (null) // scalastyle:ignore
+
+      producer.underlying.destroy()
     }
 
     "Should Add a Record to the Kinesis Stream, wrapping the response in a scala future" in {

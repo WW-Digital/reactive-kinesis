@@ -144,6 +144,7 @@ object KinesisProducerKPL extends LazyLogging {
     * @return an instantiated [[KinesisProducer]]
     */
   def apply(kplConfig: KinesisProducerConfiguration, streamName: String): KinesisProducer = {
+    //TODO add logging
     new KinesisProducerKPL(new AWSKinesisProducer(kplConfig), streamName)
   }
 }

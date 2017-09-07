@@ -31,7 +31,7 @@ import scala.concurrent.{Await, Future}
 
 //scalastyle:off magic.number
 class KinesisProducerActorSpec
-  extends TestKit(ActorSystem("producer-spec"))
+    extends TestKit(ActorSystem("producer-spec"))
     with ImplicitSender
     with FreeSpecLike
     with Matchers
@@ -52,8 +52,8 @@ class KinesisProducerActorSpec
     "Should process a message without a response for a Send" in {
       val probe = TestProbe()
 
-      val event = ProducerEvent("111", "das payload")
-      val result = mock[UserRecordResult]
+      val event    = ProducerEvent("111", "das payload")
+      val result   = mock[UserRecordResult]
       val producer = mock[KinesisProducerKPL]
 
       //Given a successful response from the underlying producer
@@ -74,8 +74,8 @@ class KinesisProducerActorSpec
     "Should process a message and respond with SendSuccessful upon completion for SendWithCallback" in {
       val probe = TestProbe()
 
-      val event = ProducerEvent("111", "das payload")
-      val result = mock[UserRecordResult]
+      val event    = ProducerEvent("111", "das payload")
+      val result   = mock[UserRecordResult]
       val producer = mock[KinesisProducerKPL]
 
       //Given a successful response from the underlying producer
@@ -86,7 +86,7 @@ class KinesisProducerActorSpec
 
       //When we send a SendWithCallback
       val producerActor = system.actorOf(KinesisProducerActor.props(producer))
-      val msg = SendWithCallback(event)
+      val msg           = SendWithCallback(event)
       producerActor.tell(msg, probe.ref)
 
       //Then we should receive a SendSuccessful response
@@ -97,9 +97,9 @@ class KinesisProducerActorSpec
     "Should process a message and respond with SendFailed upon failure with SendWithCallback" in {
       val probe = TestProbe()
 
-      val event = ProducerEvent("111", "das payload")
+      val event  = ProducerEvent("111", "das payload")
       val result = mock[UserRecordResult]
-      val ex = new UserRecordFailedException(result)
+      val ex     = new UserRecordFailedException(result)
 
       //Given an exception from the underlying producer
       val producer = mock[KinesisProducerKPL]
@@ -110,7 +110,7 @@ class KinesisProducerActorSpec
 
       //When we send a SendWithCallback
       val producerActor = system.actorOf(KinesisProducerActor.props(producer))
-      val msg = SendWithCallback(event)
+      val msg           = SendWithCallback(event)
       producerActor.tell(msg, probe.ref)
 
       //Then we should receive a SendSuccessful response
@@ -121,10 +121,10 @@ class KinesisProducerActorSpec
     "Should throttle when over the configured maxOutstandingRequests" in {
       val probe = TestProbe()
 
-      val maxOutstandingRequests = 10
+      val maxOutstandingRequests    = 10
       val actualOutstandingRequests = 10
-      val event = ProducerEvent("111", "das payload")
-      val result = mock[UserRecordResult]
+      val event                     = ProducerEvent("111", "das payload")
+      val result                    = mock[UserRecordResult]
 
       //Given that the number of requests in progress >= maxOutstandingRequests
       val producer = mock[KinesisProducerKPL]
