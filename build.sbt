@@ -40,11 +40,11 @@ lazy val library =
       "com.fasterxml.uuid"         % "java-uuid-generator"           % "3.1.4"            % Compile)
 
     val amazon = Seq(
-      "com.amazonaws"              % "amazon-kinesis-client"         % "1.7.5"            % Compile
+      "com.amazonaws"              % "amazon-kinesis-client"         % "1.8.1"            % Compile
         excludeAll(
           ExclusionRule(organization = "com.fasterxml.jackson.core"),
           ExclusionRule(organization = "com.fasterxml.jackson.dataformat")),
-      "com.amazonaws"              % "amazon-kinesis-producer"       % "0.12.3"           % Compile
+      "com.amazonaws"              % "amazon-kinesis-producer"       % "0.12.5"           % Compile
         excludeAll(
           ExclusionRule(organization = "com.fasterxml.jackson.core"),
           ExclusionRule(organization = "com.fasterxml.jackson.dataformat"))

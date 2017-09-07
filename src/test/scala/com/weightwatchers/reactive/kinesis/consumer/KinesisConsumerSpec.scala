@@ -266,7 +266,9 @@ class KinesisConsumerSpec
 
     "Should call requestShutdown on worker, when stop is called for consumer" in {
       val worker = mock[Worker]
-      Mockito.when(worker.requestShutdown()).thenReturn(mock[java.util.concurrent.Future[Void]])
+      Mockito
+        .when(worker.startGracefulShutdown())
+        .thenReturn(mock[java.util.concurrent.Future[java.lang.Boolean]])
 
       Given("A running consumer")
 
@@ -286,7 +288,7 @@ class KinesisConsumerSpec
         consumer.stop()
 
         Then("It should call request shutdown on worker once")
-        Mockito.verify(worker, Mockito.times(1)).requestShutdown()
+        Mockito.verify(worker, Mockito.times(1)).startGracefulShutdown()
       }
     }
 
@@ -294,7 +296,9 @@ class KinesisConsumerSpec
       val worker = mock[Worker]
 
       Given("A consumer with our mocked worker")
-      Mockito.when(worker.requestShutdown()).thenReturn(mock[java.util.concurrent.Future[Void]])
+      Mockito
+        .when(worker.startGracefulShutdown())
+        .thenReturn(mock[java.util.concurrent.Future[java.lang.Boolean]])
 
       val consumer = new KinesisConsumer(ConsumerConf(kinesisConfig, "testConsumer-1"),
                                          null, // scalastyle:ignore
@@ -313,7 +317,7 @@ class KinesisConsumerSpec
         consumer.stop()
 
         Then("It should only call request shutdown on worker once")
-        Mockito.verify(worker, Mockito.times(1)).requestShutdown()
+        Mockito.verify(worker, Mockito.times(1)).startGracefulShutdown()
       }
     }
   }

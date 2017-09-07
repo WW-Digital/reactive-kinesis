@@ -283,7 +283,8 @@ class KinesisConsumer(consumerConf: ConsumerConf,
       val shutdownTimeoutUnit   = consumerConf.workerConf.shutdownTimeout.duration.unit
 
       Try {
-        kclWorker.requestShutdown
+        kclWorker
+          .startGracefulShutdown()
           .get(shutdownTimeoutLength, shutdownTimeoutUnit)
       } match {
         case Success(_) =>

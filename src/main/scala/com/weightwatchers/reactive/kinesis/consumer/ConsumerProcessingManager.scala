@@ -143,7 +143,7 @@ private[consumer] class ConsumerProcessingManager(
   private[consumer] def closeManager(): Unit = {
     val canCloseManager = shuttingDown.compareAndSet(false, true)
     if (canCloseManager) {
-      Future(kclWorker.requestShutdown()) //Needs to be async otherwise we hog the processRecords thread
+      Future(kclWorker.startGracefulShutdown()) //Needs to be async otherwise we hog the processRecords thread
     }
   }
 }
