@@ -26,92 +26,11 @@ import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
 import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor._
+import com.weightwatchers.reactive.kinesis.producer.ProducerConf.ThrottlingConf
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 object KinesisProducerActor {
-
-  /**
-    * Compainion object for the [[ProducerConf]].
-    */
-  object ProducerConf {
-
-    /**
-      * Given the `kinesisConfig`, builds a combined configuration by taking the `producerName` specific configuration
-      * within, and using the `default-producer` configuration as a fallback for all values.
-      *
-      * @param kinesisConfig The top level Kinesis Configuration, containing the specified producer.
-      * @param producerName  The name of the producer, which MUST be contained within the `kinesisConfig`
-      * @return A [[ProducerConf]] case class used for constructing the [[KinesisProducerActor]]
-      */
-    def apply(kinesisConfig: Config, producerName: String): ProducerConf = {
-
-      val producerConfig = kinesisConfig
-        .getConfig(producerName)
-        .withFallback(kinesisConfig.getConfig("default-producer"))
-
-      val streamName = producerConfig.getString("stream-name")
-      require(!streamName.isEmpty,
-              "A valid stream name must be provided to start the Kinesis Producer")
-
-      val dispatcher: Option[String] =
-        if (producerConfig.getIsNull("akka.dispatcher"))
-          None
-        else {
-          val dispatcherProp = producerConfig.getString("akka.dispatcher")
-          if (dispatcherProp.isEmpty)
-            None
-          else
-            Some(dispatcherProp)
-        }
-
-      new ProducerConf(streamName,
-                       producerConfig.getConfig("kpl"),
-                       dispatcher,
-                       parseThrottlingConfig(producerConfig))
-    }
-
-    private def parseThrottlingConfig(producerConfig: Config): Option[ThrottlingConf] = {
-      if (!producerConfig.hasPath("akka.max-outstanding-requests")
-          || producerConfig.getIsNull("akka.max-outstanding-requests"))
-        None
-      else {
-        val maxOutstandingRequests = producerConfig.getInt("akka.max-outstanding-requests")
-
-        if (!producerConfig.hasPath("akka.throttling-retry-millis")
-            || producerConfig.getIsNull("akka.throttling-retry-millis"))
-          Some(ThrottlingConf(maxOutstandingRequests))
-        else
-          Some(
-            ThrottlingConf(maxOutstandingRequests,
-                           producerConfig.getLong("akka.throttling-retry-millis").millis)
-          )
-      }
-    }
-  }
-
-  /**
-    * The collection of configuration values required for constructing a producer. See the companion object.
-    *
-    * @param streamName     The name of the Kinesis Stream this producer will publish to.
-    * @param kplConfig      The `kpl` section of the kinesis configuration.
-    * @param dispatcher     An optional dispatcher for the producer and kpl.
-    * @param throttlingConf Configuration which defines whether and how often to throttle.
-    */
-  final case class ProducerConf(streamName: String,
-                                kplConfig: Config,
-                                dispatcher: Option[String] = None,
-                                throttlingConf: Option[ThrottlingConf] = None)
-
-  /**
-    * Configuration which defines whether and how often to throttle.
-    *
-    * @param maxOutstandingRequests The max number of concurrent requests before throttling. None removes throttling completely.
-    * @param retryDuration          The time before retrying after throttling.
-    */
-  protected final case class ThrottlingConf(maxOutstandingRequests: Int,
-                                            retryDuration: FiniteDuration = 100.millis)
 
   private val UUID_GENERATOR = Generators.timeBasedGenerator()
 
@@ -258,9 +177,9 @@ class KinesisProducerActor(producer: KinesisProducer, throttlingConfig: Option[T
             //TODO is this too much log output on error? I'm assuming this will be rare!
             import scala.collection.JavaConverters._
             val errorList = ex.getResult.getAttempts.asScala.map(attempt => s"""
-               |Delay after prev attempt: ${attempt.getDelay} ms,
-               |Duration: ${attempt.getDuration} ms, Code: ${attempt.getErrorCode},
-               |Message: ${attempt.getErrorMessage}
+                 |Delay after prev attempt: ${attempt.getDelay} ms,
+                 |Duration: ${attempt.getDuration} ms, Code: ${attempt.getErrorCode},
+                 |Message: ${attempt.getErrorMessage}
             """.stripMargin)
             logger.warn(
               s"Record failed to put, partitionKey=${event.partitionKey}, payload=${event.payload}, attempts:$errorList",

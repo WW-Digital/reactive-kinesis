@@ -89,6 +89,19 @@ trait KinesisProducer {
 object KinesisProducerKPL extends LazyLogging {
 
   /**
+    * Get the number of unfinished records currently being processed. The
+    * records could either be waiting to be sent to the child process, or have
+    * reached the child process and are being worked on.
+    *
+    * <p>
+    * This is equal to the number of futures returned from addUserRecord
+    * that have not finished.
+    *
+    * This is useful for applying backpressure and throttling the number of concurrent Futures.
+    *
+    * @return The number of unfinished records currently being processed.
+    */
+  /**
     * The config passed is expected to contain the AWS KPL properties at the top level.
     *
     * @see `src/it/resources/reference.conf` for a more detailed example.
