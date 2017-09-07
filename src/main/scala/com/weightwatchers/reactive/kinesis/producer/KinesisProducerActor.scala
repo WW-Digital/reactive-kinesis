@@ -83,20 +83,17 @@ object KinesisProducerActor {
   def props(kinesisConfig: Config,
             producerName: String,
             credentialsProvider: Option[AWSCredentialsProvider] = None): Props = {
-    val producerConf = ProducerConf(kinesisConfig, producerName)
-    props(producerConf, credentialsProvider)
+    props(ProducerConf(kinesisConfig, producerName, credentialsProvider))
   }
 
   /**
     * Create a [[KinesisProducerKPL]] and passes it to a [[KinesisProducerActor]], returning the Props.
     *
-    * @param producerConf        A complete [[ProducerConf]] case class.
-    * @param credentialsProvider A specific CredentialsProvider. The KCL defaults to DefaultAWSCredentialsProviderChain.
+    * @param producerConf A complete [[ProducerConf]] case class.
     */
-  def props(producerConf: ProducerConf,
-            credentialsProvider: Option[AWSCredentialsProvider]): Props = {
+  def props(producerConf: ProducerConf): Props = {
     val kinesisProducer =
-      KinesisProducerKPL(producerConf.kplConfig, producerConf.streamName, credentialsProvider)
+      KinesisProducerKPL(producerConf)
 
     val props = Props(classOf[KinesisProducerActor], kinesisProducer, producerConf.throttlingConf)
     producerConf.dispatcher.fold(props)(props.withDispatcher)

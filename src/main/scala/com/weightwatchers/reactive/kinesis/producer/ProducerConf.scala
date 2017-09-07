@@ -16,8 +16,11 @@
 
 package com.weightwatchers.reactive.kinesis.producer
 
+import com.amazonaws.auth.AWSCredentialsProvider
+import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration
 import com.typesafe.config.Config
 import com.weightwatchers.reactive.kinesis.producer.ProducerConf.ThrottlingConf
+import com.weightwatchers.reactive.kinesis.utils.TypesafeConfigExtensions
 
 import scala.concurrent.duration.{FiniteDuration, _}
 
@@ -37,14 +40,19 @@ object ProducerConf {
                                   retryDuration: FiniteDuration = 100.millis)
 
   /**
-    * Given the `kinesisConfig`, builds a combined configuration by taking the `producerName` specific configuration
+    * Given the top level `kinesis` config block, builds a combined configuration by taking the `producerName` specific configuration
     * within, and using the `default-producer` configuration as a fallback for all values.
     *
-    * @param kinesisConfig The top level Kinesis Configuration, containing the specified producer.
-    * @param producerName  The name of the producer, which MUST be contained within the `kinesisConfig`
+    * @see `src/it/resources/reference.conf` for a more detailed example of the KinesisConfig.
+    *
+    * @param kinesisConfig       The top level Kinesis Configuration, containing the specified producer.
+    * @param producerName        The name of the producer, which MUST be contained within the `kinesisConfig`
+    * @param credentialsProvider A specific CredentialsProvider. The KPL defaults to [[com.amazonaws.auth.DefaultAWSCredentialsProviderChain]].
     * @return A [[ProducerConf]] case class used for constructing the [[KinesisProducerActor]]
     */
-  def apply(kinesisConfig: Config, producerName: String): ProducerConf = {
+  def apply(kinesisConfig: Config,
+            producerName: String,
+            credentialsProvider: Option[AWSCredentialsProvider] = None): ProducerConf = {
 
     val producerConfig = kinesisConfig
       .getConfig(producerName)
@@ -65,10 +73,28 @@ object ProducerConf {
           Some(dispatcherProp)
       }
 
+    val kplConfig = producerConfig.getConfig("kpl")
+    val kplLibConfiguration: KinesisProducerConfiguration =
+      buildKPLConfig(kplConfig, credentialsProvider)
+
     new ProducerConf(streamName,
-                     producerConfig.getConfig("kpl"),
+                     kplLibConfiguration,
                      dispatcher,
                      parseThrottlingConfig(producerConfig))
+  }
+
+  private def buildKPLConfig(kplConfig: Config,
+                             credentialsProvider: Option[AWSCredentialsProvider]) = {
+    // We directly load our properties into the KPL as a Java `Properties` object
+    // See http://docs.aws.amazon.com/streams/latest/dev/kinesis-kpl-config.html
+    import TypesafeConfigExtensions._
+    val kplProps = kplConfig.toProperties
+
+    val kplLibConfiguration: KinesisProducerConfiguration =
+      KinesisProducerConfiguration.fromProperties(kplProps)
+    credentialsProvider.foreach(kplLibConfiguration.setCredentialsProvider)
+
+    kplLibConfiguration
   }
 
   private def parseThrottlingConfig(producerConfig: Config): Option[ThrottlingConf] = {
@@ -93,12 +119,12 @@ object ProducerConf {
 /**
   * The collection of configuration values required for constructing a producer. See the companion object.
   *
-  * @param streamName     The name of the Kinesis Stream this producer will publish to.
-  * @param kplConfig      The `kpl` section of the kinesis configuration.
-  * @param dispatcher     An optional dispatcher for the producer and kpl.
-  * @param throttlingConf Configuration which defines whether and how often to throttle.
+  * @param streamName          The name of the Kinesis Stream this producer will publish to.
+  * @param kplLibConfiguration An instance of the underlying [[KinesisProducerConfiguration]] for the KPL library.
+  * @param dispatcher          An optional dispatcher for the producer and kpl.
+  * @param throttlingConf      Configuration which defines whether and how often to throttle.
   */
 final case class ProducerConf(streamName: String,
-                              kplConfig: Config,
-                              dispatcher: Option[String] = None,
-                              throttlingConf: Option[ThrottlingConf] = None)
+                              kplLibConfiguration: KinesisProducerConfiguration,
+                              dispatcher: Option[String],
+                              throttlingConf: Option[ThrottlingConf])

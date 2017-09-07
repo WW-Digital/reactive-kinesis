@@ -89,19 +89,6 @@ trait KinesisProducer {
 object KinesisProducerKPL extends LazyLogging {
 
   /**
-    * Get the number of unfinished records currently being processed. The
-    * records could either be waiting to be sent to the child process, or have
-    * reached the child process and are being worked on.
-    *
-    * <p>
-    * This is equal to the number of futures returned from addUserRecord
-    * that have not finished.
-    *
-    * This is useful for applying backpressure and throttling the number of concurrent Futures.
-    *
-    * @return The number of unfinished records currently being processed.
-    */
-  /**
     * The config passed is expected to contain the AWS KPL properties at the top level.
     *
     * @see `src/it/resources/reference.conf` for a more detailed example.
@@ -113,9 +100,11 @@ object KinesisProducerKPL extends LazyLogging {
     * @param credentialsProvider A specific CredentialsProvider. The KCL defaults to DefaultAWSCredentialsProviderChain.
     * @return an instantiated [[KinesisProducer]]
     */
+  @deprecated("Use KinesisProducerKPL(producerConf: ProducerConf) instead", "v0.5.7")
   def apply(kplConfig: Config,
             streamName: String,
             credentialsProvider: Option[AWSCredentialsProvider] = None): KinesisProducer = {
+
     import TypesafeConfigExtensions._
 
     // We directly load our properties into the KPL as a Java `Properties` object
@@ -131,6 +120,31 @@ object KinesisProducerKPL extends LazyLogging {
     credentialsProvider.foreach(kplLibConfiguration.setCredentialsProvider)
 
     new KinesisProducerKPL(new AWSKinesisProducer(kplLibConfiguration), streamName)
+  }
+
+  /**
+    * The config passed is expected to contain the AWS KPL properties at the top level.
+    *
+
+    * @param producerConf        An instance of [[ProducerConf]] which contains all required configuration for the KPL.
+    * @return an instantiated [[KinesisProducer]]
+    */
+  def apply(producerConf: ProducerConf): KinesisProducer = {
+    apply(producerConf.kplLibConfiguration, producerConf.streamName)
+  }
+
+  /**
+    * The [[KinesisProducerConfiguration]] argument is passed directly to the KPL library.
+    * This constructor makes no use of the Typesafe config.
+    *
+    * @see `src/it/resources/reference.conf` for a more detailed example.
+    * @param kplConfig           An instance of the underlying [[KinesisProducerConfiguration]] to be passed
+    *                            directly to the library.
+    * @param streamName          Th name of the Kinesis stream, which must exist.
+    * @return an instantiated [[KinesisProducer]]
+    */
+  def apply(kplConfig: KinesisProducerConfiguration, streamName: String): KinesisProducer = {
+    new KinesisProducerKPL(new AWSKinesisProducer(kplConfig), streamName)
   }
 }
 
