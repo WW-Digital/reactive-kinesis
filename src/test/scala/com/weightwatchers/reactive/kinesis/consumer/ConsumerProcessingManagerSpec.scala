@@ -25,9 +25,16 @@ import akka.testkit.TestActor.AutoPilot
 import akka.testkit.{ImplicitSender, TestActor, TestDuration, TestKit, TestProbe}
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorCheckpointer
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker
-import com.amazonaws.services.kinesis.clientlibrary.types.{InitializationInput, ProcessRecordsInput, UserRecord}
+import com.amazonaws.services.kinesis.clientlibrary.types.{
+  InitializationInput,
+  ProcessRecordsInput,
+  UserRecord
+}
 import com.amazonaws.services.kinesis.model.Record
-import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{ProcessEvents, ProcessingComplete}
+import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{
+  ProcessEvents,
+  ProcessingComplete
+}
 import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito
@@ -43,7 +50,7 @@ import scala.concurrent.duration.{DurationDouble, FiniteDuration}
 import scala.concurrent.{Await, Future, Promise}
 
 class ConsumerProcessingManagerSpec
-  extends TestKit(ActorSystem("checkpoint-worker-spec"))
+    extends TestKit(ActorSystem("checkpoint-worker-spec"))
     with ImplicitSender
     with FreeSpecLike
     with Matchers
@@ -61,10 +68,10 @@ class ConsumerProcessingManagerSpec
     Await.result(system.whenTerminated, 5.seconds)
   }
 
-  "The KinesisRecordProcessingManager" - {
+  "The ConsumerProcessingManager" - {
     "Should set the shardId on init" in {
-      val worker = TestProbe()
-      val kcl = mock[Worker]
+      val worker  = TestProbe()
+      val kcl     = mock[Worker]
       val shardId = "12345"
 
       val manager = new ConsumerProcessingManager(worker.ref, kcl, batchTimeout)
@@ -84,17 +91,17 @@ class ConsumerProcessingManagerSpec
         val worker = TestProbe()
         worker.setAutoPilot(workerAutoPilot(workerResponse))
 
-        val kcl = mock[Worker]
+        val kcl     = mock[Worker]
         val shardId = "12345"
 
         val checkpointer = mock[IRecordProcessorCheckpointer]
 
-        val record1 = buildRecord("1", "payload1", new Date())
-        val record2 = buildRecord("2", "payload2", new Date())
-        val record3 = buildRecord("3", "payload3", new Date())
-        val record4 = buildAggregatedRecord("4", 1, "payload3", new Date())
-        val record5 = buildAggregatedRecord("4", 2, "payload3", new Date())
-        val record6 = buildAggregatedRecord("4", 3, "payload3", new Date())
+        val record1              = buildRecord("1", "payload1", new Date())
+        val record2              = buildRecord("2", "payload2", new Date())
+        val record3              = buildRecord("3", "payload3", new Date())
+        val record4              = buildAggregatedRecord("4", 1, "payload3", new Date())
+        val record5              = buildAggregatedRecord("4", 2, "payload3", new Date())
+        val record6              = buildAggregatedRecord("4", 3, "payload3", new Date())
         val records: Seq[Record] = Seq(record1, record2, record3, record4, record5, record6)
 
         val processInput = new ProcessRecordsInput()
@@ -113,11 +120,11 @@ class ConsumerProcessingManagerSpec
         //validate the probe received the Seq of ConsumerEvents
         val expectedMsg = ProcessEvents(
           ArrayBuffer(toConsumerEvent(record1),
-            toConsumerEvent(record2),
-            toConsumerEvent(record3),
-            toConsumerEvent(record4),
-            toConsumerEvent(record5),
-            toConsumerEvent(record6)),
+                      toConsumerEvent(record2),
+                      toConsumerEvent(record3),
+                      toConsumerEvent(record4),
+                      toConsumerEvent(record5),
+                      toConsumerEvent(record6)),
           checkpointer,
           shardId
         )
@@ -144,9 +151,9 @@ class ConsumerProcessingManagerSpec
 
       "When the response is a failed batch it should shutdown and stop processing" in new ProcessingSetup {
 
-        workerResponse.success(ProcessingComplete(false)) //complete with a failed batch
-
         whenReady(processResult) { _ =>
+          workerResponse.success(ProcessingComplete(false)) //complete with a failed batch
+
           processResult.isCompleted should be(true)
 
           manager.shuttingDown.get() should be(true)
@@ -181,10 +188,10 @@ class ConsumerProcessingManagerSpec
       //use a promise to block the response
       val worker = TestProbe()
 
-      val kcl = mock[Worker]
+      val kcl     = mock[Worker]
       val shardId = "12345"
 
-      val checkpointer = mock[IRecordProcessorCheckpointer]
+      val checkpointer         = mock[IRecordProcessorCheckpointer]
       val records: Seq[Record] = Seq(buildRecord("1", "payload1", new Date()))
       val processInput = new ProcessRecordsInput()
         .withCheckpointer(checkpointer)

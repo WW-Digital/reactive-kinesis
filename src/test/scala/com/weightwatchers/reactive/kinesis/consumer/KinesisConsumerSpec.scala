@@ -252,7 +252,7 @@ class KinesisConsumerSpec
       }
 
       Given("A Worker which throws an Exception")
-      val exception = new RuntimeException()
+      val exception = new RuntimeException("TEST")
       Mockito.when(worker.run()).thenThrow(exception)
 
       When("We start the Consumer")
