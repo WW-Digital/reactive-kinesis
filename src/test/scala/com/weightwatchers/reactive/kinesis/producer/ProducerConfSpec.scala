@@ -40,38 +40,6 @@ class ProducerConfSpec
   val defaultKinesisConfig =
     ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
 
-  val kinesisConfig = ConfigFactory
-    .parseString("""
-        |kinesis {
-        |
-        |   application-name = "TestSpec"
-        |
-        |   testProducer {
-        |      stream-name = "core-test-kinesis-producer"
-        |
-        |      akka {
-        |         max-outstanding-requests = 50000
-        |      }
-        |
-        |      kpl {
-        |         Region = us-east-1
-        |         KinesisEndpoint = "CustomKinesisEndpoint"
-        |         KinesisPort = 1111
-        |         CredentialsRefreshDelay = 5001
-        |         CloudwatchEndpoint = "CustomCloudWatchEndpoint"
-        |         CloudwatchPort = 2222
-        |         EnableCoreDumps = true
-        |         NativeExecutable = "NativeExecutable"
-        |         TempDirectory = "TempDirectory"
-        |         ThreadPoolSize = 1
-        |         ThreadingModel = "ThreadingModel.POOLED"
-        |      }
-        |   }
-        |}
-      """.stripMargin)
-    .getConfig("kinesis")
-    .withFallback(defaultKinesisConfig)
-
   val kinesisConfig2 = ConfigFactory
     .parseString(
       """
