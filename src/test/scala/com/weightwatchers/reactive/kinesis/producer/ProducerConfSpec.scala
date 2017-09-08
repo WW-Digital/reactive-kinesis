@@ -237,8 +237,6 @@ class ProducerConfSpec
           kplLibConfiguration.getClass.getDeclaredField(configKey.head.toLower + configKey.tail)
         field.setAccessible(true)
 
-        println(s"${field.getName}=${field.get(kplLibConfiguration)}")
-
         withClue(
           s"Property `$configKey` was not as expected when asserting the KPL configuration: "
         ) {
