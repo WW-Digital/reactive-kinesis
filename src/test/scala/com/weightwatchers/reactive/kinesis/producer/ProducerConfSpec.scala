@@ -40,7 +40,7 @@ class ProducerConfSpec
   val defaultKinesisConfig =
     ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
 
-  val kinesisConfig2 = ConfigFactory
+  val kinesisConfig = ConfigFactory
     .parseString(
       """
         |kinesis {
@@ -211,14 +211,14 @@ class ProducerConfSpec
   "The ProducerConf" - {
 
     "Should parse the Config into a ProducerConf, setting all properties in the KinesisProducerConfiguration" in {
-      val producerConf = ProducerConf(kinesisConfig2, "testProducer")
+      val producerConf = ProducerConf(kinesisConfig, "testProducer")
 
       producerConf.streamName should be("core-test-kinesis-producer")
       producerConf.dispatcher should be(Some("kinesis.akka.custom-dispatcher"))
       producerConf.throttlingConf.get.maxOutstandingRequests should be(50000)
       producerConf.throttlingConf.get.retryDuration should be(100.millis)
 
-      val kplConfig = kinesisConfig2.getConfig("testProducer.kpl")
+      val kplConfig = kinesisConfig.getConfig("testProducer.kpl")
 
       val kplLibConfiguration = producerConf.kplLibConfiguration
       kplLibConfiguration.isAggregationEnabled should be(false)
