@@ -54,7 +54,7 @@ class KinesisProducerActorSpec
 
       val event    = ProducerEvent("111", "das payload")
       val result   = mock[UserRecordResult]
-      val producer = mock[KinesisProducerKPL]
+      val producer = mock[KinesisProducer]
 
       //Given a successful response from the underlying producer
       when(producer.addUserRecord(event)).thenReturn(Future {
@@ -76,7 +76,7 @@ class KinesisProducerActorSpec
 
       val event    = ProducerEvent("111", "das payload")
       val result   = mock[UserRecordResult]
-      val producer = mock[KinesisProducerKPL]
+      val producer = mock[KinesisProducer]
 
       //Given a successful response from the underlying producer
       when(producer.addUserRecord(event)).thenReturn(Future {
@@ -102,7 +102,7 @@ class KinesisProducerActorSpec
       val ex     = new UserRecordFailedException(result)
 
       //Given an exception from the underlying producer
-      val producer = mock[KinesisProducerKPL]
+      val producer = mock[KinesisProducer]
       when(producer.addUserRecord(event)).thenReturn(Future {
         throw ex
       })
@@ -127,7 +127,7 @@ class KinesisProducerActorSpec
       val result                    = mock[UserRecordResult]
 
       //Given that the number of requests in progress >= maxOutstandingRequests
-      val producer = mock[KinesisProducerKPL]
+      val producer = mock[KinesisProducer]
       when(producer.addUserRecord(event)).thenReturn(Future {
         result
       })
@@ -158,7 +158,7 @@ class KinesisProducerActorSpec
     }
 
     "Should gracefully shutdown the underlying producer" in {
-      val producer = mock[KinesisProducerKPL]
+      val producer = mock[KinesisProducer]
       when(producer.outstandingRecordsCount()).thenReturn(0)
 
       //When we send a SendWithCallback

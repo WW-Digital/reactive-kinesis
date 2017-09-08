@@ -65,7 +65,7 @@ object KinesisProducerActor {
   private case object UnThrottle
 
   /**
-    * Create a [[KinesisProducerKPL]] and passes it to a [[KinesisProducerActor]], returning the Props.
+    * Create a [[KinesisProducer]] and passes it to a [[KinesisProducerActor]], returning the Props.
     *
     * This function will attempt to load config (per value) from the `producerName` section within `kinesisConfig`.
     *
@@ -87,13 +87,13 @@ object KinesisProducerActor {
   }
 
   /**
-    * Create a [[KinesisProducerKPL]] and passes it to a [[KinesisProducerActor]], returning the Props.
+    * Create a [[KinesisProducer]] and passes it to a [[KinesisProducerActor]], returning the Props.
     *
     * @param producerConf A complete [[ProducerConf]] case class.
     */
   def props(producerConf: ProducerConf): Props = {
     val kinesisProducer =
-      KinesisProducerKPL(producerConf)
+      KinesisProducer(producerConf)
 
     val props = Props(classOf[KinesisProducerActor], kinesisProducer, producerConf.throttlingConf)
     producerConf.dispatcher.fold(props)(props.withDispatcher)
@@ -109,7 +109,7 @@ object KinesisProducerActor {
 }
 
 /**
-  * This ``Actor`` wraps the [[KinesisProducerKPL]] to provide reliable handling and throttling of requests.
+  * This ``Actor`` wraps the [[KinesisProducer]] to provide reliable handling and throttling of requests.
   *
   * Upon completion of a [[com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.SendWithCallback]],
   * a [[com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.SendSuccessful]]

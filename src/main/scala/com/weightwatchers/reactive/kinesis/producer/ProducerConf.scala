@@ -18,6 +18,7 @@ package com.weightwatchers.reactive.kinesis.producer
 
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration
+import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration.ThreadingModel
 import com.typesafe.config.Config
 import com.weightwatchers.reactive.kinesis.producer.ProducerConf.ThrottlingConf
 import com.weightwatchers.reactive.kinesis.utils.TypesafeConfigExtensions
@@ -44,7 +45,6 @@ object ProducerConf {
     * within, and using the `default-producer` configuration as a fallback for all values.
     *
     * @see `src/it/resources/reference.conf` for a more detailed example of the KinesisConfig.
-    *
     * @param kinesisConfig       The top level Kinesis Configuration, containing the specified producer.
     * @param producerName        The name of the producer, which MUST be contained within the `kinesisConfig`
     * @param credentialsProvider A specific CredentialsProvider. The KPL defaults to [[com.amazonaws.auth.DefaultAWSCredentialsProviderChain]].
@@ -94,6 +94,17 @@ object ProducerConf {
       KinesisProducerConfiguration.fromProperties(kplProps)
     credentialsProvider.foreach(kplLibConfiguration.setCredentialsProvider)
 
+    //TODO, this should be part of the KPL. The KCL would handle enums and ints and let us use props directly.
+    //TODO can be removed once this is merged: https://github.com/awslabs/amazon-kinesis-producer/pull/134
+    if (kplConfig.hasPath("ThreadingModel")) {
+      kplLibConfiguration.setThreadingModel(
+        ThreadingModel.valueOf(kplConfig.getString("ThreadingModel"))
+      )
+    }
+    if (kplConfig.hasPath("ThreadPoolSize")) {
+      kplLibConfiguration.setThreadPoolSize(kplConfig.getInt("ThreadPoolSize"))
+    }
+
     kplLibConfiguration
   }
 
@@ -114,6 +125,7 @@ object ProducerConf {
         )
     }
   }
+
 }
 
 /**

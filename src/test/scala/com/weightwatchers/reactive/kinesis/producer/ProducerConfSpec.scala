@@ -79,11 +79,11 @@ class ProducerConfSpec
         |
         |   application-name = "TestSpec"
         |
-        |   testProducer{
+        |   testProducer {
         |      stream-name = "core-test-kinesis-producer"
         |
         |      akka {
-        |         dispatcher = "kinesis.akka.default-dispatcher"
+        |         dispatcher = "kinesis.akka.custom-dispatcher"
         |
         |         max-outstanding-requests = 50000
         |
@@ -102,7 +102,7 @@ class ProducerConfSpec
         |         # Default: 51200
         |         # Minimum: 64
         |         # Maximum (inclusive): 1048576
-        |         AggregationMaxSize = 25
+        |         AggregationMaxSize = 77
         |
         |         # Default: 500
         |         # Minimum: 1
@@ -112,12 +112,12 @@ class ProducerConfSpec
         |         # Default: 5242880
         |         # Minimum: 52224
         |         # Maximum (inclusive): 9223372036854775807
-        |         CollectionMaxSize = 100
+        |         CollectionMaxSize = 55555
         |
         |         # Default: 6000
         |         # Minimum: 100
         |         # Maximum (inclusive): 300000
-        |         ConnectTimeout = 27
+        |         ConnectTimeout = 101
         |
         |
         |         # Default: 5000
@@ -143,7 +143,7 @@ class ProducerConfSpec
         |         # connects with TLS.
         |         #
         |         # Expected pattern: ^([A-Za-z0-9-\\.]+)?$
-        |         # KinesisEndpoint =
+        |         KinesisEndpoint = 172.1.1.1
         |
         |         # Default: 443
         |         # Minimum: 1
@@ -210,14 +210,17 @@ class ProducerConfSpec
         |         # Maximum (inclusive): 600000
         |         RequestTimeout = 3000
         |
+        |         # If not specified, defaults to /tmp in Unix. (Windows TBD)
+        |         TempDirectory = /tmp
+        |
         |         # Default: true
         |         VerifyCertificate = false
         |
         |         # Enum:
-        |         # ThreadingModel.PER_REQUEST: Tells the native process to create a thread for each request.
-        |         # ThreadingModel.POOLED: Tells the native process to use a thread pool. The size of the pool can be controlled by ThreadPoolSize
-        |         # Default = ThreadingModel.PER_REQUEST
-        |         ThreadingModel = ThreadingModel.POOLED
+        |         # PER_REQUEST: Tells the native process to create a thread for each request.
+        |         # POOLED: Tells the native process to use a thread pool. The size of the pool can be controlled by ThreadPoolSize
+        |         # Default = PER_REQUEST
+        |         ThreadingModel = POOLED
         |
         |         # Default: 0
         |         ThreadPoolSize = 5
@@ -239,28 +242,47 @@ class ProducerConfSpec
 
   "The ProducerConf" - {
 
-    "Should parse the Config into a ProducerConf" in {
-      val producerConf = ProducerConf(kinesisConfig, "testProducer")
+    "Should parse the Config into a ProducerConf, setting all properties in the KinesisProducerConfiguration" in {
+      val producerConf = ProducerConf(kinesisConfig2, "testProducer")
 
-//      producerConf.dispatcher should be(Some("kinesis.akka.default-dispatcher"))
-//      producerConf.kplConfig.getString("Region") should be("us-east-1") //validate an override properly
-//      producerConf.kplConfig.getBoolean("AggregationEnabled") should be(true) //validate a default property
-//      producerConf.kplConfig.getString("KinesisEndpoint") should be("CustomKinesisEndpoint") //validate an override property
-//      producerConf.kplConfig.getLong("KinesisPort") should be(1111) //validate an override property
-//      producerConf.kplConfig.getLong("CredentialsRefreshDelay") should be(5001) //validate an override property
-//      producerConf.kplConfig.getString("CloudwatchEndpoint") should be("CustomCloudWatchEndpoint") //validate an override property
-//      producerConf.kplConfig.getLong("CloudwatchPort") should be(2222) //validate an override property
-//      producerConf.kplConfig.getBoolean("EnableCoreDumps") should be(true) //validate an override property
-//      producerConf.kplConfig.getString("NativeExecutable") should be("NativeExecutable") //validate an override property
-//      producerConf.kplConfig.getString("TempDirectory") should be("TempDirectory") //validate an override property
-//      producerConf.kplConfig.getString("ThreadingModel") should be("ThreadingModel.POOLED") //validate an override property
-//      producerConf.kplConfig.getInt("ThreadPoolSize") should be(1) //validate an override property
+      producerConf.streamName should be("core-test-kinesis-producer")
+      producerConf.dispatcher should be(Some("kinesis.akka.custom-dispatcher"))
       producerConf.throttlingConf.get.maxOutstandingRequests should be(50000)
       producerConf.throttlingConf.get.retryDuration should be(100.millis)
-      producerConf.streamName should be("core-test-kinesis-producer")
+
+      val kplConfig = kinesisConfig2.getConfig("testProducer.kpl")
+
+      val kplLibConfiguration = producerConf.kplLibConfiguration
+      kplLibConfiguration.isAggregationEnabled should be(false)
+
+      //We're dealing with Java classes so using Java reflection is cleaner here
+      //Start with the setters to prevent picking up all the unrelated private fields, stripping the "set"
+      val configKeys = kplLibConfiguration.getClass.getDeclaredMethods
+        .filter(_.getName.startsWith("set"))
+        .map(_.getName.drop(3))
+        // TODO we don't yet support setting of credentials providers via config due to KPL limitations
+        // TODO see issue #29 : https://github.com/WW-Digital/reactive-kinesis/issues/29
+        .filterNot(_.toLowerCase.contains("credentialsprovider"))
+
+      configKeys foreach { configKey =>
+        val field =
+          kplLibConfiguration.getClass.getDeclaredField(configKey.head.toLower + configKey.tail)
+        field.setAccessible(true)
+
+        println(s"${field.getName}=${field.get(kplLibConfiguration)}")
+
+        withClue(
+          s"Property `$configKey` was not as expected when asserting the KPL configuration: "
+        ) {
+          kplConfig.hasPath(configKey) should be(true)
+          field.get(kplLibConfiguration).toString should be(kplConfig.getString(configKey))
+        }
+      }
+
     }
 
   }
+
 }
 
 //scalastyle:on

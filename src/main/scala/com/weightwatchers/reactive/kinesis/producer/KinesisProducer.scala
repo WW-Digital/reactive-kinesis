@@ -29,64 +29,7 @@ import com.weightwatchers.reactive.kinesis.utils.{FutureUtils, TypesafeConfigExt
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-trait KinesisProducer {
-
-  /**
-    * Adds a message to the next batch to be sent to the configured stream.
-    *
-    * @return On success: Future{UserRecordResult}
-    *         On failure: Future.failed(...): Any Throwable related to put.
-    * @see Callee `com.amazonaws.services.kinesis.producer.KinesisProducer.addUserRecord`
-    * @see UserRecordResult
-    * @see KinesisProducerConfiguration#setRecordTtl(long)
-    * @see UserRecordFailedException
-    */
-  def addUserRecord(event: ProducerEvent)(
-      implicit ec: ExecutionContextExecutor
-  ): Future[UserRecordResult]
-
-  /**
-    * Get the number of unfinished records currently being processed. The
-    * records could either be waiting to be sent to the child process, or have
-    * reached the child process and are being worked on.
-    *
-    * <p>
-    * This is equal to the number of futures returned from [[addUserRecord]]
-    * that have not finished.
-    *
-    * This is useful for applying backpressure and throttling the number of concurrent Futures.
-    *
-    * @return The number of unfinished records currently being processed.
-    */
-  def outstandingRecordsCount(): Int
-
-  /**
-    * Firstly, blocks whilst all all records are complete (either succeeding or failing).
-    *
-    * <p>
-    *
-    * The includes whilst any retries are performed. Depending on
-    * your configuration of record TTL and request timeout, this can
-    * potentially take a long time if the library is having trouble delivering
-    * records to the backend, for example due to network problems.
-    *
-    * <p>
-    *
-    * Finally the [[KinesisProducer]] is destroyed, preventing further use.
-    *
-    * @throws com.amazonaws.services.kinesis.producer.DaemonException if the child process is dead //TODO - handle this better?
-    * @see [[AWSKinesisProducer]]
-    */
-  def stop(): Unit
-
-  /**
-    * @return true if the [[KinesisProducer]] has been stopped & destroyed.
-    */
-  def destroyed(): Boolean
-
-}
-
-object KinesisProducerKPL extends LazyLogging {
+object KinesisProducer extends LazyLogging {
 
   /**
     * The config passed is expected to contain the AWS KPL properties at the top level.
@@ -100,7 +43,7 @@ object KinesisProducerKPL extends LazyLogging {
     * @param credentialsProvider A specific CredentialsProvider. The KCL defaults to DefaultAWSCredentialsProviderChain.
     * @return an instantiated [[KinesisProducer]]
     */
-  @deprecated("Use KinesisProducerKPL(producerConf: ProducerConf) instead", "v0.5.7")
+  @deprecated("Use KinesisProducer(producerConf: ProducerConf) instead", "v0.5.7")
   def apply(kplConfig: Config,
             streamName: String,
             credentialsProvider: Option[AWSCredentialsProvider] = None): KinesisProducer = {
@@ -119,14 +62,13 @@ object KinesisProducerKPL extends LazyLogging {
       KinesisProducerConfiguration.fromProperties(kplProps)
     credentialsProvider.foreach(kplLibConfiguration.setCredentialsProvider)
 
-    new KinesisProducerKPL(new AWSKinesisProducer(kplLibConfiguration), streamName)
+    new KinesisProducer(new AWSKinesisProducer(kplLibConfiguration), streamName)
   }
 
   /**
     * The config passed is expected to contain the AWS KPL properties at the top level.
     *
-
-    * @param producerConf        An instance of [[ProducerConf]] which contains all required configuration for the KPL.
+    * @param producerConf An instance of [[ProducerConf]] which contains all required configuration for the KPL.
     * @return an instantiated [[KinesisProducer]]
     */
   def apply(producerConf: ProducerConf): KinesisProducer = {
@@ -138,14 +80,14 @@ object KinesisProducerKPL extends LazyLogging {
     * This constructor makes no use of the Typesafe config.
     *
     * @see `src/it/resources/reference.conf` for a more detailed example.
-    * @param kplConfig           An instance of the underlying [[KinesisProducerConfiguration]] to be passed
-    *                            directly to the library.
-    * @param streamName          Th name of the Kinesis stream, which must exist.
+    * @param kplConfig  An instance of the underlying [[KinesisProducerConfiguration]] to be passed
+    *                   directly to the library.
+    * @param streamName Th name of the Kinesis stream, which must exist.
     * @return an instantiated [[KinesisProducer]]
     */
   def apply(kplConfig: KinesisProducerConfiguration, streamName: String): KinesisProducer = {
     //TODO add logging
-    new KinesisProducerKPL(new AWSKinesisProducer(kplConfig), streamName)
+    new KinesisProducer(new AWSKinesisProducer(kplConfig), streamName)
   }
 }
 
@@ -154,9 +96,7 @@ object KinesisProducerKPL extends LazyLogging {
   *
   * To create an instance of this class, we recommend using the apply method to instantiate from config.
   */
-class KinesisProducerKPL(kinesis: AWSKinesisProducer, streamName: String)
-    extends LazyLogging
-    with KinesisProducer {
+class KinesisProducer(kinesis: AWSKinesisProducer, streamName: String) extends LazyLogging {
 
   val underlying         = kinesis
   private var _destroyed = false
@@ -165,9 +105,16 @@ class KinesisProducerKPL(kinesis: AWSKinesisProducer, streamName: String)
   //TODO seems difficult to get access to stream specific operations from producer
 
   /**
-    * @see [[KinesisProducer]].addUserRecord
+    * Adds a message to the next batch to be sent to the configured stream.
+    *
+    * @return On success: Future{UserRecordResult}
+    *         On failure: Future.failed(...): Any Throwable related to put.
+    * @see Callee `com.amazonaws.services.kinesis.producer.KinesisProducer.addUserRecord`
+    * @see UserRecordResult
+    * @see KinesisProducerConfiguration#setRecordTtl(long)
+    * @see UserRecordFailedException
     */
-  override def addUserRecord(
+  def addUserRecord(
       event: ProducerEvent
   )(implicit ec: ExecutionContextExecutor): Future[UserRecordResult] = {
     assert(!_destroyed, "Kinesis has been destroyed, no longer accepting messages") //TODO specific exception?
@@ -176,24 +123,47 @@ class KinesisProducerKPL(kinesis: AWSKinesisProducer, streamName: String)
   }
 
   /**
-    * @see [[KinesisProducer]].outstandingRecordsCount()
+    * Get the number of unfinished records currently being processed. The
+    * records could either be waiting to be sent to the child process, or have
+    * reached the child process and are being worked on.
+    *
+    * <p>
+    * This is equal to the number of futures returned from [[addUserRecord]]
+    * that have not finished.
+    *
+    * This is useful for applying backpressure and throttling the number of concurrent Futures.
+    *
+    * @return The number of unfinished records currently being processed.
     */
-  override def outstandingRecordsCount(): Int = {
+  def outstandingRecordsCount(): Int = {
     kinesis.getOutstandingRecordsCount
   }
 
   /**
-    * @see [[KinesisProducer]].stop()sbt publish
+    * Firstly, blocks whilst all all records are complete (either succeeding or failing).
     *
+    * <p>
+    *
+    * The includes whilst any retries are performed. Depending on
+    * your configuration of record TTL and request timeout, this can
+    * potentially take a long time if the library is having trouble delivering
+    * records to the backend, for example due to network problems.
+    *
+    * <p>
+    *
+    * Finally the [[KinesisProducer]] is destroyed, preventing further use.
+    *
+    * @throws com.amazonaws.services.kinesis.producer.DaemonException if the child process is dead //TODO - handle this better?
+    * @see [[AWSKinesisProducer]]
     */
-  override def stop(): Unit = {
+  def stop(): Unit = {
     kinesis.flushSync() //This blocks until all records are flushed
     kinesis.destroy()
     _destroyed = true
   }
 
   /**
-    * @see [[KinesisProducer]]destroyed()
+    * @return true if the [[KinesisProducer]] has been stopped & destroyed.
     */
-  override def destroyed(): Boolean = _destroyed
+  def destroyed(): Boolean = _destroyed
 }

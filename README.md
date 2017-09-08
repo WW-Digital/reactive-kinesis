@@ -410,22 +410,21 @@ kpa ! Send(producerEvent) //Send without a callback confirmation
 
 <a name="usage-usage-producer-pure-scala-based-implementation-simple-wrapper-around-kpl"></a>
 ### Pure Scala based implementation (simple wrapper around KPL)
-*Note that throttling will be unavailable using this method.*
+*Note that future throttling will be unavailable using this method.*
 
 ```scala
 import java.util.UUID
 import com.amazonaws.services.kinesis.producer.{UserRecordFailedException, UserRecordResult}
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducer
+import com.weightwatchers.reactive.kinesis.producer.ProducerConf
 import com.typesafe.config._
 import com.weightwatchers.reactive.kinesis.models._
-import com.weightwatchers.reactive.kinesis.producer.KinesisProducerKPL
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global //Not for production
 
 val kinesisConfig: Config = ConfigFactory.load().getConfig("kinesis")
-val producerConfig: Config = kinesisConfig.getConfig("some-producer")
-val streamName: String = producerConfig.getString("stream-name")
 
-val kpl = KinesisProducerKPL(kinesisConfig.getConfig("kpl"), streamName)
+val kpl = KinesisProducer(ProducerConf(kinesisConfig, "some-producer"))
 
 val producerEvent = ProducerEvent(UUID.randomUUID.toString, "{Some Payload}")
 

@@ -33,7 +33,7 @@ import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 import scala.concurrent.Future
 
 //scalastyle:off magic.number
-class KinesisProducerKPLSpec
+class KinesisProducerSpec
     extends FreeSpec
     with Matchers
     with MockitoSugar
@@ -71,8 +71,7 @@ class KinesisProducerKPLSpec
 
     "Should create the KinesisProducerKPL with an underlying AWSKinesisProducer" in {
 
-      val producer = KinesisProducerKPL(ProducerConf(kinesisConfig, "testProducer"))
-        .asInstanceOf[KinesisProducerKPL]
+      val producer = KinesisProducer(ProducerConf(kinesisConfig, "testProducer"))
 
       producer.underlying should not be (null) // scalastyle:ignore
 
@@ -84,7 +83,7 @@ class KinesisProducerKPLSpec
       val streamName = kinesisConfig.getString("testProducer.stream-name")
 
       val awsProducer   = mock[AWSKinesisProducer]
-      val scalaProducer = new KinesisProducerKPL(awsProducer, streamName)
+      val scalaProducer = new KinesisProducer(awsProducer, streamName)
 
       val result = mock[UserRecordResult]
       val event  = ProducerEvent("111", "das payload")
@@ -113,7 +112,7 @@ class KinesisProducerKPLSpec
       val streamName = kinesisConfig.getString("testProducer.stream-name")
 
       val awsProducer   = mock[AWSKinesisProducer]
-      val scalaProducer = new KinesisProducerKPL(awsProducer, streamName)
+      val scalaProducer = new KinesisProducer(awsProducer, streamName)
 
       //Given a 5 requests in progress
       when(awsProducer.getOutstandingRecordsCount()).thenReturn(5)
@@ -127,7 +126,7 @@ class KinesisProducerKPLSpec
       val streamName = kinesisConfig.getString("testProducer.stream-name")
 
       val awsProducer   = mock[AWSKinesisProducer]
-      val scalaProducer = new KinesisProducerKPL(awsProducer, streamName)
+      val scalaProducer = new KinesisProducer(awsProducer, streamName)
 
       //Given we call stop
       scalaProducer.stop()
