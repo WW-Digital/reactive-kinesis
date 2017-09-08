@@ -59,7 +59,10 @@ object ProducerConf {
       .withFallback(kinesisConfig.getConfig("default-producer"))
 
     val streamName = producerConfig.getString("stream-name")
-    require(!streamName.isEmpty, s"Config field `stream-name` missing, a value must be provided to start the Kinesis Producer!")
+    require(
+      !streamName.isEmpty,
+      s"Config field `stream-name` missing, a value must be provided to start the Kinesis Producer!"
+    )
 
     val dispatcher: Option[String] =
       if (producerConfig.getIsNull("akka.dispatcher"))
@@ -77,9 +80,9 @@ object ProducerConf {
       buildKPLConfig(kplConfig, credentialsProvider)
 
     new ProducerConf(streamName,
-      kplLibConfiguration,
-      dispatcher,
-      parseThrottlingConfig(producerConfig))
+                     kplLibConfiguration,
+                     dispatcher,
+                     parseThrottlingConfig(producerConfig))
   }
 
   private def buildKPLConfig(kplConfig: Config,
@@ -109,18 +112,18 @@ object ProducerConf {
 
   private def parseThrottlingConfig(producerConfig: Config): Option[ThrottlingConf] = {
     if (!producerConfig.hasPath("akka.max-outstanding-requests")
-      || producerConfig.getIsNull("akka.max-outstanding-requests"))
+        || producerConfig.getIsNull("akka.max-outstanding-requests"))
       None
     else {
       val maxOutstandingRequests = producerConfig.getInt("akka.max-outstanding-requests")
 
       if (!producerConfig.hasPath("akka.throttling-retry-millis")
-        || producerConfig.getIsNull("akka.throttling-retry-millis"))
+          || producerConfig.getIsNull("akka.throttling-retry-millis"))
         Some(ThrottlingConf(maxOutstandingRequests))
       else
         Some(
           ThrottlingConf(maxOutstandingRequests,
-            producerConfig.getLong("akka.throttling-retry-millis").millis)
+                         producerConfig.getLong("akka.throttling-retry-millis").millis)
         )
     }
   }
