@@ -33,11 +33,7 @@ import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 import scala.concurrent.Future
 
 //scalastyle:off magic.number
-class KinesisProducerSpec
-    extends FreeSpec
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll {
+class KinesisProducerSpec extends FreeSpec with Matchers with MockitoSugar with BeforeAndAfterAll {
 
   implicit val ece = scala.concurrent.ExecutionContext.global
 
