@@ -311,8 +311,7 @@ class KinesisConsumerSpec
         .map(_.getName.drop(4))
         .map(field => field.head.toLower + field.tail)
         .filterNot(
-          field => //java.lang.reflect.Modifier.isStatic(field.getModifiers)
-            fieldsToSkip.contains(field.toLowerCase)
+          field => fieldsToSkip.contains(field.toLowerCase)
         )
 
       configKeys foreach { configKey =>
