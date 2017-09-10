@@ -3,6 +3,7 @@
 
 # Bootstrapping
 Scripts are copied to `/opt/bootstrap/scripts`.
+
 Templates are copied to `/opt/bootstrap/templates`.
 
 By default the `init.sh` script creates an AWS stack using the CloudFormation template located in `/opt/bootstrap/templates`.
