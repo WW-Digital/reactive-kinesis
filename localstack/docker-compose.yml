@@ -1,0 +1,20 @@
+version: "3.3"
+
+services:
+  localstack:
+    build:
+      context: .
+      args:
+        LOCALSTACK_DOCKER_IMAGE_TAG: 0.7.5
+    container_name: templated-localstack
+    environment:
+      - "SERVICES=${LOCALSTACK_SERVICES:-kinesis,dynamodb,sqs,cloudwatch,cloudformation}"
+      - "DEFAULT_REGION=${AWS_REGION:-us-east-1}"
+      - "HOSTNAME=${LOCALSTACK_HOSTNAME:-localhost}"
+      - "HOSTNAME_EXTERNAL=${LOCALSTACK_HOSTNAME_EXTERNAL:-localhost}"
+      - "USE_SSL=true"
+      - "DATA_DIR=${LOCALSTACK_DATA_DIR:-/tmp/localstack/data}"
+    ports:
+      - "4567-4582:4567-4582"
+      - "8080:8080"
+
