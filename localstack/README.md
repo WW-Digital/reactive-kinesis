@@ -1,5 +1,5 @@
 # Running
-`docker-compose up` will start the stack with the `LOCALSTACK_SERVICES` defined in the `docker-compose.yml` or `.env` overrides.
+`docker-compose up` will start the stack with the services defined by `$LOCALSTACK_SERVICES` defined in the `docker-compose.yml` or `.env` overrides.
 
 # Bootstrapping
 Scripts are copied to `/opt/bootstrap/scripts`.
