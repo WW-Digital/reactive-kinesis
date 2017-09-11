@@ -16,6 +16,8 @@
 
 package com.weightwatchers.reactive.kinesis.producer
 
+import java.io.File
+
 import com.amazonaws.services.kinesis.producer.{
   UserRecordResult,
   KinesisProducer => AWSKinesisProducer
@@ -31,46 +33,45 @@ import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 import scala.concurrent.Future
 
 //scalastyle:off magic.number
-class KinesisProducerKPLSpec
-    extends FreeSpec
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll {
+class KinesisProducerSpec extends FreeSpec with Matchers with MockitoSugar with BeforeAndAfterAll {
 
   implicit val ece = scala.concurrent.ExecutionContext.global
+
+  val defaultKinesisConfig =
+    ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
 
   val kinesisConfig = ConfigFactory
     .parseString(
       """
-      |kinesis {
-      |
-      |   application-name = "TestSpec"
-      |
-      |   testProducer {
-      |      # The name of the producer stream
-      |      stream-name = "core-test-kinesis-producer"
-      |
-      |      # Can specify settings here as per default-producer, to override those defaults for this producer.
-      |
-      |      kpl {
-      |         Region = us-east-1
-      |      }
-      |   }
-      |}
-    """.stripMargin
+        |kinesis {
+        |
+        |   application-name = "TestSpec"
+        |
+        |   testProducer {
+        |      # The name of the producer stream
+        |      stream-name = "core-test-kinesis-producer"
+        |
+        |      # Can specify settings here as per default-producer, to override those defaults for this producer.
+        |
+        |      kpl {
+        |         Region = us-east-1
+        |      }
+        |   }
+        |}
+      """.stripMargin
     )
     .getConfig("kinesis")
+    .withFallback(defaultKinesisConfig)
 
   "The KinesisProducer" - {
 
     "Should create the KinesisProducerKPL with an underlying AWSKinesisProducer" in {
 
-      val producer = KinesisProducerKPL(
-        kinesisConfig.getConfig("testProducer.kpl"),
-        kinesisConfig.getString("testProducer.stream-name")
-      ).asInstanceOf[KinesisProducerKPL]
+      val producer = KinesisProducer(ProducerConf(kinesisConfig, "testProducer"))
 
       producer.underlying should not be (null) // scalastyle:ignore
+
+      producer.underlying.destroy()
     }
 
     "Should Add a Record to the Kinesis Stream, wrapping the response in a scala future" in {
@@ -78,7 +79,7 @@ class KinesisProducerKPLSpec
       val streamName = kinesisConfig.getString("testProducer.stream-name")
 
       val awsProducer   = mock[AWSKinesisProducer]
-      val scalaProducer = new KinesisProducerKPL(awsProducer, streamName)
+      val scalaProducer = new KinesisProducer(awsProducer, streamName)
 
       val result = mock[UserRecordResult]
       val event  = ProducerEvent("111", "das payload")
@@ -107,7 +108,7 @@ class KinesisProducerKPLSpec
       val streamName = kinesisConfig.getString("testProducer.stream-name")
 
       val awsProducer   = mock[AWSKinesisProducer]
-      val scalaProducer = new KinesisProducerKPL(awsProducer, streamName)
+      val scalaProducer = new KinesisProducer(awsProducer, streamName)
 
       //Given a 5 requests in progress
       when(awsProducer.getOutstandingRecordsCount()).thenReturn(5)
@@ -121,7 +122,7 @@ class KinesisProducerKPLSpec
       val streamName = kinesisConfig.getString("testProducer.stream-name")
 
       val awsProducer   = mock[AWSKinesisProducer]
-      val scalaProducer = new KinesisProducerKPL(awsProducer, streamName)
+      val scalaProducer = new KinesisProducer(awsProducer, streamName)
 
       //Given we call stop
       scalaProducer.stop()

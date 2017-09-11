@@ -68,7 +68,7 @@ class ConsumerProcessingManagerSpec
     Await.result(system.whenTerminated, 5.seconds)
   }
 
-  "The KinesisRecordProcessingManager" - {
+  "The ConsumerProcessingManager" - {
     "Should set the shardId on init" in {
       val worker  = TestProbe()
       val kcl     = mock[Worker]
@@ -151,9 +151,9 @@ class ConsumerProcessingManagerSpec
 
       "When the response is a failed batch it should shutdown and stop processing" in new ProcessingSetup {
 
-        workerResponse.success(ProcessingComplete(false)) //complete with a failed batch
-
         whenReady(processResult) { _ =>
+          workerResponse.success(ProcessingComplete(false)) //complete with a failed batch
+
           processResult.isCompleted should be(true)
 
           manager.shuttingDown.get() should be(true)
@@ -166,7 +166,10 @@ class ConsumerProcessingManagerSpec
 
       "When the response is a failed (exception) future it should shutdown and stop processing" in new ProcessingSetup {
 
-        workerResponse.failure(new NullPointerException("TEST")) //complete with an exception
+        val ex = new Exception("TEST")
+        ex.setStackTrace(Array.empty[StackTraceElement])
+
+        workerResponse.failure(ex) //complete with an exception
 
         whenReady(processResult) { _ =>
           processResult.isCompleted should be(true)
