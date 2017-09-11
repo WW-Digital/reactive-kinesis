@@ -34,7 +34,7 @@ import scala.util.Random
 
 //scalastyle:off magic.number
 class KinesisProducerIntegrationSpec
-  extends FreeSpec
+    extends FreeSpec
     with Matchers
     with MockitoSugar
     with BeforeAndAfterAll
@@ -88,11 +88,11 @@ class KinesisProducerIntegrationSpec
     .getConfig("kinesis")
     .withFallback(defaultKinesisConfig)
 
-
   implicit override val patienceConfig: PatienceConfig =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(100, Millis))
 
-  val consumer: KinesisTestConsumer = KinesisTestConsumer.from(ConsumerConf(kinesisConfig, "testConsumer"), Some(100 millis))
+  val consumer: KinesisTestConsumer =
+    KinesisTestConsumer.from(ConsumerConf(kinesisConfig, "testConsumer"), Some(100 millis))
 
   override protected def afterAll(): Unit = {
     consumer.shutdown
@@ -102,7 +102,8 @@ class KinesisProducerIntegrationSpec
 
     "Should publish a message to a stream" in {
 
-      val producerConf = ProducerConf(kinesisConfig, "testProducer", Some(TestCredentials.Credentials))
+      val producerConf =
+        ProducerConf(kinesisConfig, "testProducer", Some(TestCredentials.Credentials))
       val producer = KinesisProducer(producerConf)
 
       val existingRecordCount = consumer.retrieveRecords(producerConf.streamName, 10).size
@@ -113,7 +114,9 @@ class KinesisProducerIntegrationSpec
       eventually {
         val records: Seq[String] = consumer.retrieveRecords(producerConf.streamName, 10)
         records.size shouldBe (existingRecordCount + 1)
-        records should contain(new String(event.payload.array(), java.nio.charset.StandardCharsets.UTF_8))
+        records should contain(
+          new String(event.payload.array(), java.nio.charset.StandardCharsets.UTF_8)
+        )
       }
     }
   }

@@ -13,7 +13,6 @@ import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.FiniteDuration
 
-
 object KinesisTestConsumer {
 
   /**
@@ -21,12 +20,13 @@ object KinesisTestConsumer {
     * If the endpoint has been specified this will be used instead of deriving it from the region.
     */
   def from(config: ConsumerConf, requestTimeout: Option[FiniteDuration]): KinesisTestConsumer =
-    from(config.kclConfiguration.getKinesisCredentialsProvider,
+    from(
+      config.kclConfiguration.getKinesisCredentialsProvider,
       Option(config.kclConfiguration.getKinesisEndpoint),
       Option(config.kclConfiguration.getRegionName),
       requestTimeout,
-      config.kclConfiguration.getKinesisClientConfiguration)
-
+      config.kclConfiguration.getKinesisClientConfiguration
+    )
 
   /**
     * Creates an instance of the test consumer from the configuration.
@@ -45,12 +45,10 @@ object KinesisTestConsumer {
       .withClientConfiguration(config)
       .withCredentials(credentialsProvider)
 
-    endpoint.fold(
-      builder.withRegion(region.getOrElse("us-east-1"))) {
-      endpoint =>
-        builder.withEndpointConfiguration(
-          new EndpointConfiguration(endpoint,
-            region.getOrElse("us-east-1")))
+    endpoint.fold(builder.withRegion(region.getOrElse("us-east-1"))) { endpoint =>
+      builder.withEndpointConfiguration(
+        new EndpointConfiguration(endpoint, region.getOrElse("us-east-1"))
+      )
     }
 
     new KinesisTestConsumer(builder.build())
@@ -110,5 +108,3 @@ class KinesisTestConsumer(client: AmazonKinesis) {
   def shutdown(): Unit = client.shutdown()
 
 }
-
-

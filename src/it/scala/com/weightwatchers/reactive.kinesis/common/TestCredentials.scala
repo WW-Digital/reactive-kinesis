@@ -3,7 +3,7 @@ package com.weightwatchers.reactive.kinesis.common
 import com.amazonaws.auth.{AWSCredentials, AWSCredentialsProvider}
 
 class TestCredentials(accessKey: String, secretKey: String)
-  extends AWSCredentials
+    extends AWSCredentials
     with AWSCredentialsProvider {
 
   override def getAWSAccessKeyId: String = accessKey
