@@ -146,7 +146,10 @@ lazy val commonSettings =
       val project = Project.extract(state).currentRef.project
       s"[$project]> "
     },
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    parallelExecution in IntegrationTest := false,
+    javaOptions in IntegrationTest += "-Dcom.amazonaws.sdk.disableCertChecking=true",
+    envVars in IntegrationTest += ("AWS_CBOR_DISABLE" -> "true")
   )
 
 /* This allows to derive an sbt version string from the git information.
