@@ -60,7 +60,7 @@ object ProducerConf {
 
     val streamName = producerConfig.getString("stream-name")
     require(
-    !streamName.isEmpty,
+      !streamName.isEmpty,
       s"Config field `stream-name` missing, a value must be provided to start the Kinesis Producer!"
     )
 
