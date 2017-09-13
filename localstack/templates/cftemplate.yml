@@ -16,3 +16,8 @@ Resources:
       Properties:
         Name: int-test-stream-3
         ShardCount: 1
+  KinesisStream4:
+      Type: AWS::Kinesis::Stream
+      Properties:
+        Name: int-test-stream-4
+        ShardCount: 1
