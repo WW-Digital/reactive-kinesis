@@ -60,11 +60,6 @@ object ProducerConf {
 
     val streamName = producerConfig.getString("stream-name")
     require(
-
-    val kplConfig = producerConfig.getConfig("kpl")
-    val kplLibConfiguration: KinesisProducerConfiguration =
-      buildKPLConfig(kplConfig, credentialsProvider)
-
     !streamName.isEmpty,
       s"Config field `stream-name` missing, a value must be provided to start the Kinesis Producer!"
     )
@@ -79,6 +74,11 @@ object ProducerConf {
         else
           Some(dispatcherProp)
       }
+
+    val kplConfig = producerConfig.getConfig("kpl")
+    val kplLibConfiguration: KinesisProducerConfiguration =
+      buildKPLConfig(kplConfig, credentialsProvider)
+
     new ProducerConf(streamName,
                      kplLibConfiguration,
                      dispatcher,
