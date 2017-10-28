@@ -24,18 +24,19 @@ trait KinesisConfiguration {
 
   def consumerConfig(appName: String, workerId: String, batchSize: Int): ConsumerConf = {
     val conf = ConsumerConf(config.getConfig("kinesis"), "testConsumer")
-    val kcl = conf.kclConfiguration
+    val kcl  = conf.kclConfiguration
     conf.copy(
-      kclConfiguration = new KinesisClientLibConfiguration(
-        appName,
-        kcl.getStreamName,
-        kcl.getKinesisCredentialsProvider,
-        workerId)
+      kclConfiguration = new KinesisClientLibConfiguration(appName,
+                                                           kcl.getStreamName,
+                                                           kcl.getKinesisCredentialsProvider,
+                                                           workerId)
         .withKinesisEndpoint(kcl.getKinesisEndpoint)
         .withDynamoDBEndpoint(kcl.getDynamoDBEndpoint)
         .withMetricsLevel(kcl.getMetricsLevel)
         .withMaxRecords(batchSize)
-        .withCallProcessRecordsEvenForEmptyRecordList(kcl.shouldCallProcessRecordsEvenForEmptyRecordList())
+        .withCallProcessRecordsEvenForEmptyRecordList(
+          kcl.shouldCallProcessRecordsEvenForEmptyRecordList()
+        )
         .withCleanupLeasesUponShardCompletion(kcl.shouldCleanupLeasesUponShardCompletion())
         .withFailoverTimeMillis(kcl.getFailoverTimeMillis)
         .withIdleTimeBetweenReadsInMillis(kcl.getIdleTimeBetweenReadsInMillis)
@@ -49,9 +50,13 @@ trait KinesisConfiguration {
         .withParentShardPollIntervalMillis(kcl.getParentShardPollIntervalMillis)
         .withShardSyncIntervalMillis(kcl.getShardSyncIntervalMillis)
         .withShardPrioritizationStrategy(kcl.getShardPrioritizationStrategy)
-        .withSkipShardSyncAtStartupIfLeasesExist(kcl.getSkipShardSyncAtWorkerInitializationIfLeasesExist)
+        .withSkipShardSyncAtStartupIfLeasesExist(
+          kcl.getSkipShardSyncAtWorkerInitializationIfLeasesExist
+        )
         .withTaskBackoffTimeMillis(kcl.getTaskBackoffTimeMillis)
-        .withValidateSequenceNumberBeforeCheckpointing(kcl.shouldValidateSequenceNumberBeforeCheckpointing())
+        .withValidateSequenceNumberBeforeCheckpointing(
+          kcl.shouldValidateSequenceNumberBeforeCheckpointing()
+        )
     )
   }
 }
@@ -60,12 +65,15 @@ trait KinesisConfiguration {
   * Use this trait to interact with Kinesis.
   * Every suite will have a clean Kinesis and Dynamo as well as one Stream with 2 Shards with 100 Messages each.
   */
-trait KinesisKit extends BeforeAndAfter with BeforeAndAfterAll with StrictLogging with KinesisConfiguration {
-  self: Suite =>
+trait KinesisKit
+    extends BeforeAndAfter
+    with BeforeAndAfterAll
+    with StrictLogging
+    with KinesisConfiguration { self: Suite =>
 
   val TestStreamNrOfMessagesPerShard: Long = 100
-  val TestStreamNumberOfShards: Long = 2
-  val TestStreamName: String = "test-kinesis-reliability"
+  val TestStreamNumberOfShards: Long       = 2
+  val TestStreamName: String               = "test-kinesis-reliability"
 
   /**
     * Cleanup dynamo before each test
@@ -94,7 +102,10 @@ trait KinesisKit extends BeforeAndAfter with BeforeAndAfterAll with StrictLoggin
     kinesisClient.createStream(TestStreamName, TestStreamNumberOfShards.toInt)
 
     // Block until the stream is ready to rumble.
-    while (kinesisClient.describeStream(TestStreamName).getStreamDescription.getStreamStatus != "ACTIVE") {
+    while (kinesisClient
+             .describeStream(TestStreamName)
+             .getStreamDescription
+             .getStreamStatus != "ACTIVE") {
       Thread.sleep(100)
     }
     logger.info(s"Stream: $TestStreamName is created.")
@@ -128,17 +139,23 @@ trait KinesisKit extends BeforeAndAfter with BeforeAndAfterAll with StrictLoggin
 
   protected def kinesisClient(): AmazonKinesisAsync = {
     val kcl = consumerConfig(suiteName, "setup", batchSize = 1000).kclConfiguration
-    AmazonKinesisAsyncClientBuilder.standard()
+    AmazonKinesisAsyncClientBuilder
+      .standard()
       .withClientConfiguration(kcl.getKinesisClientConfiguration)
-      .withEndpointConfiguration(new EndpointConfiguration(kcl.getKinesisEndpoint, kcl.getRegionName))
+      .withEndpointConfiguration(
+        new EndpointConfiguration(kcl.getKinesisEndpoint, kcl.getRegionName)
+      )
       .build()
   }
 
   protected def dynamoClient(): AmazonDynamoDB = {
     val kcl = consumerConfig(suiteName, "setup", batchSize = 1000).kclConfiguration
-    AmazonDynamoDBClientBuilder.standard()
+    AmazonDynamoDBClientBuilder
+      .standard()
       .withClientConfiguration(kcl.getDynamoDBClientConfiguration)
-      .withEndpointConfiguration(new EndpointConfiguration(kcl.getDynamoDBEndpoint, kcl.getRegionName))
+      .withEndpointConfiguration(
+        new EndpointConfiguration(kcl.getDynamoDBEndpoint, kcl.getRegionName)
+      )
       .build()
   }
 
@@ -147,7 +164,11 @@ trait KinesisKit extends BeforeAndAfter with BeforeAndAfterAll with StrictLoggin
 
     client
       .describeStream(TestStreamName)
-      .getStreamDescription.getShards.asScala.toList.map(_.getShardId)
+      .getStreamDescription
+      .getShards
+      .asScala
+      .toList
+      .map(_.getShardId)
       .foreach { shardId =>
         (1 to testDataCount).foreach { nr =>
           val msg = new PutRecordRequest()
