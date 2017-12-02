@@ -12,7 +12,7 @@ cache:
   - "$HOME/.ivy2"
 before_script:
 - docker-compose -f localstack/docker-compose.yml pull
-- docker-compose -f localstack/docker-compose.yml up
+- docker-compose -f localstack/docker-compose.yml up -d
 - docker ps -a
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage scalafmtTest test
