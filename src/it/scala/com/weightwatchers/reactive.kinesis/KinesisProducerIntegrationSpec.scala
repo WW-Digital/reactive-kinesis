@@ -30,11 +30,12 @@ import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 import scala.util.Random
 
 //scalastyle:off magic.number
 class KinesisProducerIntegrationSpec
-    extends FreeSpec
+  extends FreeSpec
     with Matchers
     with MockitoSugar
     with BeforeAndAfterAll
@@ -91,6 +92,8 @@ class KinesisProducerIntegrationSpec
   implicit override val patienceConfig: PatienceConfig =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(100, Millis))
 
+  //System.setProperty("com.amazonaws.sdk.disableCertChecking", "true")
+
   val consumer: KinesisTestConsumer =
     KinesisTestConsumer.from(ConsumerConf(kinesisConfig, "testConsumer"), Some(100 millis))
 
@@ -101,6 +104,8 @@ class KinesisProducerIntegrationSpec
   "The KinesisProducer" - {
 
     "Should publish a message to a stream" in {
+
+      println("******"+System.getProperty("com.amazonaws.sdk.disableCertChecking"))
 
       val producerConf =
         ProducerConf(kinesisConfig, "testProducer", Some(TestCredentials.Credentials))

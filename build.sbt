@@ -68,10 +68,10 @@ lazy val library =
       "org.scalactic"              %% "scalactic"                    % Version.scalaTest  % Compile)
 
     val testing = Seq(
-      "org.scalatest"              %% "scalatest"                    % Version.scalaTest  % Test,
-      "org.scalacheck"             %% "scalacheck"                   % Version.scalaCheck % Test,
-      "com.typesafe.akka"          %% "akka-testkit"                 % Version.akka       % Test,
-      "org.mockito"                % "mockito-core"                  % "2.7.15"           % Test,
+      "org.scalatest"              %% "scalatest"                    % Version.scalaTest  % "it,test",
+      "org.scalacheck"             %% "scalacheck"                   % Version.scalaCheck % "it,test",
+      "com.typesafe.akka"          %% "akka-testkit"                 % Version.akka       % "it,test",
+      "org.mockito"                % "mockito-core"                  % "2.7.15"           % "it,test",
       "io.kamon"                   %% "kamon-core"                   % Version.kamon      % Test,
       "io.kamon"                   %% "kamon-akka-2.4"               % Version.kamon      % Test,
       "io.kamon"                   %% "kamon-statsd"                 % Version.kamon      % Test,
@@ -131,7 +131,7 @@ lazy val commonSettings =
       "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
       "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
       "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-      "-Ywarn-numeric-widen"              // Warn when numerics are widened.
+      "-Ywarn-numeric-widen"               // Warn when numerics are widened.
     ),
     scalacOptions in (Compile, doc) ++= Seq(
       "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
@@ -148,6 +148,7 @@ lazy val commonSettings =
     },
     parallelExecution in Test := false,
     parallelExecution in IntegrationTest := false,
+    fork in IntegrationTest := true,
     javaOptions in IntegrationTest += "-Dcom.amazonaws.sdk.disableCertChecking=true",
     envVars in IntegrationTest += ("AWS_CBOR_DISABLE" -> "true")
   )

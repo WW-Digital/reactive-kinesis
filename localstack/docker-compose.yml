@@ -1,8 +1,8 @@
-version: "3.3"
+version: "2.3"
 
 services:
   localstack:
-    image: markglh/initialised-localstack:latest
+    image: markglh/initialised-localstack:0.8.3
     volumes:
           - ./templates:/opt/bootstrap/templates
     #network_mode: "host"
@@ -16,4 +16,12 @@ services:
     ports:
       - "4567-4582:4567-4582"
       - "8080:8080"
+
+  # Ensures the health check runs
+  dummy-service:
+    image: alpine:3.5
+    depends_on:
+      localstack:
+        condition: service_healthy
+
 
