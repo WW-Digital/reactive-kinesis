@@ -35,7 +35,7 @@ import scala.util.Random
 
 //scalastyle:off magic.number
 class KinesisProducerIntegrationSpec
-  extends FreeSpec
+    extends FreeSpec
     with Matchers
     with MockitoSugar
     with BeforeAndAfterAll
@@ -105,7 +105,7 @@ class KinesisProducerIntegrationSpec
 
     "Should publish a message to a stream" in {
 
-      println("******"+System.getProperty("com.amazonaws.sdk.disableCertChecking"))
+      println("******" + System.getProperty("com.amazonaws.sdk.disableCertChecking"))
 
       val producerConf =
         ProducerConf(kinesisConfig, "testProducer", Some(TestCredentials.Credentials))
