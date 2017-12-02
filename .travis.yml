@@ -11,8 +11,8 @@ cache:
   - "$HOME/.sbt"
   - "$HOME/.ivy2"
 before_script:
-- docker-compose -f localstack/docker-compose.travis.yml pull
-- docker-compose -f localstack/docker-compose.travis.yml up
+- docker-compose -f localstack/docker-compose.yml pull
+- docker-compose -f localstack/docker-compose.yml up
 - docker ps -a
 script:
 - sbt ++$TRAVIS_SCALA_VERSION clean coverage scalafmtTest test
@@ -28,7 +28,7 @@ script:
   && mkdir ~/.bintray && cp publishing/.credentials ~/.bintray/ && cp publishing/.artifactory
   ~/.bintray/ && sbt ++$TRAVIS_SCALA_VERSION publish; fi
 after_script:
-- docker-compose -f localstack/docker-compose.travis.yml down
+- docker-compose -f localstack/docker-compose.yml down
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coverageReport coveralls
 before_cache:
