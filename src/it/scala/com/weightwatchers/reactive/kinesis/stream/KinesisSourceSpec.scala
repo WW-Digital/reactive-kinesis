@@ -1,13 +1,76 @@
 package com.weightwatchers.reactive.kinesis.stream
 
+import java.io.File
+
 import akka.stream.scaladsl.Sink
-import com.weightwatchers.reactive.kinesis.{AkkaUnitTestLike, KinesisKit}
+import com.typesafe.config.ConfigFactory
+import com.weightwatchers.reactive.kinesis.AkkaUnitTestLike
+import com.weightwatchers.reactive.kinesis.common.KinesisKit
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.scalatest._
 
 import scala.concurrent.duration._
 
 class KinesisSourceSpec extends WordSpec with KinesisKit with AkkaUnitTestLike with Matchers {
+
+  val TestStreamName = "int-test-stream-3"
+
+  val defaultKinesisConfig =
+    ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
+
+  def kinesisConfig(appName: String, workerId: String, maxRecords: Int) = ConfigFactory
+    .parseString(
+      s"""
+        |kinesis {
+        |
+        |   application-name = "$appName"
+        |
+        |   # The name of the consumer, we can have many consumers per application
+        |   testConsumer {
+        |      # The name of the consumer stream, MUST be specified per consumer
+        |      stream-name = "$TestStreamName"
+        |
+        |      # Use localstack for integration test
+        |      kcl {
+        |         kinesisEndpoint = "https://localhost:4568"
+        |         dynamoDBEndpoint = "https://localhost:4569"
+        |
+        |         AWSCredentialsProvider = "com.weightwatchers.reactive.kinesis.common.TestCredentials|foo|bar"
+        |
+        |         workerId = "$workerId"
+        |
+        |         # dramatically reduce default values.
+        |         # This will speed up the integration test by factor 20x or greater
+        |         maxRecords = $maxRecords
+        |         metricsLevel = NONE
+        |         failoverTimeMillis = 500
+        |         shardSyncIntervalMillis = 1000
+        |         idleTimeBetweenReadsInMillis = 100
+        |         parentShardPollIntervalMillis = 1000
+        |      }
+        |
+        |      worker {
+        |         batchTimeoutSeconds = 1
+        |         failedMessageRetries = 0
+        |         failureTolerancePercentage = 0
+        |         gracefulShutdownHook = false
+        |         shutdownTimeoutSeconds = 10
+        |      }
+        |   }
+        |}
+      """.stripMargin
+    )
+    .getConfig("kinesis")
+    .withFallback(defaultKinesisConfig)
+
+  trait WithKinesis {
+    val workerIdGen: Iterator[String] = 1.to(Int.MaxValue).iterator.map(id => s"wrk-$id")
+    def consumerConf(appName: String, batchSize: Long): ConsumerConf = {
+      ConsumerConf(kinesisConfig(appName, appName + "-" + workerIdGen.next(), batchSize.toInt), "testConsumer")
+    }
+  }
+
+  override implicit def patienceConfig: PatienceConfig = PatienceConfig(60.seconds)
 
   "A Kinesis Source" should {
 
@@ -140,13 +203,4 @@ class KinesisSourceSpec extends WordSpec with KinesisKit with AkkaUnitTestLike w
       grouped.values.foreach(_ should have size TestStreamNumberOfShards)
     }
   }
-
-  class WithKinesis {
-    val workerIdGen: Iterator[String] = 1.to(Int.MaxValue).iterator.map(id => s"wrk-$id")
-    def consumerConf(appName: String, batchSize: Long): ConsumerConf = {
-      consumerConfig(appName, appName + "-" + workerIdGen.next(), batchSize.toInt)
-    }
-  }
-
-  override implicit def patienceConfig: PatienceConfig = PatienceConfig(60.seconds)
 }

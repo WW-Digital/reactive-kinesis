@@ -59,8 +59,6 @@ class KinesisProducerIntegrationSpec
         |      kpl {
         |         Region = us-east-1
         |
-        |         AWSCredentialsProvider = "com.weightwatchers.reactive.kinesis.common.TestCredentials|foo|bar"
-        |
         |         CloudwatchEndpoint = localhost
         |         CloudwatchPort = 4582
         |
