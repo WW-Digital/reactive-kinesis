@@ -7,7 +7,7 @@ import org.scalatest._
 
 import scala.concurrent.duration._
 
-class KinesisSourceTest extends WordSpec with KinesisKit with AkkaUnitTestLike with Matchers {
+class KinesisSourceSpec extends WordSpec with KinesisKit with AkkaUnitTestLike with Matchers {
 
   "A Kinesis Source" should {
 
