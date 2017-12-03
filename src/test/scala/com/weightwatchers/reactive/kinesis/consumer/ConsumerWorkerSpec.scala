@@ -184,7 +184,7 @@ class ConsumerWorkerSpec
 
           checkpointerProbe.reply(CheckpointResult(event2.sequenceNumber, success = true))
 
-          managerProbe.expectNoMsg(noMsgTimeout)
+          managerProbe.expectNoMessage(noMsgTimeout)
         }
 
         "When the messages are not processed in order for an aggregated batch" in new Setup {
@@ -220,7 +220,7 @@ class ConsumerWorkerSpec
 
           checkpointerProbe.reply(CheckpointResult(event2.sequenceNumber, success = true))
 
-          managerProbe.expectNoMsg(noMsgTimeout)
+          managerProbe.expectNoMessage(noMsgTimeout)
         }
 
         "When a message is skipped by returning successful = false" in new Setup {
@@ -275,7 +275,7 @@ class ConsumerWorkerSpec
           //This way we'll start a new batch, but ensure the processed messages are carried over
           worker.tell(ProcessEvents(Seq(noAckRecord), checkpointer, "12345"), managerProbe.ref)
           processorProbe.expectMsgAllOf(messageConfirmationTimeout, ProcessEvent(noAckRecord))
-          managerProbe.expectNoMsg(noMsgTimeout)
+          managerProbe.expectNoMessage(noMsgTimeout)
 
           //Fire checkpointer, we expect the latest from the first batch as the second batch hasn't yet been acked
           checkpointerProbe.send(worker, ReadyToCheckpoint)
@@ -324,7 +324,7 @@ class ConsumerWorkerSpec
                                         ProcessEvent(event5))
 
           //the batch shouldn't be confirmed within the timeout
-          managerProbe.expectNoMsg(batchTimeout)
+          managerProbe.expectNoMessage(batchTimeout)
 
           //we should then retry the unacked msg
           processorProbe.expectMsgAllOf(messageConfirmationTimeout, ProcessEvent(event3))
@@ -377,7 +377,7 @@ class ConsumerWorkerSpec
                                         ProcessEvent(event5))
 
           //the batch shouldn't be confirmed within the timeout
-          managerProbe.expectNoMsg(messageConfirmationTimeout)
+          managerProbe.expectNoMessage(messageConfirmationTimeout)
 
           //we should then retry the unacked msg
           processorProbe.expectMsgAllOf(messageConfirmationTimeout, ProcessEvent(event3))
@@ -390,7 +390,7 @@ class ConsumerWorkerSpec
           checkpointerProbe.reply(CheckpointResult(event2.sequenceNumber, success = true))
 
           //still no confirmation? We're using a lower timeout to ensure we haven't timed out yet
-          managerProbe.expectNoMsg(messageConfirmationTimeout)
+          managerProbe.expectNoMessage(messageConfirmationTimeout)
 
           //Success (we should skip the message after the retry)!?!
           managerProbe.expectMsg(batchConfirmationTimeout,
@@ -429,18 +429,18 @@ class ConsumerWorkerSpec
                                         ProcessEvent(event5))
 
           //the batch shouldn't be confirmed within the timeout
-          managerProbe.expectNoMsg(messageConfirmationTimeout)
+          managerProbe.expectNoMessage(messageConfirmationTimeout)
 
           // * RETRY 1 *
           //we should then retry the unacked msg
           processorProbe.expectMsgAllOf(messageConfirmationTimeout, ProcessEvent(event3))
 
           //still no confirmation? We're using a lower timeout to ensure we haven't timed out yet
-          managerProbe.expectNoMsg(messageConfirmationTimeout)
+          managerProbe.expectNoMessage(messageConfirmationTimeout)
 
           // * RETRY 2 *
           processorProbe.expectMsgAllOf(messageConfirmationTimeout, ProcessEvent(event3))
-          managerProbe.expectNoMsg(messageConfirmationTimeout)
+          managerProbe.expectNoMessage(messageConfirmationTimeout)
 
           //Expected batch failure!!
           managerProbe.expectMsg(batchConfirmationTimeout,
@@ -480,7 +480,7 @@ class ConsumerWorkerSpec
 
         //Ensure we don't checkpoint the same seq again
         checkpointerProbe.send(worker, ReadyToCheckpoint)
-        checkpointerProbe.expectNoMsg(noMsgTimeout)
+        checkpointerProbe.expectNoMessage(noMsgTimeout)
       }
 
       "Should NOT checkpoint if no messages have been confirmed" in new Setup {
@@ -491,11 +491,11 @@ class ConsumerWorkerSpec
           createEvent(noAckSeqNo.sequenceNumber, noAckSeqNo.subSequenceNumber, "payloadNoAck")
         worker.tell(ProcessEvents(Seq(event1), checkpointer, "12345"), managerProbe.ref)
         processorProbe.expectMsgAllOf(messageConfirmationTimeout, ProcessEvent(event1))
-        managerProbe.expectNoMsg(noMsgTimeout)
+        managerProbe.expectNoMessage(noMsgTimeout)
 
         //validate the batch doesn't get checkpointed
         checkpointerProbe.send(worker, ReadyToCheckpoint)
-        checkpointerProbe.expectNoMsg(noMsgTimeout)
+        checkpointerProbe.expectNoMessage(noMsgTimeout)
       }
 
       "Should NOT confirm the batch until all messages have been confirmed" in new Setup {
@@ -505,11 +505,11 @@ class ConsumerWorkerSpec
         worker.tell(ProcessEvents(Seq(noAckRecord), checkpointer, "12345"), managerProbe.ref)
         processorProbe.expectMsgAllOf(messageConfirmationTimeout, ProcessEvent(noAckRecord))
         //the batch shouldn't be acked with the manager yet
-        managerProbe.expectNoMsg(noMsgTimeout)
+        managerProbe.expectNoMessage(noMsgTimeout)
 
         //Fire checkpointer, nothing should be checkpointed
         checkpointerProbe.send(worker, ReadyToCheckpoint)
-        checkpointerProbe.expectNoMsg(noMsgTimeout)
+        checkpointerProbe.expectNoMessage(noMsgTimeout)
 
         //Now ack the batch
         processorProbe.send(worker, EventProcessed(noAckSeqNo))
@@ -673,7 +673,7 @@ class ConsumerWorkerSpec
         checkpointerProbe.expectMsg(checkpointTimeout,
                                     "Expecting forced checkpoint message",
                                     "Actor Killed!")
-        checkpointerProbe.expectNoMsg(noMsgTimeout) // ensure ONLY the Actor Killed message was received
+        checkpointerProbe.expectNoMessage(noMsgTimeout) // ensure ONLY the Actor Killed message was received
         managerProbe.expectTerminated(worker)
       }
     }
