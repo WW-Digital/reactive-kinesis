@@ -4,7 +4,11 @@ import java.io.File
 
 import akka.stream.scaladsl.Sink
 import com.typesafe.config.ConfigFactory
-import com.weightwatchers.reactive.kinesis.common.{AkkaUnitTestLike, KinesisConfiguration, KinesisKit}
+import com.weightwatchers.reactive.kinesis.common.{
+  AkkaUnitTestLike,
+  KinesisConfiguration,
+  KinesisKit
+}
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.scalatest._
 

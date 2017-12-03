@@ -1,6 +1,7 @@
 package com.weightwatchers.reactive.kinesis.common
 
 import akka.actor.{ActorSystem, Scheduler}
+import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKitBase
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.ScalaFutures
