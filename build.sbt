@@ -73,11 +73,11 @@ lazy val library =
       "org.scalacheck"             %% "scalacheck"                   % Version.scalaCheck % "it,test",
       "com.typesafe.akka"          %% "akka-testkit"                 % Version.akka       % "it,test",
       "org.mockito"                % "mockito-core"                  % "2.7.15"           % "it,test",
-      "io.kamon"                   %% "kamon-core"                   % Version.kamon      % "it,test",
-      "io.kamon"                   %% "kamon-akka-2.4"               % Version.kamon      % "it,test",
-      "io.kamon"                   %% "kamon-statsd"                 % Version.kamon      % "it,test",
-      "io.kamon"                   %% "kamon-log-reporter"           % Version.kamon      % "it,test",
-      "io.kamon"                   %% "kamon-system-metrics"         % Version.kamon      % "it,test"
+      "io.kamon"                   %% "kamon-core"                   % Version.kamon      % Test,
+      "io.kamon"                   %% "kamon-akka-2.4"               % Version.kamon      % Test,
+      "io.kamon"                   %% "kamon-statsd"                 % Version.kamon      % Test,
+      "io.kamon"                   %% "kamon-log-reporter"           % Version.kamon      % Test,
+      "io.kamon"                   %% "kamon-system-metrics"         % Version.kamon      % Test
     )
   }
 
@@ -132,7 +132,7 @@ lazy val commonSettings =
       "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
       "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
       "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-      "-Ywarn-numeric-widen"              // Warn when numerics are widened.
+      "-Ywarn-numeric-widen"               // Warn when numerics are widened.
     ),
     scalacOptions in (Compile, doc) ++= Seq(
       "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
@@ -147,7 +147,11 @@ lazy val commonSettings =
       val project = Project.extract(state).currentRef.project
       s"[$project]> "
     },
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    parallelExecution in IntegrationTest := false,
+    fork in IntegrationTest := true,
+    javaOptions in IntegrationTest += "-Dcom.amazonaws.sdk.disableCertChecking=true",
+    envVars in IntegrationTest += ("AWS_CBOR_DISABLE" -> "true")
   )
 
 /* This allows to derive an sbt version string from the git information.
