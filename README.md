@@ -40,15 +40,25 @@ It's worth familiarising yourself with [Sequence numbers and Sub sequence number
 # Dependency Resolution
 SBT
 ```
-"com.weightwatchers" %% "reactive-kinesis" % 0.5.0
+"com.weightwatchers" %% "reactive-kinesis" % "0.5.5"
 ```
 
-Maven
+Maven 2.11
 ```
 <dependency>
   <groupId>com.weightwatchers</groupId>
   <artifactId>reactive-kinesis_2.11</artifactId>
-  <version>0.5.0</version>
+  <version>0.5.5</version>
+  <type>pom</type>
+</dependency>
+```
+
+Maven 2.12
+```
+<dependency>
+  <groupId>com.weightwatchers</groupId>
+  <artifactId>reactive-kinesis_2.12</artifactId>
+  <version>0.5.5</version>
   <type>pom</type>
 </dependency>
 ```
