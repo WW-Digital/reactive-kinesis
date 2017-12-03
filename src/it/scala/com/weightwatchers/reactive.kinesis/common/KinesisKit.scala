@@ -1,4 +1,4 @@
-package com.weightwatchers.reactive.kinesis
+package com.weightwatchers.reactive.kinesis.common
 
 import java.nio.ByteBuffer
 
@@ -9,7 +9,6 @@ import com.amazonaws.services.kinesis.model.PutRecordRequest
 import com.amazonaws.services.kinesis.{AmazonKinesisAsync, AmazonKinesisAsyncClientBuilder}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.StrictLogging
-import com.weightwatchers.reactive.kinesis.common.TestCredentials
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Suite}
 
@@ -17,7 +16,6 @@ import scala.collection.JavaConverters._
 
 /**
   * Base trait to create a KinesisConfiguration from application config + override options.
-  * Handles cleanup of and creation of streams before tests.
   */
 trait KinesisConfiguration {
 
@@ -64,7 +62,7 @@ trait KinesisConfiguration {
 }
 
 /**
-  * Use this trait to interact with Kinesis.
+  * Mixin this trait to your test to interact with Kinesis.
   * Every suite will have a clean Kinesis and Dynamo as well as one Stream with 2 Shards with 100 Messages each.
   */
 trait KinesisKit
@@ -73,9 +71,10 @@ trait KinesisKit
     with StrictLogging
     with KinesisConfiguration { self: Suite =>
 
+  val TestStreamName: String
+
   val TestStreamNrOfMessagesPerShard: Long = 100
   val TestStreamNumberOfShards: Long       = 2
-  val TestStreamName: String               = "test-kinesis-reliability"
 
   /**
     * Cleanup dynamo before each test
