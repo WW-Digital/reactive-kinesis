@@ -129,7 +129,7 @@ class CheckpointWorkerSpec
         .checkpoint(sequenceNumber.sequenceNumber, sequenceNumber.subSequenceNumber)
 
       //Finally assert that we don't receive another ReadyToCheckpoint message until the configured interval (2 seconds + 1 second)
-      probe.expectNoMsg(readyToCheckpointTimeout)
+      probe.expectNoMessage(readyToCheckpointTimeout)
       probe.expectMsg(checkpointNotificationTimeout,
                       "Subsequent Checkpoint Notification",
                       ReadyToCheckpoint)
@@ -172,7 +172,7 @@ class CheckpointWorkerSpec
         .checkpoint(sequenceNumber.sequenceNumber, sequenceNumber.subSequenceNumber)
 
       //Finally assert that we don't receive another ReadyToCheckpoint message until the configured BACKOFF interval (3 seconds)
-      probe.expectNoMsg(checkpointBackoffTimeout)
+      probe.expectNoMessage(checkpointBackoffTimeout)
       probe.expectMsg(checkpointNotificationTimeout,
                       "Subsequent Checkpoint Notification after backoff",
                       ReadyToCheckpoint)
@@ -238,8 +238,8 @@ class CheckpointWorkerSpec
                       CheckpointResult(sequenceNumber, success = true))
 
       //Finally assert that we don't receive another ReadyToCheckpoint message, ever
-      probe.expectNoMsg(readyToCheckpointTimeout)
-      probe.expectNoMsg(readyToCheckpointTimeout)
+      probe.expectNoMessage(readyToCheckpointTimeout)
+      probe.expectNoMessage(readyToCheckpointTimeout)
     }
   }
 

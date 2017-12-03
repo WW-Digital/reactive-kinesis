@@ -67,7 +67,7 @@ class KinesisProducerActorSpec
       producerActor.tell(Send(event), probe.ref)
 
       //Then we should receive a SendSuccessful response
-      probe.expectNoMsg(500.millis)
+      probe.expectNoMessage(500.millis)
       verify(producer, times(1)).addUserRecord(event)
     }
 
@@ -140,14 +140,14 @@ class KinesisProducerActorSpec
       producerActor.tell(msg, probe.ref)
 
       //Then we receive and process no messages
-      probe.expectNoMsg(500.millis)
+      probe.expectNoMessage(500.millis)
       verify(producer, times(0)).addUserRecord(event)
 
       //Until we have LESS than 9 requests in progress (DEFAULT is 10% less than max to unthrottle)
       when(producer.outstandingRecordsCount()).thenReturn(9)
 
       //Still not LESS than 9
-      probe.expectNoMsg(500.millis)
+      probe.expectNoMessage(500.millis)
       verify(producer, times(0)).addUserRecord(event)
 
       when(producer.outstandingRecordsCount()).thenReturn(8)

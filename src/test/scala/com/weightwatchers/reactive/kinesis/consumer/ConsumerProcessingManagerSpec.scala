@@ -205,7 +205,7 @@ class ConsumerProcessingManagerSpec
       }
 
       //validate the probe received nothing
-      worker.expectNoMsg(1.second)
+      worker.expectNoMessage(1.second)
 
       processResult.isCompleted should be(true) //should be false until we complete the promise
     }
