@@ -27,7 +27,7 @@ lazy val library =
       val scalaTest = "3.0.3"
       val kamon = "0.6.6"
       val jackson = "2.8.7"
-      val akka = "2.5.1"
+      val akka = "2.5.7"
     }
 
     val jackson = Seq(
