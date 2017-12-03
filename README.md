@@ -27,6 +27,7 @@ It's worth familiarising yourself with [Sequence numbers and Sub sequence number
 * [FAQ](#faq)
 * [Contributor Guide](#contributor-guide)
     * [Code Formatting](#contributor-guide-code-formatting)
+    * [Integration Tests](#contributor-guide-integration-tests)
     * [Tag Requirements](#contributor-guide-tag-requirements)
         * [Version information](#contributor-guide-tag-requirements-version-information)
         * [Valid Release Tag Examples:](#contributor-guide-tag-requirements-valid-release-tag-examples)
@@ -510,6 +511,12 @@ You'll see some stats logged regarding messages/sec processed, near that line.
 This project uses [scalafmt](http://scalameta.org/scalafmt/) and will automatically fail the build if any files do not match the expected formatting.
 
 Please run `sbt scalafmt` before committing and pushing changes.
+
+<a name="contributor-guide-integration-tests"></a>
+## Integration tests
+As part of the travis build, integration tests will run against a Kinesis localstack instance. You can run these locally as follows:
+* `docker-compose -f localstack/docker-compose.yml up`
+* `sbt it:test`
 
 <a name="contributor-guide-tag-requirements"></a>
 ## Tag Requirements
