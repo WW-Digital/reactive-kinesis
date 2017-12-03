@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Int Test Template
+Resources:
+  KinesisStream1:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: int-test-stream-1
+      ShardCount: 1
+  KinesisStream2:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: int-test-stream-2
+      ShardCount: 1
+  KinesisStream3:
+      Type: AWS::Kinesis::Stream
+      Properties:
+        Name: int-test-stream-3
+        ShardCount: 1
+  KinesisStream4:
+      Type: AWS::Kinesis::Stream
+      Properties:
+        Name: int-test-stream-4
+        ShardCount: 1

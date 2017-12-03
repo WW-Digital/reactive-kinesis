@@ -1,0 +1,27 @@
+version: "2.3"
+
+services:
+  localstack:
+    image: markglh/initialised-localstack:0.8.3
+    volumes:
+          - ./templates:/opt/bootstrap/templates
+    #network_mode: "host"
+    environment:
+      - "SERVICES=${LOCALSTACK_SERVICES:-kinesis,dynamodb,cloudwatch,cloudformation}"
+      - "DEFAULT_REGION=${AWS_REGION:-us-east-1}"
+      - "HOSTNAME=${LOCALSTACK_HOSTNAME:-localhost}"
+      - "HOSTNAME_EXTERNAL=${LOCALSTACK_HOSTNAME_EXTERNAL:-localhost}"
+      - "USE_SSL=true"
+      #- "DATA_DIR=${LOCALSTACK_DATA_DIR:-/tmp/localstack/data}"
+    ports:
+      - "4567-4582:4567-4582"
+      - "8080:8080"
+
+  # Ensures the health check runs
+  dummy-service:
+    image: alpine:3.5
+    depends_on:
+      localstack:
+        condition: service_healthy
+
+

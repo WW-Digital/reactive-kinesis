@@ -13,14 +13,12 @@ import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.models.CompoundSequenceNumber
-import kamon.Kamon
 import org.joda.time.{DateTime, DateTimeZone, Period}
 
 import scala.collection.mutable.ListBuffer
 import com.weightwatchers.eventing.system
 
 object RunSimpleConsumer extends App {
-  Kamon.start()
   val consumer = system.actorOf(SimpleKinesisConsumer.props, "simple-consumer")
 }
 
@@ -109,7 +107,6 @@ class SimpleKinesisConsumer(kinesisConfig: Config) extends Actor with LazyLoggin
         logger.error(s"\n\nFailed pit stop check @ $totalReceived!\n\n")
         logger.error(s"\n\nFailed pit stop check @ $totalReceived!\n\n")
         context.stop(self)
-        Kamon.shutdown()
         System.exit(3)
       } else {
         logger.warn(s"\n\n**** PIT STOP OK: $totalVerified records verified\n\n")
