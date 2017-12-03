@@ -1,13 +1,13 @@
 package com.weightwatchers.reactive.kinesis.common
 
+import java.io.File
 import java.nio.ByteBuffer
 
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.dynamodbv2.{AmazonDynamoDB, AmazonDynamoDBClientBuilder}
-import com.amazonaws.services.kinesis.clientlibrary.lib.worker.KinesisClientLibConfiguration
 import com.amazonaws.services.kinesis.model.PutRecordRequest
 import com.amazonaws.services.kinesis.{AmazonKinesisAsync, AmazonKinesisAsyncClientBuilder}
-import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Suite}
@@ -19,51 +19,67 @@ import scala.collection.JavaConverters._
   */
 trait KinesisConfiguration {
 
-  // The global application config
-  def config: Config
+  val defaultKinesisConfig =
+    ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
 
-  def consumerConfig(appName: String, workerId: String, batchSize: Int): ConsumerConf = {
-    val conf = ConsumerConf(config.getConfig("kinesis"), "testConsumer")
-    val kcl  = conf.kclConfiguration
-    conf.copy(
-      kclConfiguration = new KinesisClientLibConfiguration(appName,
-                                                           kcl.getStreamName,
-                                                           kcl.getKinesisCredentialsProvider,
-                                                           workerId)
-        .withKinesisEndpoint(kcl.getKinesisEndpoint)
-        .withDynamoDBEndpoint(kcl.getDynamoDBEndpoint)
-        .withMetricsLevel(kcl.getMetricsLevel)
-        .withMaxRecords(batchSize)
-        .withCallProcessRecordsEvenForEmptyRecordList(
-          kcl.shouldCallProcessRecordsEvenForEmptyRecordList()
-        )
-        .withCleanupLeasesUponShardCompletion(kcl.shouldCleanupLeasesUponShardCompletion())
-        .withFailoverTimeMillis(kcl.getFailoverTimeMillis)
-        .withIdleTimeBetweenReadsInMillis(kcl.getIdleTimeBetweenReadsInMillis)
-        .withInitialLeaseTableReadCapacity(kcl.getInitialLeaseTableReadCapacity)
-        .withInitialLeaseTableWriteCapacity(kcl.getInitialLeaseTableWriteCapacity)
-        .withInitialPositionInStream(kcl.getInitialPositionInStream)
-        .withMaxLeaseRenewalThreads(kcl.getMaxLeaseRenewalThreads)
-        .withMaxLeasesForWorker(kcl.getMaxLeasesForWorker)
-        .withMaxLeasesToStealAtOneTime(kcl.getMaxLeasesToStealAtOneTime)
-        .withMetricsBufferTimeMillis(kcl.getMetricsBufferTimeMillis)
-        .withParentShardPollIntervalMillis(kcl.getParentShardPollIntervalMillis)
-        .withShardSyncIntervalMillis(kcl.getShardSyncIntervalMillis)
-        .withShardPrioritizationStrategy(kcl.getShardPrioritizationStrategy)
-        .withSkipShardSyncAtStartupIfLeasesExist(
-          kcl.getSkipShardSyncAtWorkerInitializationIfLeasesExist
-        )
-        .withTaskBackoffTimeMillis(kcl.getTaskBackoffTimeMillis)
-        .withValidateSequenceNumberBeforeCheckpointing(
-          kcl.shouldValidateSequenceNumberBeforeCheckpointing()
-        )
-    )
-  }
+  def kinesisConfig(streamName: String,
+                    appName: String = "integration-test",
+                    workerId: String = "",
+                    maxRecords: Int = 10000) =
+    ConfigFactory
+      .parseString(
+        s"""
+         |kinesis {
+         |
+         |   application-name = "$appName"
+         |
+         |   # The name of the consumer, we can have many consumers per application
+         |   testConsumer {
+         |      # The name of the consumer stream, MUST be specified per consumer
+         |      stream-name = "$streamName"
+         |
+         |      # Use localstack for integration test
+         |      kcl {
+         |         kinesisEndpoint = "https://localhost:4568"
+         |         dynamoDBEndpoint = "https://localhost:4569"
+         |
+         |         AWSCredentialsProvider = "com.weightwatchers.reactive.kinesis.common.TestCredentials|foo|bar"
+         |
+         |         regionName = us-east-1
+         |
+         |         workerId = "$workerId"
+         |
+         |         # dramatically reduce default values.
+         |         # This will speed up the integration test by factor 20x or greater
+         |         maxRecords = $maxRecords
+         |         metricsLevel = NONE
+         |         failoverTimeMillis = 500
+         |         shardSyncIntervalMillis = 1000
+         |         idleTimeBetweenReadsInMillis = 100
+         |         parentShardPollIntervalMillis = 1000
+         |      }
+         |
+         |      worker {
+         |         batchTimeoutSeconds = 1
+         |         failedMessageRetries = 0
+         |         failureTolerancePercentage = 0
+         |         gracefulShutdownHook = false
+         |         shutdownTimeoutSeconds = 10
+         |      }
+         |   }
+         |}
+      """.stripMargin
+      )
+      .getConfig("kinesis")
+      .withFallback(defaultKinesisConfig)
 }
 
 /**
   * Mixin this trait to your test to interact with Kinesis.
   * Every suite will have a clean Kinesis and Dynamo as well as one Stream with 2 Shards with 100 Messages each.
+  *
+  * Deletes only the table and stream for the CURRENT test (TestStreamName).
+  *
   */
 trait KinesisKit
     extends BeforeAndAfter
@@ -139,7 +155,9 @@ trait KinesisKit
   }
 
   protected def kinesisClient(): AmazonKinesisAsync = {
-    val kcl = consumerConfig(suiteName, "setup", batchSize = 1000).kclConfiguration
+    val kcl = ConsumerConf(kinesisConfig(streamName = TestStreamName, appName = suiteName),
+                           "testConsumer").kclConfiguration
+
     AmazonKinesisAsyncClientBuilder
       .standard()
       .withClientConfiguration(kcl.getKinesisClientConfiguration)
@@ -151,7 +169,9 @@ trait KinesisKit
   }
 
   protected def dynamoClient(): AmazonDynamoDB = {
-    val kcl = consumerConfig(suiteName, "setup", batchSize = 1000).kclConfiguration
+    val kcl = ConsumerConf(kinesisConfig(streamName = TestStreamName, appName = suiteName),
+                           "testConsumer").kclConfiguration
+
     AmazonDynamoDBClientBuilder
       .standard()
       .withClientConfiguration(kcl.getDynamoDBClientConfiguration)
