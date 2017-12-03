@@ -178,6 +178,7 @@ trait KinesisKit
       .withEndpointConfiguration(
         new EndpointConfiguration(kcl.getDynamoDBEndpoint, kcl.getRegionName)
       )
+      .withCredentials(TestCredentials.Credentials)
       .build()
   }
 
