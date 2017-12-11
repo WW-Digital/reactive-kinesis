@@ -8,7 +8,7 @@ import com.amazonaws.services.dynamodbv2.{AmazonDynamoDB, AmazonDynamoDBClientBu
 import com.amazonaws.services.kinesis.leases.impl.{KinesisClientLease, KinesisClientLeaseSerializer, LeaseManager}
 import com.amazonaws.services.kinesis.model.PutRecordRequest
 import com.amazonaws.services.kinesis.{AmazonKinesisAsync, AmazonKinesisAsyncClientBuilder}
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.StrictLogging
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Suite}
@@ -26,7 +26,7 @@ trait KinesisConfiguration {
   def kinesisConfig(streamName: String,
                     appName: String = "integration-test",
                     workerId: String = "",
-                    maxRecords: Int = 10000) =
+                    maxRecords: Int = 10000): Config =
     ConfigFactory
       .parseString(
         s"""
@@ -72,6 +72,14 @@ trait KinesisConfiguration {
       )
       .getConfig("kinesis")
       .withFallback(defaultKinesisConfig)
+
+  def consumerConfFor(conf: Config, consumer: String = "testConsumer"): ConsumerConf = {
+    val config = ConsumerConf(conf, consumer)
+    val clientConf = config.kclConfiguration.getKinesisClientConfiguration
+    // reduce the thread pool to a small size (default is 50)
+    // this config option is missing via typesafe config and should be added.
+    config.copy(kclConfiguration = config.kclConfiguration.withKinesisClientConfig(clientConf.withMaxConnections(5)))
+  }
 }
 
 /**
@@ -158,12 +166,11 @@ trait KinesisKit
   }
 
   lazy val kinesisClient: AmazonKinesisAsync = {
-    val kcl = ConsumerConf(kinesisConfig(streamName = TestStreamName, appName = suiteName),
-                           "testConsumer").kclConfiguration
+    val kcl = consumerConfFor(kinesisConfig(streamName = TestStreamName, appName = suiteName)).kclConfiguration
 
     AmazonKinesisAsyncClientBuilder
       .standard()
-      .withClientConfiguration(kcl.getKinesisClientConfiguration.withMaxConnections(2))
+      .withClientConfiguration(kcl.getKinesisClientConfiguration)
       .withEndpointConfiguration(
         new EndpointConfiguration(kcl.getKinesisEndpoint, kcl.getRegionName)
       )
@@ -172,8 +179,7 @@ trait KinesisKit
   }
 
   lazy val dynamoClient: AmazonDynamoDB = {
-    val kcl = ConsumerConf(kinesisConfig(streamName = TestStreamName, appName = suiteName),
-                           "testConsumer").kclConfiguration
+    val kcl = consumerConfFor(kinesisConfig(streamName = TestStreamName, appName = suiteName)).kclConfiguration
 
     AmazonDynamoDBClientBuilder
       .standard()
