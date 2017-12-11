@@ -101,7 +101,7 @@ class KinesisProducerIntegrationSpec
 
   "The KinesisProducer" - {
 
-    "Should publish a message to a stream" ignore {
+    "Should publish a message to a stream" in {
 
       val producerConf =
         ProducerConf(kinesisConfig, "testProducer", Some(TestCredentials.Credentials))
