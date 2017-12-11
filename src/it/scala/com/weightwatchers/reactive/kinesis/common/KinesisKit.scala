@@ -5,6 +5,7 @@ import java.nio.ByteBuffer
 
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.dynamodbv2.{AmazonDynamoDB, AmazonDynamoDBClientBuilder}
+import com.amazonaws.services.kinesis.leases.impl.{KinesisClientLease, KinesisClientLeaseSerializer, LeaseManager}
 import com.amazonaws.services.kinesis.model.PutRecordRequest
 import com.amazonaws.services.kinesis.{AmazonKinesisAsync, AmazonKinesisAsyncClientBuilder}
 import com.typesafe.config.ConfigFactory
@@ -49,18 +50,17 @@ trait KinesisConfiguration {
          |
          |         workerId = "$workerId"
          |
-         |         # dramatically reduce default values.
-         |         # This will speed up the integration test by factor 20x or greater
+         |         # Reduce default values, to speed up the integration test.
          |         maxRecords = $maxRecords
          |         metricsLevel = NONE
-         |         failoverTimeMillis = 500
+         |         failoverTimeMillis = 1000
          |         shardSyncIntervalMillis = 1000
-         |         idleTimeBetweenReadsInMillis = 100
+         |         idleTimeBetweenReadsInMillis = 200
          |         parentShardPollIntervalMillis = 1000
          |      }
          |
          |      worker {
-         |         batchTimeoutSeconds = 1
+         |         batchTimeoutSeconds = 2
          |         failedMessageRetries = 0
          |         failureTolerancePercentage = 0
          |         gracefulShutdownHook = false
@@ -87,8 +87,7 @@ trait KinesisKit
     with StrictLogging
     with KinesisConfiguration { self: Suite =>
 
-  val TestStreamName: String
-
+  val TestStreamName: String = self.suiteName
   val TestStreamNrOfMessagesPerShard: Long = 100
   val TestStreamNumberOfShards: Long       = 2
 
@@ -100,22 +99,26 @@ trait KinesisKit
   }
 
   override protected def beforeAll(): Unit = {
-    val kinesis = kinesisClient()
+    super.beforeAll()
 
     // clean up from eventually last run
-    cleanKinesis(kinesis)
+    cleanKinesis()
 
     // create new stream
-    createKinesisStream(kinesis)
+    createKinesisStream()
 
     // Pumping test data inside.
-    createTestData(TestStreamNrOfMessagesPerShard.toInt, kinesis)
-
-    kinesis.shutdown()
+    createTestData(TestStreamNrOfMessagesPerShard.toInt)
   }
 
-  protected def createKinesisStream(kinesisClient: AmazonKinesisAsync): Unit = {
 
+  override protected def afterAll(): Unit = {
+    super.afterAll()
+    dynamoClient.shutdown()
+    kinesisClient.shutdown()
+  }
+
+  protected def createKinesisStream(): Unit = {
     kinesisClient.createStream(TestStreamName, TestStreamNumberOfShards.toInt)
 
     // Block until the stream is ready to rumble.
@@ -128,7 +131,13 @@ trait KinesisKit
     logger.info(s"Stream: $TestStreamName is created.")
   }
 
-  protected def cleanKinesis(kinesisClient: AmazonKinesisAsync): Unit = {
+  protected def createLeaseTable(applicationName: String): Unit = {
+    val manager = new LeaseManager[KinesisClientLease](s"$applicationName-$TestStreamName", dynamoClient, new KinesisClientLeaseSerializer())
+    manager.createLeaseTableIfNotExists(1l, 1l)
+    while(!manager.leaseTableExists()) Thread.sleep(100)
+  }
+
+  protected def cleanKinesis(): Unit = {
     // We delete our stream if it exist.
     kinesisClient.listStreams().getStreamNames.asScala.toList.find(_ == TestStreamName).foreach {
       kinesisClient.deleteStream
@@ -141,12 +150,6 @@ trait KinesisKit
   }
 
   protected def cleanDynamo(): Unit = {
-    val dynamo = dynamoClient()
-    cleanDynamo(dynamo)
-    dynamo.shutdown()
-  }
-
-  protected def cleanDynamo(dynamoClient: AmazonDynamoDB): Unit = {
     val result = dynamoClient.listTables()
     result.getTableNames.asScala.foreach { tableName =>
       logger.info(s"Delete dynamo table $tableName")
@@ -154,13 +157,13 @@ trait KinesisKit
     }
   }
 
-  protected def kinesisClient(): AmazonKinesisAsync = {
+  lazy val kinesisClient: AmazonKinesisAsync = {
     val kcl = ConsumerConf(kinesisConfig(streamName = TestStreamName, appName = suiteName),
                            "testConsumer").kclConfiguration
 
     AmazonKinesisAsyncClientBuilder
       .standard()
-      .withClientConfiguration(kcl.getKinesisClientConfiguration)
+      .withClientConfiguration(kcl.getKinesisClientConfiguration.withMaxConnections(2))
       .withEndpointConfiguration(
         new EndpointConfiguration(kcl.getKinesisEndpoint, kcl.getRegionName)
       )
@@ -168,13 +171,13 @@ trait KinesisKit
       .build()
   }
 
-  protected def dynamoClient(): AmazonDynamoDB = {
+  lazy val dynamoClient: AmazonDynamoDB = {
     val kcl = ConsumerConf(kinesisConfig(streamName = TestStreamName, appName = suiteName),
                            "testConsumer").kclConfiguration
 
     AmazonDynamoDBClientBuilder
       .standard()
-      .withClientConfiguration(kcl.getDynamoDBClientConfiguration)
+      .withClientConfiguration(kcl.getDynamoDBClientConfiguration.withMaxConnections(2))
       .withEndpointConfiguration(
         new EndpointConfiguration(kcl.getDynamoDBEndpoint, kcl.getRegionName)
       )
@@ -182,10 +185,10 @@ trait KinesisKit
       .build()
   }
 
-  protected def createTestData(testDataCount: Int, client: AmazonKinesisAsync): Unit = {
+  protected def createTestData(testDataCount: Int): Unit = {
     import scala.collection.JavaConverters._
 
-    client
+    kinesisClient
       .describeStream(TestStreamName)
       .getStreamDescription
       .getShards
@@ -198,7 +201,7 @@ trait KinesisKit
             .withData(ByteBuffer.wrap(nr.toString.getBytes))
             .withStreamName(TestStreamName)
             .withPartitionKey(shardId)
-          client.putRecord(msg)
+          kinesisClient.putRecord(msg)
         }
       }
   }
