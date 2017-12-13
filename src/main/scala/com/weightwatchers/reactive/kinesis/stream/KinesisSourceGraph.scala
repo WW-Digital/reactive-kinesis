@@ -34,24 +34,35 @@ import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.models.ConsumerEvent
 
+import scala.concurrent.{ExecutionContext, Future}
+
 /**
   * The KinesisEvent is passed through the stream.
   * Every event has to be committed explicitly.
   */
-sealed trait KinesisEvent {
-  def event: ConsumerEvent
-  def commit(successful: Boolean = true): KinesisEvent
+sealed trait KinesisEvent[T] {
+  def payload: T
+  def commit(successful: Boolean = true): KinesisEvent[T]
+  def map[B](f: T => B): KinesisEvent[B]
+  def mapAsync[B](f: T => Future[B])(implicit ec: ExecutionContext): Future[KinesisEvent[B]]
 }
 
 /**
   * Actor based implementation of KinesisEvent.
   */
-private[kinesis] case class KinesisActorEvent(event: ConsumerEvent)(implicit sender: ActorRef)
-    extends KinesisEvent {
-  def commit(successful: Boolean = true): KinesisEvent = {
+private[kinesis] case class KinesisActorEvent[T](event: ConsumerEvent,
+                                                 payload: T)(implicit sender: ActorRef)
+    extends KinesisEvent[T] {
+  def commit(successful: Boolean = true): KinesisEvent[T] = {
     sender ! EventProcessed(event.sequenceNumber, successful)
     this
   }
+  override def map[B](f: T => B): KinesisEvent[B] = KinesisActorEvent(event, f(payload))
+
+  override def mapAsync[B](
+      f: T => Future[B]
+  )(implicit ec: ExecutionContext): Future[KinesisEvent[B]] =
+    f(payload).map(KinesisActorEvent(event, _))
 }
 
 /**
@@ -77,18 +88,18 @@ private[kinesis] case class KinesisActorEvent(event: ConsumerEvent)(implicit sen
   * @param actorSystem the actor system.
   */
 class KinesisSourceGraph(config: ConsumerConf, actorSystem: ActorSystem)
-    extends GraphStage[SourceShape[KinesisEvent]]
+    extends GraphStage[SourceShape[KinesisEvent[ConsumerEvent]]]
     with LazyLogging {
 
-  private[this] val out: Outlet[KinesisEvent]   = Outlet("KinesisSource.out")
-  override val shape: SourceShape[KinesisEvent] = SourceShape.of(out)
+  private[this] val out: Outlet[KinesisEvent[ConsumerEvent]]   = Outlet("KinesisSource.out")
+  override val shape: SourceShape[KinesisEvent[ConsumerEvent]] = SourceShape.of(out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
     new GraphStageLogic(shape) {
       // KCL will read events in batches. The stream should be able to buffer the whole batch.
       private[this] val bufferSize: Int = config.kclConfiguration.getMaxRecords
       // The queue to buffer events that can not be pushed downstream.
-      private[this] val messages = new java.util.ArrayDeque[KinesisEvent]()
+      private[this] val messages = new java.util.ArrayDeque[KinesisEvent[ConsumerEvent]]()
       // The kinesis consumer to read from.
       private[this] var kinesisConsumer: Option[KinesisConsumer] = None
 
@@ -125,7 +136,7 @@ class KinesisSourceGraph(config: ConsumerConf, actorSystem: ActorSystem)
           // A new event that needs to be processed.
           // Always use the queue to guarantee the correct order of messages.
           logger.info(s"Process event: $event")
-          messages.offer(KinesisActorEvent(event)(actorRef))
+          messages.offer(KinesisActorEvent[ConsumerEvent](event, event)(actorRef))
           while (isAvailable(out) && !messages.isEmpty) push(out, messages.poll())
 
         case (_, ConsumerShutdown(shardId)) =>

@@ -30,7 +30,7 @@ class KinesisSourceIntegrationSpec
         .take(TestStreamNumberOfShards * TestStreamNrOfMessagesPerShard)
         .map { event =>
           event.commit()
-          event.event.payload
+          event.payload.payload
         }
         .runWith(Sink.seq)
 
@@ -52,7 +52,7 @@ class KinesisSourceIntegrationSpec
         .take(TestStreamNrOfMessagesPerShard * TestStreamNumberOfShards)
         .map { event =>
           event.commit()
-          event.event.payload
+          event.payload.payload
         }
         .runWith(Sink.seq)
 
@@ -79,7 +79,7 @@ class KinesisSourceIntegrationSpec
         .take(TestStreamNrOfMessagesPerShard * TestStreamNumberOfShards)
         .map { event =>
           event.commit()
-          event.event.payload
+          event.payload.payload
         }
         .runWith(Sink.seq)
 
@@ -107,7 +107,7 @@ class KinesisSourceIntegrationSpec
               .take(batchSize)
               .map { event =>
                 event.commit()
-                event.event.payload
+                event.payload.payload
               }
               .runWith(Sink.seq)
               .futureValue
@@ -140,7 +140,7 @@ class KinesisSourceIntegrationSpec
         .take(TestStreamNumberOfShards * TestStreamNrOfMessagesPerShard)
         .map { event =>
           event.commit()
-          event.event.payload
+          event.payload.payload
         }
         .runWith(Sink.seq)
         .futureValue

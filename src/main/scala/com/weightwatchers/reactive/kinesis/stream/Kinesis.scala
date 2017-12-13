@@ -20,6 +20,7 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
+import com.weightwatchers.reactive.kinesis.models.ConsumerEvent
 
 /**
   * Main entry point for creating a Kinesis source and sink.
@@ -37,7 +38,7 @@ object Kinesis {
     */
   def source(
       consumerConf: ConsumerConf
-  )(implicit system: ActorSystem): Source[KinesisEvent, NotUsed] = {
+  )(implicit system: ActorSystem): Source[KinesisEvent[ConsumerEvent], NotUsed] = {
     Source.fromGraph(new KinesisSourceGraph(consumerConf, system))
   }
 
@@ -64,7 +65,7 @@ object Kinesis {
     */
   def source(consumerName: String, inConfig: String = "kinesis")(
       implicit system: ActorSystem
-  ): Source[KinesisEvent, NotUsed] = {
+  ): Source[KinesisEvent[ConsumerEvent], NotUsed] = {
     source(ConsumerConf(system.settings.config.getConfig(inConfig), consumerName))
   }
 }
