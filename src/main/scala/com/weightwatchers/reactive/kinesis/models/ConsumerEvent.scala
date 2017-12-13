@@ -16,6 +16,8 @@
 
 package com.weightwatchers.reactive.kinesis.models
 
+import java.nio.ByteBuffer
+
 import org.joda.time.DateTime
 
 /**
@@ -45,5 +47,5 @@ object CompoundSequenceNumber {
   * The actual event we're processing (contained within [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.ProcessEvent]]
   */
 case class ConsumerEvent(sequenceNumber: CompoundSequenceNumber,
-                         payload: String,
+                         payload: ByteBuffer,
                          timestamp: DateTime)

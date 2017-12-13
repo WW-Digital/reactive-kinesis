@@ -16,8 +16,10 @@
 
 package com.weightwatchers.reactive.kinesis.consumer
 
+import java.nio.ByteBuffer
+
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.testkit.TestActor.{AutoPilot, NoAutoPilot}
+import akka.testkit.TestActor.AutoPilot
 import akka.testkit.{ImplicitSender, TestActor, TestDuration, TestKit, TestProbe}
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorCheckpointer
 import com.weightwatchers.reactive.kinesis.consumer.CheckpointWorker.{
@@ -724,6 +726,8 @@ class ConsumerWorkerSpec
   }
 
   private def createEvent(seqNo: String, subNo: Long, payload: String): ConsumerEvent = {
-    ConsumerEvent(CompoundSequenceNumber(seqNo, subNo), payload, new DateTime())
+    ConsumerEvent(CompoundSequenceNumber(seqNo, subNo),
+                  ByteBuffer.wrap(payload.getBytes(java.nio.charset.StandardCharsets.UTF_8)),
+                  new DateTime())
   }
 }

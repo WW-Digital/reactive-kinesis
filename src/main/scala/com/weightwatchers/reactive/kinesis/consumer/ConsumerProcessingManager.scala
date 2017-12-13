@@ -84,7 +84,7 @@ private[consumer] class ConsumerProcessingManager(
       val userRecord = record.asInstanceOf[UserRecord]
       ConsumerEvent(
         CompoundSequenceNumber(userRecord.getSequenceNumber, userRecord.getSubSequenceNumber),
-        new String(userRecord.getData.array(), java.nio.charset.StandardCharsets.UTF_8),
+        userRecord.getData,
         new DateTime(userRecord.getApproximateArrivalTimestamp, DateTimeZone.UTC)
       )
     }

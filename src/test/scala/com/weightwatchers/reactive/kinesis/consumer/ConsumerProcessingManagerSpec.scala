@@ -256,9 +256,8 @@ class ConsumerProcessingManagerSpec
   def toConsumerEvent(record: UserRecord): ConsumerEvent = {
     ConsumerEvent(
       CompoundSequenceNumber(record.getSequenceNumber, record.getSubSequenceNumber),
-      new String(record.getData.array(), java.nio.charset.StandardCharsets.UTF_8),
+      record.getData,
       new DateTime(record.getApproximateArrivalTimestamp, DateTimeZone.UTC)
     )
   }
-
 }
