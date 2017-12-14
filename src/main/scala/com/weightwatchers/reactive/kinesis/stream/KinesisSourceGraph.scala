@@ -40,11 +40,12 @@ import scala.concurrent.{ExecutionContext, Future}
   * The KinesisEvent is passed through the stream.
   * Every event has to be committed explicitly.
   */
-sealed trait KinesisEvent[T] {
-  def payload: T
-  def commit(successful: Boolean = true): KinesisEvent[T]
-  def map[B](f: T => B): KinesisEvent[B]
-  def mapAsync[B](f: T => Future[B])(implicit ec: ExecutionContext): Future[KinesisEvent[B]]
+trait KinesisEvent[A] {
+  def event: ConsumerEvent
+  def payload: A
+  def commit(successful: Boolean = true): KinesisEvent[A]
+  def map[B](f: A => B): KinesisEvent[B]
+  def mapAsync[B](f: A => Future[B])(implicit ec: ExecutionContext): Future[KinesisEvent[B]]
 }
 
 /**
