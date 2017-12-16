@@ -29,7 +29,7 @@ script:
   && mkdir ~/.bintray && cp publishing/.credentials ~/.bintray/ && cp publishing/.artifactory
   ~/.bintray/ && sbt ++$TRAVIS_SCALA_VERSION publish; fi
 after_script:
-- docker-compose -f localstack/docker-compose.yml down
+#- docker-compose -f localstack/docker-compose.yml down
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coverageReport coveralls
 before_cache:
