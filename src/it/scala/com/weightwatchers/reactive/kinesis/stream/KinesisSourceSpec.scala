@@ -21,10 +21,12 @@ class KinesisSourceSpec
   class WithKinesis(val appName: String) {
     val workerIdGen: Iterator[String] = 1.to(Int.MaxValue).iterator.map(id => s"wrk-$id")
     def consumerConf(appName: String, batchSize: Long): ConsumerConf = {
-      consumerConfFor(kinesisConfig(streamName = TestStreamName,
-                                 appName = appName,
-                                 workerId = appName + "-" + workerIdGen.next(),
-                                 maxRecords = batchSize.toInt))
+      consumerConfFor(
+        kinesisConfig(streamName = TestStreamName,
+                      appName = appName,
+                      workerId = appName + "-" + workerIdGen.next(),
+                      maxRecords = batchSize.toInt)
+      )
     }
 
     // proactively create the lease table for this application.
