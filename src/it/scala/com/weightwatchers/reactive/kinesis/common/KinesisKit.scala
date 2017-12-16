@@ -5,7 +5,11 @@ import java.nio.ByteBuffer
 
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.dynamodbv2.{AmazonDynamoDB, AmazonDynamoDBClientBuilder}
-import com.amazonaws.services.kinesis.leases.impl.{KinesisClientLease, KinesisClientLeaseSerializer, LeaseManager}
+import com.amazonaws.services.kinesis.leases.impl.{
+  KinesisClientLease,
+  KinesisClientLeaseSerializer,
+  LeaseManager
+}
 import com.amazonaws.services.kinesis.model.PutRecordRequest
 import com.amazonaws.services.kinesis.{AmazonKinesisAsync, AmazonKinesisAsyncClientBuilder}
 import com.typesafe.config.{Config, ConfigFactory}
@@ -74,11 +78,14 @@ trait KinesisConfiguration {
       .withFallback(defaultKinesisConfig)
 
   def consumerConfFor(conf: Config, consumer: String = "testConsumer"): ConsumerConf = {
-    val config = ConsumerConf(conf, consumer)
+    val config     = ConsumerConf(conf, consumer)
     val clientConf = config.kclConfiguration.getKinesisClientConfiguration
     // reduce the thread pool to a small size (default is 50)
     // this config option is missing via typesafe config and should be added.
-    config.copy(kclConfiguration = config.kclConfiguration.withKinesisClientConfig(clientConf.withMaxConnections(5)))
+    config.copy(
+      kclConfiguration =
+        config.kclConfiguration.withKinesisClientConfig(clientConf.withMaxConnections(5))
+    )
   }
 }
 
@@ -95,7 +102,7 @@ trait KinesisKit
     with StrictLogging
     with KinesisConfiguration { self: Suite =>
 
-  val TestStreamName: String = self.suiteName
+  val TestStreamName: String               = self.suiteName
   val TestStreamNrOfMessagesPerShard: Long = 100
   val TestStreamNumberOfShards: Long       = 2
 
@@ -119,7 +126,6 @@ trait KinesisKit
     createTestData(TestStreamNrOfMessagesPerShard.toInt)
   }
 
-
   override protected def afterAll(): Unit = {
     super.afterAll()
     dynamoClient.shutdown()
@@ -140,9 +146,11 @@ trait KinesisKit
   }
 
   protected def createLeaseTable(applicationName: String): Unit = {
-    val manager = new LeaseManager[KinesisClientLease](s"$applicationName-$TestStreamName", dynamoClient, new KinesisClientLeaseSerializer())
+    val manager = new LeaseManager[KinesisClientLease](s"$applicationName-$TestStreamName",
+                                                       dynamoClient,
+                                                       new KinesisClientLeaseSerializer())
     manager.createLeaseTableIfNotExists(1l, 1l)
-    while(!manager.leaseTableExists()) Thread.sleep(100)
+    while (!manager.leaseTableExists()) Thread.sleep(100)
   }
 
   protected def cleanKinesis(): Unit = {
