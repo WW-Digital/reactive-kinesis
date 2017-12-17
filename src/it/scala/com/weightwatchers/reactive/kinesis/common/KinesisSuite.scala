@@ -15,10 +15,11 @@ import com.amazonaws.services.kinesis.{AmazonKinesisAsync, AmazonKinesisAsyncCli
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.StrictLogging
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
-import org.scalactic.source.Position
+import com.weightwatchers.reactive.kinesis.producer.ProducerConf
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Suite}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
 /**
   * Base trait to create a KinesisConfiguration from application config + override options.
@@ -28,10 +29,10 @@ trait KinesisConfiguration {
   val defaultKinesisConfig =
     ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
 
-  def kinesisConfig(streamName: String,
-                    appName: String = "integration-test",
-                    workerId: String = "",
-                    maxRecords: Int = 10000): Config =
+  private def kinesisConfig(streamName: String,
+                            appName: String = "integration-test",
+                            workerId: String = "",
+                            maxRecords: Int = 10000): Config =
     ConfigFactory
       .parseString(
         s"""
@@ -93,7 +94,7 @@ trait KinesisConfiguration {
       .getConfig("kinesis")
       .withFallback(defaultKinesisConfig)
 
-  def consumerConfFor(conf: Config, consumer: String = "testConsumer"): ConsumerConf = {
+  def consumerConfFromConfig(conf: Config, consumer: String = "testConsumer"): ConsumerConf = {
     val config     = ConsumerConf(conf, consumer)
     val clientConf = config.kclConfiguration.getKinesisClientConfiguration
     // reduce the thread pool to a small size (default is 50)
@@ -103,14 +104,42 @@ trait KinesisConfiguration {
         config.kclConfiguration.withKinesisClientConfig(clientConf.withMaxConnections(5))
     )
   }
+
+  def consumerConfFor(streamName: String,
+                      appName: String = "integration-test",
+                      workerId: String = "",
+                      maxRecords: Int = 10000): ConsumerConf = {
+
+    val config =
+      ConsumerConf(kinesisConfig(streamName, appName, workerId, maxRecords), "testConsumer")
+    val clientConf = config.kclConfiguration.getKinesisClientConfiguration
+
+    // reduce the thread pool to a small size (default is 50)
+    // this config option is missing via typesafe config and should be added.
+    // TODO - not exposed in KinesisClientLibConfiguration (and therefore configurator), needs hack or KCL PR
+    config.copy(
+      kclConfiguration =
+        config.kclConfiguration.withKinesisClientConfig(clientConf.withMaxConnections(5))
+    )
+  }
+
+  def producerConfFor(streamName: String, appName: String = "integration-test") = {
+    ProducerConf(kinesisConfig(streamName, appName),
+                 "testProducer",
+                 Some(TestCredentials.Credentials))
+  }
 }
 
 /**
-  * Mixin this trait to your test to interact with Kinesis.
+  * Mixin this trait to your test to setup Kinesis for integration tests.
+  *
   * Every suite will have a clean Kinesis and Dynamo as well as one Stream
   * with `TestStreamNumberOfShards` Shards with `TestStreamNrOfMessagesPerShard` Messages each.
   *
-  * Deletes only the table and stream for the CURRENT test (TestStreamName).
+  * The ApplicationName used for each test should be different, this will prevent tests from interfering with each other.
+  * i.e. Different applications will checkpoint and consume the data separately.
+  *
+  * Deletes only the table and stream for the CURRENT test (TestStreamName) once the Suite has completed.
   *
   */
 trait KinesisSuite
@@ -119,13 +148,14 @@ trait KinesisSuite
     with StrictLogging
     with KinesisConfiguration { self: Suite =>
 
-  val TestStreamName: String               = self.suiteName
-  val TestStreamNrOfMessagesPerShard: Long = 100
-  val TestStreamNumberOfShards: Long       = 2
+  def TestStreamName: String = self.suiteName
 
-  private lazy val kclSetupConfig = consumerConfFor(
-    kinesisConfig(streamName = TestStreamName, appName = suiteName)
-  ).kclConfiguration
+  def TestStreamNrOfMessagesPerShard: Long
+
+  def TestStreamNumberOfShards: Long = 2
+
+  private lazy val kclSetupConfig =
+    consumerConfFor(streamName = TestStreamName, appName = suiteName).kclConfiguration
 
   /**
     * Cleanup dynamo before each test
@@ -154,20 +184,25 @@ trait KinesisSuite
   }
 
   /**
-    * Wrap your code in this
+    * Wrap your spec in this to make Kinesis configuration easily available for the application name.
+    * Also ensures the lease table is initialised correctly.
     *
-    * @param appName
+    * @param appName the name of the application
     */
-  class WithKinesis(val appName: String) {
-    val workerIdGen: Iterator[String] = 1.to(Int.MaxValue).iterator.map(id => s"wrk-$id")
-    def consumerConf(appName: String, batchSize: Long): ConsumerConf = {
-      consumerConfFor(
-        kinesisConfig(streamName = TestStreamName,
-                      appName = appName,
-                      //workerId = appName + "-" + workerIdGen.next(),
-                      maxRecords = batchSize.toInt)
-      )
+  class withKinesisConfForApp(val appName: String) {
+
+    /**
+      * A simple consumer, useful for validating the behaviour of producers.
+      */
+    lazy val testConsumer: KinesisTestConsumer =
+      KinesisTestConsumer.from(consumerConfFor(appName = appName, streamName = TestStreamName),
+                               Some(100.millis))
+
+    def consumerConf(batchSize: Long = TestStreamNrOfMessagesPerShard): ConsumerConf = {
+      consumerConfFor(streamName = TestStreamName, appName = appName, maxRecords = batchSize.toInt)
     }
+
+    def producerConf() = producerConfFor(TestStreamName, appName)
 
     // proactively create the lease table for this application.
     // KCL does not handle this reliably, which makes the test brittle.
@@ -191,7 +226,7 @@ trait KinesisSuite
     * There seems to be a race condition in KCL when the lease table is created/accessed, which made the tests brittle.
     * This creates the lease table proactively to remedy this shortcoming
     */
-  protected def createLeaseTable(applicationName: String): Unit = {
+  private def createLeaseTable(applicationName: String): Unit = {
     val manager = new LeaseManager[KinesisClientLease](s"$applicationName-$TestStreamName",
                                                        dynamoClient,
                                                        new KinesisClientLeaseSerializer())
