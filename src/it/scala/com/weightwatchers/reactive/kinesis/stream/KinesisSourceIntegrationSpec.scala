@@ -20,11 +20,13 @@ class KinesisSourceIntegrationSpec
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(60.seconds)
 
+  val TestStreamNrOfMessagesPerShard: Long = 100
+
   "A Kinesis Source" should {
 
-    "process all messages of a stream with one worker" in new WithKinesis("1worker") {
+    "process all messages of a stream with one worker" in new withKinesisConfForApp("1worker") {
       val result = Kinesis
-        .source(consumerConf = consumerConf(appName, TestStreamNrOfMessagesPerShard))
+        .source(consumerConf = consumerConf())
         .take(TestStreamNumberOfShards * TestStreamNrOfMessagesPerShard)
         .map { event =>
           event.commit()
@@ -38,13 +40,13 @@ class KinesisSourceIntegrationSpec
       grouped.values.foreach(_ should have size TestStreamNumberOfShards)
     }
 
-    "process all messages of a stream with 2 workers" in new WithKinesis("2worker") {
+    "process all messages of a stream with 2 workers" in new withKinesisConfForApp("2worker") {
       // Please note: since source1 and source2 are started simultaneously, both will assume there is no other worker.
       // During register one will fail and not read any message until retry
       // Depending on timing one or both sources will read all events
       val batchSize = TestStreamNrOfMessagesPerShard
-      val source1   = Kinesis.source(consumerConf = consumerConf(appName, batchSize))
-      val source2   = Kinesis.source(consumerConf = consumerConf(appName, batchSize))
+      val source1   = Kinesis.source(consumerConf = consumerConf())
+      val source2   = Kinesis.source(consumerConf = consumerConf())
       val result = source1
         .merge(source2)
         .take(TestStreamNrOfMessagesPerShard * TestStreamNumberOfShards)
@@ -60,15 +62,15 @@ class KinesisSourceIntegrationSpec
       grouped.values.foreach(_ should have size TestStreamNumberOfShards)
     }
 
-    "process all messages of a stream with 4 workers" in new WithKinesis("4worker") {
+    "process all messages of a stream with 4 workers" in new withKinesisConfForApp("4worker") {
       // Please note: since all sources are started simultaneously, all will assume there is no other worker.
       // During register all except one will fail and not read any message until retry
       // Depending on timing one or multiple sources will read all events
       val batchSize = TestStreamNrOfMessagesPerShard
-      val source1   = Kinesis.source(consumerConf = consumerConf(appName, batchSize))
-      val source2   = Kinesis.source(consumerConf = consumerConf(appName, batchSize))
-      val source3   = Kinesis.source(consumerConf = consumerConf(appName, batchSize))
-      val source4   = Kinesis.source(consumerConf = consumerConf(appName, batchSize))
+      val source1   = Kinesis.source(consumerConf = consumerConf())
+      val source2   = Kinesis.source(consumerConf = consumerConf())
+      val source3   = Kinesis.source(consumerConf = consumerConf())
+      val source4   = Kinesis.source(consumerConf = consumerConf())
       val result = source1
         .merge(source2)
         .merge(source3)
@@ -87,7 +89,9 @@ class KinesisSourceIntegrationSpec
       grouped.values.foreach(_ should have size TestStreamNumberOfShards)
     }
 
-    "maintain the read position in the stream correctly" in new WithKinesis("read_position") {
+    "maintain the read position in the stream correctly" in new withKinesisConfForApp(
+      "read_position"
+    ) {
       val batchSize = TestStreamNrOfMessagesPerShard / 2 // 2 * NrOfShards batches needed
 
       // We create multiple Sources (one after the other!). Each source:
@@ -99,7 +103,7 @@ class KinesisSourceIntegrationSpec
                .to((TestStreamNumberOfShards * TestStreamNrOfMessagesPerShard / batchSize).toInt))
           yield {
             Kinesis
-              .source(consumerConf = consumerConf(appName, batchSize))
+              .source(consumerConf = consumerConf())
               .take(batchSize)
               .map { event =>
                 event.commit()
@@ -116,13 +120,15 @@ class KinesisSourceIntegrationSpec
       grouped should have size TestStreamNrOfMessagesPerShard
     }
 
-    "not commit the position, if the event is not committed" in new WithKinesis("not_committed") {
+    "not commit the position, if the event is not committed" in new withKinesisConfForApp(
+      "not_committed"
+    ) {
       val batchSize = TestStreamNrOfMessagesPerShard / 2 // 2 * NrOfShards batches needed
 
       // This worker will read batchSize events and will not commit
       // We expect that the read position will not change
       val uncomitted = Kinesis
-        .source(consumerConf(appName, batchSize = batchSize))
+        .source(consumerConf())
         .take(batchSize)
         .runWith(Sink.seq)
         .futureValue
@@ -130,7 +136,7 @@ class KinesisSourceIntegrationSpec
       // This worker will read all available events.
       // This works only, if the first worker has not committed anything
       val commited = Kinesis
-        .source(consumerConf = consumerConf(appName, batchSize = batchSize))
+        .source(consumerConf = consumerConf())
         .take(TestStreamNumberOfShards * TestStreamNrOfMessagesPerShard)
         .map { event =>
           event.commit()
