@@ -4,35 +4,21 @@ import akka.stream.scaladsl.Sink
 import com.weightwatchers.reactive.kinesis.common.{
   AkkaUnitTestLike,
   KinesisConfiguration,
-  KinesisKit
+  KinesisSuite
 }
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.scalatest._
 
 import scala.concurrent.duration._
 
-class KinesisSourceSpec
+class KinesisSourceIntegrationSpec
     extends WordSpec
-    with KinesisKit
+    with KinesisSuite
     with KinesisConfiguration
     with AkkaUnitTestLike
     with Matchers {
 
-  class WithKinesis(val appName: String) {
-    val workerIdGen: Iterator[String] = 1.to(Int.MaxValue).iterator.map(id => s"wrk-$id")
-    def consumerConf(appName: String, batchSize: Long): ConsumerConf = {
-      consumerConfFor(
-        kinesisConfig(streamName = TestStreamName,
-                      appName = appName,
-                      workerId = appName + "-" + workerIdGen.next(),
-                      maxRecords = batchSize.toInt)
-      )
-    }
 
-    // proactively create the lease table for this application.
-    // KCL does not handle this reliably, which makes the test brittle.
-    createLeaseTable(appName)
-  }
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(60.seconds)
 
