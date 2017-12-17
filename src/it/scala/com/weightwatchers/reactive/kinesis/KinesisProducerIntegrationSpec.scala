@@ -55,7 +55,9 @@ class KinesisProducerIntegrationSpec
 
   "The KinesisProducer" - {
 
-    "Should publish a message to a stream" in new withKinesisConfForApp("int-test-stream-producer-1") {
+    "Should publish a message to a stream" in new withKinesisConfForApp(
+      "int-test-stream-producer-1"
+    ) {
 
       val conf     = producerConf()
       val producer = KinesisProducer(conf)
