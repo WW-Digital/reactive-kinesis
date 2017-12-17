@@ -5,7 +5,11 @@ import java.nio.ByteBuffer
 
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.dynamodbv2.{AmazonDynamoDB, AmazonDynamoDBClientBuilder}
-import com.amazonaws.services.kinesis.leases.impl.{KinesisClientLease, KinesisClientLeaseSerializer, LeaseManager}
+import com.amazonaws.services.kinesis.leases.impl.{
+  KinesisClientLease,
+  KinesisClientLeaseSerializer,
+  LeaseManager
+}
 import com.amazonaws.services.kinesis.model.PutRecordRequest
 import com.amazonaws.services.kinesis.{AmazonKinesisAsync, AmazonKinesisAsyncClientBuilder}
 import com.typesafe.config.{Config, ConfigFactory}
@@ -90,7 +94,7 @@ trait KinesisConfiguration {
       .withFallback(defaultKinesisConfig)
 
   def consumerConfFor(conf: Config, consumer: String = "testConsumer"): ConsumerConf = {
-    val config = ConsumerConf(conf, consumer)
+    val config     = ConsumerConf(conf, consumer)
     val clientConf = config.kclConfiguration.getKinesisClientConfiguration
     // reduce the thread pool to a small size (default is 50)
     // this config option is missing via typesafe config and should be added.
@@ -110,17 +114,18 @@ trait KinesisConfiguration {
   *
   */
 trait KinesisSuite
-  extends BeforeAndAfter
+    extends BeforeAndAfter
     with BeforeAndAfterAll
     with StrictLogging
-    with KinesisConfiguration {
-  self: Suite =>
+    with KinesisConfiguration { self: Suite =>
 
-  val TestStreamName: String = self.suiteName
+  val TestStreamName: String               = self.suiteName
   val TestStreamNrOfMessagesPerShard: Long = 100
-  val TestStreamNumberOfShards: Long = 2
+  val TestStreamNumberOfShards: Long       = 2
 
-  private lazy val kclSetupConfig = consumerConfFor(kinesisConfig(streamName = TestStreamName, appName = suiteName)).kclConfiguration
+  private lazy val kclSetupConfig = consumerConfFor(
+    kinesisConfig(streamName = TestStreamName, appName = suiteName)
+  ).kclConfiguration
 
   /**
     * Cleanup dynamo before each test
@@ -158,9 +163,9 @@ trait KinesisSuite
     def consumerConf(appName: String, batchSize: Long): ConsumerConf = {
       consumerConfFor(
         kinesisConfig(streamName = TestStreamName,
-          appName = appName,
-          //workerId = appName + "-" + workerIdGen.next(),
-          maxRecords = batchSize.toInt)
+                      appName = appName,
+                      //workerId = appName + "-" + workerIdGen.next(),
+                      maxRecords = batchSize.toInt)
       )
     }
 
@@ -174,9 +179,9 @@ trait KinesisSuite
 
     // Block until the stream is ready to rumble.
     while (kinesisClient
-      .describeStream(TestStreamName)
-      .getStreamDescription
-      .getStreamStatus != "ACTIVE") {
+             .describeStream(TestStreamName)
+             .getStreamDescription
+             .getStreamStatus != "ACTIVE") {
       Thread.sleep(100)
     }
     logger.info(s"Stream: $TestStreamName is created.")
@@ -188,8 +193,8 @@ trait KinesisSuite
     */
   protected def createLeaseTable(applicationName: String): Unit = {
     val manager = new LeaseManager[KinesisClientLease](s"$applicationName-$TestStreamName",
-      dynamoClient,
-      new KinesisClientLeaseSerializer())
+                                                       dynamoClient,
+                                                       new KinesisClientLeaseSerializer())
     manager.createLeaseTableIfNotExists(1l, 1l)
     while (!manager.leaseTableExists()) Thread.sleep(100)
   }

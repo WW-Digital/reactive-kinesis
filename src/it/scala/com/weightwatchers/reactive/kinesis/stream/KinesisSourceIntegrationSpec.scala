@@ -18,8 +18,6 @@ class KinesisSourceIntegrationSpec
     with AkkaUnitTestLike
     with Matchers {
 
-
-
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(60.seconds)
 
   "A Kinesis Source" should {
