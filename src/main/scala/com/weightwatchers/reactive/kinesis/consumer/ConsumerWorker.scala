@@ -448,7 +448,7 @@ private[consumer] class ConsumerWorker(eventProcessor: ActorRef,
         logger.warn(s"Worker for shard $latestShardId: Failed to checkpoint '$seqNo'")
       }
 
-    case GracefulShutdown(checkpointer) => {
+    case GracefulShutdown(shutdownCheckpointer) => {
       implicit val shutdownTimeout = workerConf.shutdownTimeout
       val outerSender              = sender()
 
@@ -467,7 +467,7 @@ private[consumer] class ConsumerWorker(eventProcessor: ActorRef,
       //Note that if this checkpoint fails (backoff, etc), we won't retry!!
       checkpoint(latestProcessedSeq) {
         (_: IRecordProcessorCheckpointer, latestSeq: CompoundSequenceNumber) =>
-          (checkpointWorker ? Checkpoint(checkpointer, latestSeq, force = true))
+          (checkpointWorker ? Checkpoint(shutdownCheckpointer, latestSeq, force = true))
             .mapTo[CheckpointResult]
       } match {
         case Some(cpResponseFut) =>
