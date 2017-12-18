@@ -26,7 +26,7 @@ import scala.concurrent.duration._
   */
 trait KinesisConfiguration {
 
-  val defaultKinesisConfig =
+  val defaultKinesisConfig: Config =
     ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
 
   private def kinesisConfig(streamName: String,
@@ -123,7 +123,7 @@ trait KinesisConfiguration {
     )
   }
 
-  def producerConfFor(streamName: String, appName: String = "integration-test") = {
+  def producerConfFor(streamName: String, appName: String = "integration-test"): ProducerConf = {
     ProducerConf(kinesisConfig(streamName, appName),
                  "testProducer",
                  Some(TestCredentials.Credentials))
@@ -202,7 +202,7 @@ trait KinesisSuite
       consumerConfFor(streamName = TestStreamName, appName = appName, maxRecords = batchSize.toInt)
     }
 
-    def producerConf() = producerConfFor(TestStreamName, appName)
+    def producerConf(): ProducerConf = producerConfFor(TestStreamName, appName)
 
     // proactively create the lease table for this application.
     // KCL does not handle this reliably, which makes the test brittle.
@@ -223,8 +223,8 @@ trait KinesisSuite
   }
 
   /**
-    * There seems to be a race condition in KCL when the lease table is created/accessed, which made the tests brittle.
-    * This creates the lease table proactively to remedy this shortcoming
+    * There seems to be a race condition in KCL when the lease table is created/accessed, which can make the tests brittle.
+    * This method creates the lease table proactively to remedy this shortcoming.
     */
   private def createLeaseTable(applicationName: String): Unit = {
     val manager = new LeaseManager[KinesisClientLease](s"$applicationName-$TestStreamName",
