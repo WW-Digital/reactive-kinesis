@@ -30,7 +30,7 @@ import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{
   EventProcessed,
   ProcessEvent
 }
-import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer
+import com.weightwatchers.reactive.kinesis.consumer.{KinesisConsumer, ConsumerService}
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
 import org.joda.time.DateTime
@@ -134,11 +134,21 @@ private[kinesis] case class CommittableActorEvent[+A](event: ConsumerEvent,
   * See reference.conf for a list of all available config options.
   *
   * @param config the kinesis stream configuration.
+  * @param createConsumer function that creates a consumer service from the graph stage actor reference.
   * @param actorSystem the actor system.
   */
-class KinesisSourceGraph(config: ConsumerConf, actorSystem: ActorSystem)
+class KinesisSourceGraph(config: ConsumerConf,
+                         createConsumer: ActorRef => ConsumerService,
+                         actorSystem: ActorSystem)
     extends GraphStage[SourceShape[CommittableEvent[ConsumerEvent]]]
     with LazyLogging {
+
+  /**
+    * Ctor that uses the KinesisConsumer as ConsumerService implementation.
+    */
+  def this(config: ConsumerConf, actorSystem: ActorSystem) = {
+    this(config, KinesisConsumer(config, _, actorSystem), actorSystem)
+  }
 
   private[this] val out: Outlet[CommittableEvent[ConsumerEvent]]   = Outlet("KinesisSource.out")
   override val shape: SourceShape[CommittableEvent[ConsumerEvent]] = SourceShape.of(out)
@@ -150,7 +160,7 @@ class KinesisSourceGraph(config: ConsumerConf, actorSystem: ActorSystem)
       // The queue to buffer events that can not be pushed downstream.
       private[this] val messages = new java.util.ArrayDeque[CommittableEvent[ConsumerEvent]]()
       // The kinesis consumer to read from.
-      private[this] var kinesisConsumer: Option[KinesisConsumer] = None
+      private[this] var consumerService: Option[ConsumerService] = None
 
       setHandler(out, new OutHandler {
         override def onPull(): Unit = if (!messages.isEmpty) push(out, messages.poll())
@@ -160,16 +170,16 @@ class KinesisSourceGraph(config: ConsumerConf, actorSystem: ActorSystem)
         super.preStart()
         // the underlying stage actor reference of this graph stage.
         val actor    = getStageActor(receive).ref
-        val consumer = KinesisConsumer(config, actor, actorSystem)
+        val consumer = createConsumer(actor)
         // start() creates a long running future that returns, if the consumer worker is done or failed.
         import actorSystem.dispatcher
         consumer.start().map(_ => Done).pipeTo(actor)
-        kinesisConsumer = Some(consumer)
+        consumerService = Some(consumer)
       }
 
       override def postStop(): Unit = {
         logger.info(s"Stopping Source $out. ${messages.size()} messages are buffered unprocessed.")
-        kinesisConsumer.foreach(_.stop())
+        consumerService.foreach(_.stop())
         super.postStop()
       }
 

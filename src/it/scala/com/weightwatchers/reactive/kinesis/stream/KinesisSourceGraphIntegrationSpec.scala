@@ -6,12 +6,11 @@ import com.weightwatchers.reactive.kinesis.common.{
   KinesisConfiguration,
   KinesisSuite
 }
-import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.scalatest._
 
 import scala.concurrent.duration._
 
-class KinesisSourceIntegrationSpec
+class KinesisSourceGraphIntegrationSpec
     extends WordSpec
     with KinesisSuite
     with KinesisConfiguration
@@ -127,7 +126,7 @@ class KinesisSourceIntegrationSpec
 
       // This worker will read batchSize events and will not commit
       // We expect that the read position will not change
-      val uncomitted = Kinesis
+      val uncommitted = Kinesis
         .source(consumerConf())
         .take(batchSize)
         .runWith(Sink.seq)
@@ -135,7 +134,7 @@ class KinesisSourceIntegrationSpec
 
       // This worker will read all available events.
       // This works only, if the first worker has not committed anything
-      val commited = Kinesis
+      val committed = Kinesis
         .source(consumerConf = consumerConf())
         .take(TestStreamNumberOfShards * TestStreamNrOfMessagesPerShard)
         .map { event =>
@@ -145,9 +144,9 @@ class KinesisSourceIntegrationSpec
         .runWith(Sink.seq)
         .futureValue
 
-      uncomitted should have size batchSize
-      val grouped = commited.groupBy(identity)
-      commited.distinct should have size TestStreamNrOfMessagesPerShard
+      uncommitted should have size batchSize
+      val grouped = committed.groupBy(identity)
+      committed.distinct should have size TestStreamNrOfMessagesPerShard
       grouped should have size TestStreamNrOfMessagesPerShard
       grouped.values.foreach(_ should have size TestStreamNumberOfShards)
     }
