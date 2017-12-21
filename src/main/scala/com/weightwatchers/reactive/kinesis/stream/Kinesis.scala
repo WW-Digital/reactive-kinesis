@@ -38,7 +38,7 @@ object Kinesis {
     */
   def source(
       consumerConf: ConsumerConf
-  )(implicit system: ActorSystem): Source[KinesisEvent[ConsumerEvent], NotUsed] = {
+  )(implicit system: ActorSystem): Source[CommittableEvent[ConsumerEvent], NotUsed] = {
     Source.fromGraph(new KinesisSourceGraph(consumerConf, system))
   }
 
@@ -65,7 +65,7 @@ object Kinesis {
     */
   def source(consumerName: String, inConfig: String = "kinesis")(
       implicit system: ActorSystem
-  ): Source[KinesisEvent[ConsumerEvent], NotUsed] = {
+  ): Source[CommittableEvent[ConsumerEvent], NotUsed] = {
     source(ConsumerConf(system.settings.config.getConfig(inConfig), consumerName))
   }
 }

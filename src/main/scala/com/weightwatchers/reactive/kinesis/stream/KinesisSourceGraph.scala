@@ -32,38 +32,86 @@ import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{
 }
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
-import com.weightwatchers.reactive.kinesis.models.ConsumerEvent
+import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
+import org.joda.time.DateTime
 
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
-  * The KinesisEvent is passed through the stream.
+  * The CommittableEvent is passed through the stream.
   * Every event has to be committed explicitly.
   */
-trait KinesisEvent[A] {
-  def event: ConsumerEvent
+trait CommittableEvent[+A] {
+
+  /**
+    * The payload of this committable event.
+    * @return the payload of this event.
+    */
   def payload: A
-  def commit(successful: Boolean = true): KinesisEvent[A]
-  def map[B](f: A => B): KinesisEvent[B]
-  def mapAsync[B](f: A => Future[B])(implicit ec: ExecutionContext): Future[KinesisEvent[B]]
+
+  /**
+    * The sequence number of this event.
+    * @return the sequence number of this event.
+    */
+  def sequenceNumber: CompoundSequenceNumber
+
+  /**
+    * Timestamp when the event has been created.
+    * @return timestamp of creation.
+    */
+  def timestamp: DateTime
+
+  /**
+    * Mark this event as handled. If all events of a batch are handled the read position can be advanced.
+    * @param successful indicates if the event was handled successfully.
+    */
+  def commit(successful: Boolean = true): CommittableEvent[A]
+
+  /**
+    * Change the type of the payload by applying the given function to the payload.
+    * This is useful if the payload is changed in different stages and the commit should be applied in a later stage.
+    * Note: Committing a mapped event has the same effect as committing the original event - the sequence number is not changed.
+    *
+    * @param f the function to apply to the payload.
+    * @tparam B the type of the returned CommittableEvent
+    * @return A `CommittableEvent` with payload of type B
+    */
+  def map[B](f: A => B): CommittableEvent[B]
+
+  /**
+    * Change the type of the payload by applying the async function to the payload.
+    * This is useful if the payload is changed in an async stage and the commit should be applied in a later stage.
+    * Note: Committing a mapped event has the same effect as committing the original event - the sequence number is not changed.
+    *
+    * @param f the function to apply to the payload.
+    * @param ec the execution context to use
+    * @tparam B the type of the returned `CommittableEvent`
+    * @return a `Future` which will be completed with a `CommittableEvent` with payload of type B
+    */
+  def mapAsync[B](f: A => Future[B])(implicit ec: ExecutionContext): Future[CommittableEvent[B]]
 }
 
 /**
-  * Actor based implementation of KinesisEvent.
+  * Actor based implementation of CommittableEvent.
   */
-private[kinesis] case class KinesisActorEvent[T](event: ConsumerEvent,
-                                                 payload: T)(implicit sender: ActorRef)
-    extends KinesisEvent[T] {
-  def commit(successful: Boolean = true): KinesisEvent[T] = {
+private[kinesis] case class CommittableActorEvent[+A](event: ConsumerEvent,
+                                                      payload: A)(implicit sender: ActorRef)
+    extends CommittableEvent[A] {
+
+  override def sequenceNumber: CompoundSequenceNumber = event.sequenceNumber
+
+  override def timestamp: DateTime = event.timestamp
+
+  def commit(successful: Boolean = true): CommittableEvent[A] = {
     sender ! EventProcessed(event.sequenceNumber, successful)
     this
   }
-  override def map[B](f: T => B): KinesisEvent[B] = KinesisActorEvent(event, f(payload))
+  override def map[B](f: A => B): CommittableEvent[B] = CommittableActorEvent(event, f(payload))
 
   override def mapAsync[B](
-      f: T => Future[B]
-  )(implicit ec: ExecutionContext): Future[KinesisEvent[B]] =
-    f(payload).map(KinesisActorEvent(event, _))
+      f: A => Future[B]
+  )(implicit ec: ExecutionContext): Future[CommittableEvent[B]] =
+    f(payload).map(CommittableActorEvent(event, _))
 }
 
 /**
@@ -89,18 +137,18 @@ private[kinesis] case class KinesisActorEvent[T](event: ConsumerEvent,
   * @param actorSystem the actor system.
   */
 class KinesisSourceGraph(config: ConsumerConf, actorSystem: ActorSystem)
-    extends GraphStage[SourceShape[KinesisEvent[ConsumerEvent]]]
+    extends GraphStage[SourceShape[CommittableEvent[ConsumerEvent]]]
     with LazyLogging {
 
-  private[this] val out: Outlet[KinesisEvent[ConsumerEvent]]   = Outlet("KinesisSource.out")
-  override val shape: SourceShape[KinesisEvent[ConsumerEvent]] = SourceShape.of(out)
+  private[this] val out: Outlet[CommittableEvent[ConsumerEvent]]   = Outlet("KinesisSource.out")
+  override val shape: SourceShape[CommittableEvent[ConsumerEvent]] = SourceShape.of(out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
     new GraphStageLogic(shape) {
       // KCL will read events in batches. The stream should be able to buffer the whole batch.
       private[this] val bufferSize: Int = config.kclConfiguration.getMaxRecords
       // The queue to buffer events that can not be pushed downstream.
-      private[this] val messages = new java.util.ArrayDeque[KinesisEvent[ConsumerEvent]]()
+      private[this] val messages = new java.util.ArrayDeque[CommittableEvent[ConsumerEvent]]()
       // The kinesis consumer to read from.
       private[this] var kinesisConsumer: Option[KinesisConsumer] = None
 
@@ -137,7 +185,7 @@ class KinesisSourceGraph(config: ConsumerConf, actorSystem: ActorSystem)
           // A new event that needs to be processed.
           // Always use the queue to guarantee the correct order of messages.
           logger.info(s"Process event: $event")
-          messages.offer(KinesisActorEvent[ConsumerEvent](event, event)(actorRef))
+          messages.offer(CommittableActorEvent[ConsumerEvent](event, event)(actorRef))
           while (isAvailable(out) && !messages.isEmpty) push(out, messages.poll())
 
         case (_, ConsumerShutdown(shardId)) =>
