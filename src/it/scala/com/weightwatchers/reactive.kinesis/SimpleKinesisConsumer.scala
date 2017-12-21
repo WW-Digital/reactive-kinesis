@@ -122,7 +122,7 @@ class SimpleKinesisConsumer(kinesisConfig: Config) extends Actor with LazyLoggin
     case ProcessEvent(event) => {
       //logger.trace(s"[!] Incoming message: ${event.payload}, with seqNo: ${event.sequenceNumber}")
 
-      val payload = event.payload.toString().toInt
+      val payload = event.payloadAsString().toInt
 
       val client = sender()
       //payload is literally an int
