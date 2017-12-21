@@ -190,7 +190,8 @@ class KinesisConsumer(consumerConf: ConsumerConf,
                       consumerWorkerProps: Props,
                       system: ActorSystem,
                       context: ActorRefFactory)
-    extends LazyLogging {
+    extends ConsumerService
+    with LazyLogging {
 
   //The manager timeout needs to be just longer than the batch timeout * retries
   val managerBatchTimeout = Timeout(

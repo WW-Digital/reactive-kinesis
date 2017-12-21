@@ -27,7 +27,7 @@ lazy val library =
       val scalaTest = "3.0.3"
       val kamon = "0.6.6"
       val jackson = "2.8.7"
-      val akka = "2.5.1"
+      val akka = "2.5.7"
     }
 
     val jackson = Seq(
@@ -53,6 +53,7 @@ lazy val library =
     val lightbend = Seq(
       "com.typesafe"               % "config"                        % "1.3.1"            % Compile,
       "com.typesafe.akka"          %% "akka-actor"                   % Version.akka       % Compile,
+      "com.typesafe.akka"          %% "akka-stream"                  % Version.akka       % Compile,
       "com.typesafe.scala-logging" %% "scala-logging"                % "3.5.0"            % Compile
       )
 
@@ -72,11 +73,11 @@ lazy val library =
       "org.scalacheck"             %% "scalacheck"                   % Version.scalaCheck % "it,test",
       "com.typesafe.akka"          %% "akka-testkit"                 % Version.akka       % "it,test",
       "org.mockito"                % "mockito-core"                  % "2.7.15"           % "it,test",
-      "io.kamon"                   %% "kamon-core"                   % Version.kamon      % Test,
-      "io.kamon"                   %% "kamon-akka-2.4"               % Version.kamon      % Test,
-      "io.kamon"                   %% "kamon-statsd"                 % Version.kamon      % Test,
-      "io.kamon"                   %% "kamon-log-reporter"           % Version.kamon      % Test,
-      "io.kamon"                   %% "kamon-system-metrics"         % Version.kamon      % Test
+      "io.kamon"                   %% "kamon-core"                   % Version.kamon      % "it,test",
+      "io.kamon"                   %% "kamon-akka-2.4"               % Version.kamon      % "it,test",
+      "io.kamon"                   %% "kamon-statsd"                 % Version.kamon      % "it,test",
+      "io.kamon"                   %% "kamon-log-reporter"           % Version.kamon      % "it,test",
+      "io.kamon"                   %% "kamon-system-metrics"         % Version.kamon      % "it,test"
     )
   }
 

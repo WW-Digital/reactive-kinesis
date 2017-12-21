@@ -15,8 +15,7 @@ before_script:
 - docker-compose -f localstack/docker-compose.yml up -d
 - docker ps -a
 script:
-- sbt ++$TRAVIS_SCALA_VERSION clean coverage scalafmtTest test
-- sbt ++$TRAVIS_SCALA_VERSION it:test
+- sbt ++$TRAVIS_SCALA_VERSION clean coverage scalafmtTest test it:test
 # Tagged releases
 - if [ $TRAVIS_TEST_RESULT -eq 0 -a "$TRAVIS_PULL_REQUEST" = "false" ] && [[ "$TRAVIS_TAG"
   =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?(-M[0-9]+)?$ ]]; then echo "** Publishing Release

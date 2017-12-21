@@ -49,6 +49,7 @@ object SimpleKinesisProducer {
   }
 }
 
+@deprecated("Here for reference", "v0.6.0")
 class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
 
   protected def kinesisConfig = kConfig

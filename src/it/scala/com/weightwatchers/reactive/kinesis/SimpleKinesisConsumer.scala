@@ -54,6 +54,7 @@ object SimpleKinesisConsumer {
   * sleep 120 && \
   * aws kinesis create-stream --stream-name test-kinesis-reliability --shard-count 2
   */
+@deprecated("Here for reference", "v0.6.0")
 class SimpleKinesisConsumer(kinesisConfig: Config) extends Actor with LazyLogging {
 
   import scala.concurrent.duration._
