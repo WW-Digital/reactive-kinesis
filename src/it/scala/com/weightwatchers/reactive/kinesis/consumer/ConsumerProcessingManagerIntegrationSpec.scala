@@ -2,7 +2,10 @@ package com.weightwatchers.reactive.kinesis.consumer
 
 import akka.actor.{ActorRef, Props}
 import akka.testkit.TestProbe
-import com.amazonaws.services.kinesis.clientlibrary.interfaces.v2.IRecordProcessorFactory
+import com.amazonaws.services.kinesis.clientlibrary.interfaces.v2.{
+  IRecordProcessor,
+  IRecordProcessorFactory
+}
 import com.weightwatchers.reactive.kinesis.common.{
   AkkaUnitTestLike,
   KinesisConfiguration,
@@ -79,16 +82,19 @@ class ConsumerProcessingManagerIntegrationSpec
     def runningProcessingManagers: Int =
       createdProcessingManager.count(_.shuttingDown.get == false)
 
-    override private[consumer] val recordProcessorFactory: IRecordProcessorFactory = () => {
-      val manager = new ConsumerProcessingManager(
-        system.actorOf(consumerWorkerProps, s"consumer-worker-${UUID_GENERATOR.generate()}"),
-        kclWorker,
-        managerBatchTimeout,
-        consumerConf.workerConf.shutdownTimeout.duration
-      )(ctx)
-      createdProcessingManager += manager
-      manager
-    }
+    override private[consumer] val recordProcessorFactory: IRecordProcessorFactory =
+      new IRecordProcessorFactory {
+        override def createProcessor(): IRecordProcessor = {
+          val manager = new ConsumerProcessingManager(
+            system.actorOf(consumerWorkerProps, s"consumer-worker-${UUID_GENERATOR.generate()}"),
+            kclWorker,
+            managerBatchTimeout,
+            consumerConf.workerConf.shutdownTimeout.duration
+          )(ctx)
+          createdProcessingManager += manager
+          manager
+        }
+      }
 
     // test consumer are started during instantiation
     start()
