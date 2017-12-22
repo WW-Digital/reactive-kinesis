@@ -541,7 +541,7 @@ class ConsumerWorkerSpec
                                ProcessingComplete())
 
         When("We ask for a GracefulShutdown")
-        managerProbe.send(worker, GracefulShutdown)
+        managerProbe.send(worker, GracefulShutdown(checkpointer))
 
         Then("A Checkpoint is requested, forcing if necessary")
         //validate the batch gets checkpointed
@@ -577,7 +577,7 @@ class ConsumerWorkerSpec
                                       ProcessEvent(noAckRecord))
 
         When("We ask for a GracefulShutdown")
-        managerProbe.send(worker, GracefulShutdown)
+        managerProbe.send(worker, GracefulShutdown(checkpointer))
 
         Then("The manager is notified of batch completion (abort awaiting for batch response)")
         managerProbe.expectMsg(checkpointTimeout, ProcessingComplete(false))
@@ -617,7 +617,7 @@ class ConsumerWorkerSpec
                                ProcessingComplete())
 
         When("We ask for a GracefulShutdown")
-        managerProbe.send(worker, GracefulShutdown)
+        managerProbe.send(worker, GracefulShutdown(checkpointer))
 
         Then("A Checkpoint is requested, forcing if necessary")
         //validate the batch gets checkpointed
@@ -661,7 +661,7 @@ class ConsumerWorkerSpec
         checkpointerProbe.reply(CheckpointResult(event1.sequenceNumber, success = true))
 
         When("We ask for a GracefulShutdown")
-        managerProbe.send(worker, GracefulShutdown)
+        managerProbe.send(worker, GracefulShutdown(checkpointer))
 
         Then("A Checkpoint is not requested")
 

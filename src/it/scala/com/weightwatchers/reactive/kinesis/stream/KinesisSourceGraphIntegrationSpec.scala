@@ -11,17 +11,17 @@ import org.scalatest._
 import scala.concurrent.duration._
 
 class KinesisSourceGraphIntegrationSpec
-    extends WordSpec
+    extends FreeSpec
     with KinesisSuite
     with KinesisConfiguration
     with AkkaUnitTestLike
     with Matchers {
 
-  override implicit def patienceConfig: PatienceConfig = PatienceConfig(60.seconds)
+  override implicit def patienceConfig: PatienceConfig = PatienceConfig(60.seconds, 1.second)
 
   val TestStreamNrOfMessagesPerShard: Long = 100
 
-  "A Kinesis Source" should {
+  "A Kinesis Source" - {
 
     "process all messages of a stream with one worker" in new withKinesisConfForApp("1worker") {
       val result = Kinesis

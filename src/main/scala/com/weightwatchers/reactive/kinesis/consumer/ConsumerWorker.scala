@@ -141,8 +141,9 @@ object ConsumerWorker {
 
   /**
     * Handles any important shutdown requirements such as final checkpointing
+    * @param checkpointer the checkpointer to use to checkpoint current position.
     */
-  private[consumer] case object GracefulShutdown
+  private[consumer] case class GracefulShutdown(checkpointer: IRecordProcessorCheckpointer)
 
   /**
     * Tells the manager we've completed shutdown
@@ -447,7 +448,7 @@ private[consumer] class ConsumerWorker(eventProcessor: ActorRef,
         logger.warn(s"Worker for shard $latestShardId: Failed to checkpoint '$seqNo'")
       }
 
-    case GracefulShutdown => {
+    case GracefulShutdown(shutdownCheckpointer) => {
       implicit val shutdownTimeout = workerConf.shutdownTimeout
       val outerSender              = sender()
 
@@ -465,8 +466,8 @@ private[consumer] class ConsumerWorker(eventProcessor: ActorRef,
 
       //Note that if this checkpoint fails (backoff, etc), we won't retry!!
       checkpoint(latestProcessedSeq) {
-        (checkpointer: IRecordProcessorCheckpointer, latestSeq: CompoundSequenceNumber) =>
-          (checkpointWorker ? Checkpoint(checkpointer, latestSeq, force = true))
+        (_: IRecordProcessorCheckpointer, latestSeq: CompoundSequenceNumber) =>
+          (checkpointWorker ? Checkpoint(shutdownCheckpointer, latestSeq, force = true))
             .mapTo[CheckpointResult]
       } match {
         case Some(cpResponseFut) =>

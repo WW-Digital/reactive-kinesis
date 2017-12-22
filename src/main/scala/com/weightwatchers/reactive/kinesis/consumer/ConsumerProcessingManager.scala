@@ -124,20 +124,33 @@ private[consumer] class ConsumerProcessingManager(
   }
 
   override def shutdownRequested(checkpointer: IRecordProcessorCheckpointer): Unit = {
-    shuttingDown.getAndSet(true)
-    logger.info(s"*** Shutting down record processor for shard: $kinesisShardId ***")
-
-    Try {
-      Await.result(consumerWorker ? GracefulShutdown, shutdownTimeout)
-    } recover {
-      case exception =>
-        logger.error(s"Unexpected exception on shutdown, final checkpoint attempt may have failed",
-                     exception)
-    }
+    logger.info(s"Graceful shutdown requested for record processor of shard: $kinesisShardId.")
+    shutdown(checkpointer)
   }
 
   override def shutdown(shutdownInput: ShutdownInput): Unit = {
-    logger.info(s"*** Shutdown complete for record processor of shard: $kinesisShardId ***")
+    logger.info(
+      s"Shutdown record processor for shard: $kinesisShardId. Reason: ${shutdownInput.getShutdownReason}"
+    )
+    shutdown(shutdownInput.getCheckpointer)
+  }
+
+  private[consumer] def shutdown(checkpointer: IRecordProcessorCheckpointer): Unit = {
+    if (shuttingDown.compareAndSet(false, true)) {
+      logger.info(s"*** Shutting down record processor for shard: $kinesisShardId ***")
+
+      Try {
+        Await.result(consumerWorker ? GracefulShutdown(checkpointer), shutdownTimeout)
+      } recover {
+        case exception =>
+          logger.error(
+            s"Unexpected exception on shutdown, final checkpoint attempt may have failed",
+            exception
+          )
+      }
+    } else {
+      logger.warn(s"Shutdown already initiated for record processor of shard: $kinesisShardId.")
+    }
   }
 
   private[consumer] def closeManager(): Unit = {
