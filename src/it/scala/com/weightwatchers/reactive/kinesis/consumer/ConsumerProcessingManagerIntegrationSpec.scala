@@ -3,7 +3,11 @@ package com.weightwatchers.reactive.kinesis.consumer
 import akka.actor.{ActorRef, Props}
 import akka.testkit.TestProbe
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.v2.IRecordProcessorFactory
-import com.weightwatchers.reactive.kinesis.common.{AkkaUnitTestLike, KinesisConfiguration, KinesisSuite}
+import com.weightwatchers.reactive.kinesis.common.{
+  AkkaUnitTestLike,
+  KinesisConfiguration,
+  KinesisSuite
+}
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{FreeSpec, Matchers}
@@ -11,19 +15,22 @@ import org.scalatest.{FreeSpec, Matchers}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
 
-class ConsumerProcessingManagerIntegrationSpec extends FreeSpec
-  with KinesisSuite
-  with KinesisConfiguration
-  with AkkaUnitTestLike
-  with Matchers
-  with Eventually {
+class ConsumerProcessingManagerIntegrationSpec
+    extends FreeSpec
+    with KinesisSuite
+    with KinesisConfiguration
+    with AkkaUnitTestLike
+    with Matchers
+    with Eventually {
 
-  override def TestStreamNrOfMessagesPerShard: Long = 0
+  override def TestStreamNrOfMessagesPerShard: Long    = 0
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(60.seconds, 1.second)
 
   "A ConsumerProcessingManager on a stream with 2 shards" - {
 
-    "should start and stop processing managers correctly" in new withKinesisConfForApp("count_processing_managers") {
+    "should start and stop processing managers correctly" in new withKinesisConfForApp(
+      "count_processing_managers"
+    ) {
       // 2 consumers start - each operates on one shard
       val consumer1 = new TestKinesisConsumer(consumerConf(), TestProbe().testActor)
       val consumer2 = new TestKinesisConsumer(consumerConf(), TestProbe().testActor)
@@ -58,16 +65,19 @@ class ConsumerProcessingManagerIntegrationSpec extends FreeSpec
     }
   }
 
-  class TestKinesisConsumer(consumerConf: ConsumerConf,
-                            consumerWorkerProps: Props) extends KinesisConsumer(consumerConf, consumerWorkerProps, system, system) {
-    def this(consumerConf: ConsumerConf, eventProcessor: ActorRef) = this(consumerConf, ConsumerWorker.props(eventProcessor,
-      consumerConf.workerConf,
-      consumerConf.checkpointerConf,
-      consumerConf.dispatcher))
+  class TestKinesisConsumer(consumerConf: ConsumerConf, consumerWorkerProps: Props)
+      extends KinesisConsumer(consumerConf, consumerWorkerProps, system, system) {
+    def this(consumerConf: ConsumerConf, eventProcessor: ActorRef) =
+      this(consumerConf,
+           ConsumerWorker.props(eventProcessor,
+                                consumerConf.workerConf,
+                                consumerConf.checkpointerConf,
+                                consumerConf.dispatcher))
 
     val createdProcessingManager = ListBuffer.empty[ConsumerProcessingManager]
 
-    def runningProcessingManagers: Int = createdProcessingManager.count(_.shuttingDown.get == false)
+    def runningProcessingManagers: Int =
+      createdProcessingManager.count(_.shuttingDown.get == false)
 
     override private[consumer] val recordProcessorFactory: IRecordProcessorFactory = () => {
       val manager = new ConsumerProcessingManager(
@@ -84,5 +94,3 @@ class ConsumerProcessingManagerIntegrationSpec extends FreeSpec
     start()
   }
 }
-
-
