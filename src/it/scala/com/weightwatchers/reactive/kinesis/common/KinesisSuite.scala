@@ -81,7 +81,7 @@ trait KinesisConfiguration {
            |      }
            |
            |      worker {
-           |         batchTimeoutSeconds = 2
+           |         batchTimeoutSeconds = 4
            |         failedMessageRetries = 0
            |         failureTolerancePercentage = 0
            |         gracefulShutdownHook = false
