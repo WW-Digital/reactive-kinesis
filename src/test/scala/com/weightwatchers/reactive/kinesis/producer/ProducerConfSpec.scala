@@ -211,6 +211,13 @@ class ProducerConfSpec
   "The ProducerConf" - {
 
     "Should parse the Config into a ProducerConf, setting all properties in the KinesisProducerConfiguration" in {
+      // This will fail when fields are added or renamed in the KPL
+      //
+      // The properties are automatically tested reflectively against the underlying implementation
+      // First we load each property reflectively
+      // Then we parse and try to load it from our config
+      // If it isn't present we fail the test
+
       val producerConf = ProducerConf(kinesisConfig, "testProducer")
 
       producerConf.streamName should be("core-test-kinesis-producer")
@@ -238,7 +245,7 @@ class ProducerConfSpec
         field.setAccessible(true)
 
         withClue(
-          s"Property `$configKey` was not as expected when asserting the KPL configuration: "
+          s"Property `$configKey` was missing or incorrect when asserting the KPL configuration - possibly a newly added KPL property: "
         ) {
           kplConfig.hasPath(configKey) should be(true)
           field.get(kplLibConfiguration).toString should be(kplConfig.getString(configKey))

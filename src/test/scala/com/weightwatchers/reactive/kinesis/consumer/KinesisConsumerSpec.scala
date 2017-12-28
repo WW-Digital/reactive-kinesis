@@ -58,7 +58,8 @@ class KinesisConsumerSpec
     PatienceConfig(timeout = Span(3, Seconds), interval = Span(50, Millis))
 
   val kinesisConfig = ConfigFactory
-    .parseString("""
+    .parseString(
+      """
         |kinesis {
         |
         |   application-name = "TestSpec"
@@ -104,112 +105,9 @@ class KinesisConsumerSpec
         |      }
         |   }
         |
-        |   testConsumer-3 {
-        |      stream-name = "some-other-stream"
-        |
-        |      worker {
-        |         batchTimeoutSeconds = 1234
-        |         gracefulShutdownHook = false
-        |         shutdownTimeoutSeconds = 2
-        |      }
-        |
-        |      checkpointer {
-        |         backoffMillis = 4321
-        |      }
-        |
-        |      kcl {
-        |         AWSCredentialsProvider = DefaultAWSCredentialsProviderChain
-        |
-        |         regionName = us-east-2
-        |
-        |         # Default: LATEST
-        |         initialPositionInStream = TRIM_HORIZON
-        |
-        |         # Default = 10000
-        |         maxRecords = 20000
-        |
-        |         # Default = 1000
-        |         idleTimeBetweenReadsInMillis = 1234
-        |
-        |         # Default: 10000
-        |         failoverTimeMillis = 11000
-        |
-        |         # Default: 60000
-        |         shardSyncIntervalMillis = 70000
-        |
-        |         # Default: true
-        |         cleanupLeasesUponShardCompletion = false
-        |
-        |         # Default: true
-        |         validateSequenceNumberBeforeCheckpointing = false
-        |
-        |         # Default: null
-        |         kinesisEndpoint = "https://kinesis"
-        |
-        |         # Default: null
-        |         dynamoDBEndpoint = "https://dynamo"
-        |
-        |         # Default: false
-        |         callProcessRecordsEvenForEmptyRecordList = true
-        |
-        |         # Default: 10000
-        |         parentShardPollIntervalMillis = 40000
-        |
-        |         # Default: 500
-        |         taskBackoffTimeMillis = 600
-        |
-        |         # Default: 10000
-        |         metricsBufferTimeMillis = 10001
-        |
-        |
-        |         # Default: 10000
-        |         metricsMaxQueueSize = 10009
-        |
-        |
-        |         # Default: DETAILED
-        |         metricsLevel = NONE
-        |
-        |
-        |         # Default: Operation, ShardId
-        |         metricsEnabledDimensions = Operation
-        |
-        |
-        |         # Default: 2147483647 (Integer.MAX_VALUE)
-        |         maxLeasesForWorker = 11111111
-        |
-        |
-        |         # Default: 1
-        |         maxLeasesToStealAtOneTime = 2
-        |
-        |
-        |         # Default: 10
-        |         initialLeaseTableReadCapacity = 15
-        |
-        |
-        |         # Default: 10
-        |         initialLeaseTableWriteCapacity = 14
-        |
-        |         # Default: false
-        |         skipShardSyncAtStartupIfLeasesExist=true
-        |
-        |
-        |         # Default: <applicationName>
-        |         userAgent = testy123
-        |
-        |         # Default = <applicationName>
-        |         tableName = meh
-        |
-        |         # Default: 20
-        |         maxLeaseRenewalThreads=9
-        |
-        |
-        |         # Default: no timeout
-        |         timeoutInSeconds = 10
-        |      }
-        |
-        |   }
         |}
-      """.stripMargin)
+      """.stripMargin
+    )
     .getConfig("kinesis")
     .withFallback(defaultKinesisConfig)
 
@@ -225,7 +123,7 @@ class KinesisConsumerSpec
         .createProcessor() shouldBe a[ConsumerProcessingManager]
     }
 
-    def assertConsumer1Config(): Assertion = {
+    "Should parse the Config into a ConsumerConf for a single consumer" in {
       val consumerConf = ConsumerConf(kinesisConfig, "testConsumer-1")
 
       consumerConf.workerConf.batchTimeout should be(1234.seconds)
@@ -241,12 +139,12 @@ class KinesisConsumerSpec
         "TestSpec-test-kinesis-reliability"
       )
       consumerConf.kclConfiguration.getStreamName should be("test-kinesis-reliability")
-      consumerConf.kclConfiguration.getKinesisEndpoint should be("CustomKinesisEndpoint")   //validate an override property
-      consumerConf.kclConfiguration.getDynamoDBEndpoint should be("CustomDynamoDBEndpoint") //validate an override property
+      consumerConf.kclConfiguration.getKinesisEndpoint should be("CustomKinesisEndpoint")
+      consumerConf.kclConfiguration.getDynamoDBEndpoint should be("CustomDynamoDBEndpoint")
       consumerConf.kclConfiguration.getSkipShardSyncAtWorkerInitializationIfLeasesExist should be(
         true
-      )                                                                 //validate an override property
-      consumerConf.kclConfiguration.getTableName should be("TableName") //validate an override property
+      )
+      consumerConf.kclConfiguration.getTableName should be("TableName")
 
       val credentialsProvider = consumerConf.kclConfiguration.getKinesisCredentialsProvider
         .asInstanceOf[AWSCredentialsProviderChain]
@@ -261,79 +159,7 @@ class KinesisConsumerSpec
       consumerConf.kclConfiguration.getRegionName should be("us-east-1")
     }
 
-    "Should parse the Config into a ConsumerConf for a single consumer" in {
-      assertConsumer1Config()
-    }
-
-    "Should parse consumer 3 the Config into a ConsumerConf, setting all properties in the KinesisClientLibConfiguration" in {
-      //This will fail when fields are added or renamed in the KCL
-
-      // Some setters don't match the field names.
-      val confToFieldConversions = Map(
-        "skipShardSyncAtStartupIfLeasesExist" -> "skipShardSyncAtWorkerInitializationIfLeasesExist"
-      )
-
-      val fieldsToSkip = List(
-        "useragent", //this gets nested internally
-        "streamname",
-        "timestampatinitialpositioninstream",
-        "commonclientconfig",
-        "shardprioritizationstrategy",
-        "kinesisclientconfig",
-        "dynamodbclientconfig",
-        "cloudwatchclientconfig",
-        "credentialsprovider", //these must be tested individually
-        "applicationname"
-      )
-
-      val consumerConf = ConsumerConf(kinesisConfig, "testConsumer-3")
-
-      consumerConf.workerConf.batchTimeout should be(1234.seconds)
-      consumerConf.workerConf.failedMessageRetries should be(1)
-      consumerConf.workerConf.failureTolerancePercentage should be(0.25)
-      consumerConf.workerConf.shutdownHook should be(false)
-      consumerConf.workerConf.shutdownTimeout should be(Timeout(2.seconds))
-      consumerConf.checkpointerConf.backoff should be(4321.millis)
-      consumerConf.checkpointerConf.interval should be(2000.millis)          //reference default
-      consumerConf.checkpointerConf.notificationDelay should be(1000.millis) //reference default
-      consumerConf.dispatcher should be(Some("kinesis.akka.default-dispatcher"))
-      consumerConf.kclConfiguration.getApplicationName should be(
-        "TestSpec-some-other-stream"
-      )
-
-      val kclConfig           = kinesisConfig.getConfig("testConsumer-3.kcl")
-      val kclLibConfiguration = consumerConf.kclConfiguration
-
-      //We're dealing with Java classes so using Java reflection is cleaner here
-      //Start with the setters to prevent picking up all the unrelated private fields, stripping the "with"
-      val configKeys = kclLibConfiguration.getClass.getDeclaredMethods
-        .filter(_.getName.startsWith("with"))
-        .map(_.getName.drop(4))
-        .map(field => field.head.toLower + field.tail)
-        .filterNot(
-          field => fieldsToSkip.contains(field.toLowerCase)
-        )
-
-      configKeys foreach { configKey =>
-        val field =
-          kclLibConfiguration.getClass.getDeclaredField(
-            confToFieldConversions.getOrElse(configKey, configKey)
-          )
-        field.setAccessible(true)
-
-        withClue(
-          s"Property `$configKey` was not as expected when asserting the KCL configuration: "
-        ) {
-          kclConfig.hasPath(configKey) should be(true)
-          field.get(kclLibConfiguration).toString should include(kclConfig.getString(configKey))
-        }
-      }
-
-    }
-
     "Should parse the Config into multiple ConsumerConf objects for multiple consumers" in {
-      assertConsumer1Config()
-
       val consumerConf2 = ConsumerConf(kinesisConfig, "testConsumer-2")
 
       consumerConf2.workerConf.batchTimeout should be(10.seconds)
