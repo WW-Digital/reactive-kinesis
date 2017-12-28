@@ -96,17 +96,6 @@ object ProducerConf {
       KinesisProducerConfiguration.fromProperties(kplProps)
     credentialsProvider.foreach(kplLibConfiguration.setCredentialsProvider)
 
-    //TODO, this should be part of the KPL. The KCL would handle enums and ints and let us use props directly.
-    //TODO can be removed once this is merged: https://github.com/awslabs/amazon-kinesis-producer/pull/134
-    if (kplConfig.hasPath("ThreadingModel")) {
-      kplLibConfiguration.setThreadingModel(
-        ThreadingModel.valueOf(kplConfig.getString("ThreadingModel"))
-      )
-    }
-    if (kplConfig.hasPath("ThreadPoolSize")) {
-      kplLibConfiguration.setThreadPoolSize(kplConfig.getInt("ThreadPoolSize"))
-    }
-
     kplLibConfiguration
   }
 

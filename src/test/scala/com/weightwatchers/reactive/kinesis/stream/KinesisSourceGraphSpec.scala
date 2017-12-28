@@ -36,6 +36,7 @@ import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
 import org.joda.time.DateTime
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
 
 import scala.concurrent.duration._
@@ -51,6 +52,8 @@ class KinesisSourceGraphSpec
 
   implicit val materializer: Materializer = ActorMaterializer()
   implicit val ec                         = system.dispatcher
+  implicit val defaultPatience =
+    PatienceConfig(timeout = Span(3, Seconds), interval = Span(50, Millis))
 
   "KinesisSourceGraph" - {
 

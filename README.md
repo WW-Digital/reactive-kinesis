@@ -35,6 +35,7 @@ It's worth familiarising yourself with [Sequence numbers and Sub sequence number
         * [Valid Release Tag Examples:](#contributor-guide-tag-requirements-valid-release-tag-examples)
         * [Invalid Release Tag Examples:](#contributor-guide-tag-requirements-invalid-release-tag-examples)
 * [Contribution policy](#contribution-policy)
+* [Changelog](#changelog)
 * [License](#license)
 
 
@@ -595,6 +596,10 @@ the work to the project under the project's open source license. Whether or not 
 explicitly, by submitting any copyrighted material via pull request, email, or other means you
 agree to license the material under the project's open source license and warrant that you have the
 legal authority to do so.
+
+<a name="changelog"></a>
+# Changelog
+See the releases tab: https://github.com/WW-Digital/reactive-kinesis/releases
 
 <a name="license"></a>
 # License
