@@ -44,7 +44,7 @@ lazy val library =
         excludeAll(
           ExclusionRule(organization = "com.fasterxml.jackson.core"),
           ExclusionRule(organization = "com.fasterxml.jackson.dataformat")),
-      "com.amazonaws"              % "amazon-kinesis-producer"       % "0.12.5"           % Compile
+      "com.amazonaws"              % "amazon-kinesis-producer"       % "0.12.8"           % Compile
         excludeAll(
           ExclusionRule(organization = "com.fasterxml.jackson.core"),
           ExclusionRule(organization = "com.fasterxml.jackson.dataformat"))
