@@ -1,0 +1,136 @@
+/*
+ * Copyright 2017 WeightWatchers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.weightwatchers.reactive.kinesis.stream
+
+import akka.Done
+import akka.actor.Actor.Receive
+import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
+import akka.stream.stage.{GraphStageLogic, GraphStageWithMaterializedValue, InHandler}
+import akka.stream.{Attributes, Inlet, SinkShape}
+import com.typesafe.scalalogging.LazyLogging
+import com.weightwatchers.reactive.kinesis.models.ProducerEvent
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{
+  SendFailed,
+  SendSuccessful,
+  SendWithCallback
+}
+
+import scala.collection.mutable
+import scala.concurrent.{Future, Promise}
+
+class KinesisSinkGraph(producerActorProps: Props, maxOutStanding: Int, actorSystem: ActorSystem)
+    extends GraphStageWithMaterializedValue[SinkShape[ProducerEvent], Future[Done]]
+    with LazyLogging {
+
+  private[this] val in: Inlet[ProducerEvent]   = Inlet("KinesisSink.in")
+  override def shape: SinkShape[ProducerEvent] = SinkShape.of(in)
+
+  // The materialized value of this graph stage.
+  // The promise is fulfilled, when all outstanding messages are acknowledged or the graph stage fails.
+  val promise: Promise[Done] = Promise()
+
+  override def createLogicAndMaterializedValue(
+      inheritedAttributes: Attributes
+  ): (GraphStageLogic, Future[Done]) = {
+    val logic = new GraphStageLogic(shape) {
+
+      // Holds all outstanding messages by its message identifier.
+      // Note: the identifier is created here locally and does not make sense outside of this stage.
+      val outstandingMessages: mutable.AnyRefMap[String, ProducerEvent] = mutable.AnyRefMap.empty
+
+      // The related stage actor.
+      implicit var graphStageActor: ActorRef = ActorRef.noSender
+
+      // The underlying kinesis producer actor.
+      var producerActor: ActorRef = ActorRef.noSender
+
+      override def preStart(): Unit = {
+        super.preStart()
+        // this stage should keep going, even if upstream is finished
+        setKeepGoing(true)
+        // store a reference to the stage actor
+        graphStageActor = getStageActor(receive).ref
+        // start up the underlying producer actor
+        producerActor = actorSystem.actorOf(producerActorProps)
+        // start the process by signalling demand
+        pull(in)
+      }
+
+      override def postStop(): Unit = {
+        super.postStop()
+        // stop the underlying producer actor
+        producerActor ! PoisonPill
+        // Finish the promise (it could already be finished in case of failure)
+        if (outstandingMessages.isEmpty) promise.trySuccess(Done)
+        else
+          promise.tryFailure(
+            new IllegalStateException(s"No acknowledge for ${outstandingMessages.size} events.")
+          )
+      }
+
+      setHandler(
+        in,
+        new InHandler {
+          override def onPush(): Unit = {
+            val element = grab(in)
+            val toSend  = SendWithCallback(element)
+            outstandingMessages += toSend.messageId -> element
+            producerActor ! toSend
+            if (outstandingMessages.size < maxOutStanding) pull(in)
+          }
+
+          override def onUpstreamFinish(): Unit = {
+            logger.info("Upstream is finished!")
+            // Only finish the stage if there are no outstanding messages
+            // If there are outstanding messages, the receive handler will complete the stage.
+            if (outstandingMessages.isEmpty) completeStage()
+          }
+
+          override def onUpstreamFailure(ex: Throwable): Unit = {
+            logger.info(s"Upstream failed: ${ex.getMessage}")
+            super.onUpstreamFailure(ex)
+            // signal the failure to the waiting side
+            promise.tryFailure(ex)
+          }
+        }
+      )
+
+      def receive: Receive = {
+        case (_, SendSuccessful(messageId, recordResult)) =>
+          outstandingMessages.remove(messageId).foreach { producerEvent =>
+            logger.info(
+              s"Send message: $producerEvent with result $recordResult. ${outstandingMessages.size} messages outstanding."
+            )
+            // upstream is finished?
+            if (isClosed(in)) {
+              // only complete the stage if all outstanding messages are acknowledged
+              if (outstandingMessages.isEmpty) completeStage()
+            } else {
+              // signal demand
+              if (outstandingMessages.size < maxOutStanding) pull(in)
+            }
+          }
+
+        case (_, SendFailed(messageId, reason)) =>
+          logger.warn(s"Could not send message with id: $messageId", reason)
+          failStage(reason)
+      }
+    }
+
+    logic -> promise.future
+  }
+}

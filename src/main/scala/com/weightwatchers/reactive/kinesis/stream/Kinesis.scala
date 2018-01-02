@@ -16,11 +16,15 @@
 
 package com.weightwatchers.reactive.kinesis.stream
 
-import akka.NotUsed
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.Source
+import akka.{Done, NotUsed}
+import akka.actor.{ActorSystem, Props}
+import akka.stream.scaladsl.{Sink, Source}
+import com.amazonaws.auth.AWSCredentialsProvider
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
-import com.weightwatchers.reactive.kinesis.models.ConsumerEvent
+import com.weightwatchers.reactive.kinesis.models.{ConsumerEvent, ProducerEvent}
+import com.weightwatchers.reactive.kinesis.producer.{KinesisProducerActor, ProducerConf}
+
+import scala.concurrent.Future
 
 /**
   * Main entry point for creating a Kinesis source and sink.
@@ -67,5 +71,28 @@ object Kinesis {
       implicit system: ActorSystem
   ): Source[CommittableEvent[ConsumerEvent], NotUsed] = {
     source(ConsumerConf(system.settings.config.getConfig(inConfig), consumerName))
+  }
+
+  def sink(props: Props, maxOutStanding: Int)(
+      implicit system: ActorSystem
+  ): Sink[ProducerEvent, Future[Done]] = {
+    Sink.fromGraph(new KinesisSinkGraph(props, maxOutStanding, system))
+  }
+
+  def sink(
+      producerConf: ProducerConf
+  )(implicit system: ActorSystem): Sink[ProducerEvent, Future[Done]] = {
+    val maxOutstanding = producerConf.throttlingConf.fold(Int.MaxValue)(_.maxOutstandingRequests)
+    sink(KinesisProducerActor.props(producerConf), maxOutstanding)
+  }
+
+  def sink(producerName: String,
+           inConfig: String = "kinesis",
+           credentialsProvider: Option[AWSCredentialsProvider] = None)(
+      implicit system: ActorSystem
+  ): Sink[ProducerEvent, Future[Done]] = {
+    sink(
+      ProducerConf(system.settings.config.getConfig(inConfig), producerName, credentialsProvider)
+    )
   }
 }

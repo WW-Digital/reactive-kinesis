@@ -43,6 +43,8 @@ trait KinesisConfiguration {
            |   testProducer {
            |      stream-name = "$streamName"
            |
+           |      akka.max-outstanding-requests = 10
+           |
            |      kpl {
            |         Region = us-east-1
            |
