@@ -152,7 +152,7 @@ trait KinesisSuite
 
   def TestStreamNrOfMessagesPerShard: Long
 
-  def TestStreamNumberOfShards: Long = 2
+  def TestStreamNumberOfShards: Long = 1
 
   private lazy val kclSetupConfig =
     consumerConfFor(streamName = TestStreamName, appName = suiteName).kclConfiguration
