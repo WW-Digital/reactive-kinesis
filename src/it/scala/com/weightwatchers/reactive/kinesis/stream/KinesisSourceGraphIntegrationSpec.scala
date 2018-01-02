@@ -26,17 +26,17 @@ class KinesisSourceGraphIntegrationSpec
     "process all messages of a stream with one worker" in new withKinesisConfForApp("1worker") {
       val result = Kinesis
         .source(consumerConf = consumerConf())
-        .take(TestStreamNumberOfShards * TestStreamNrOfMessagesPerShard)
+        .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard, inclusive = true)
         .map { event =>
           event.commit()
-          event.payload.payload
+          event.payload.payloadAsString()
         }
         .runWith(Sink.seq)
 
       val grouped = result.futureValue.groupBy(identity)
       result.futureValue.distinct should have size TestStreamNrOfMessagesPerShard
       grouped should have size TestStreamNrOfMessagesPerShard
-      grouped.values.foreach(_ should have size TestStreamNumberOfShards)
+      grouped.values.foreach(_.size.toLong shouldBe >= (TestStreamNumberOfShards))
     }
 
     "process all messages of a stream with 2 workers" in new withKinesisConfForApp("2worker") {
@@ -48,44 +48,17 @@ class KinesisSourceGraphIntegrationSpec
       val source2   = Kinesis.source(consumerConf = consumerConf())
       val result = source1
         .merge(source2)
-        .take(TestStreamNrOfMessagesPerShard * TestStreamNumberOfShards)
+        .takeWhile(_.payload.payloadAsString().toLong  < TestStreamNrOfMessagesPerShard, inclusive = true)
         .map { event =>
           event.commit()
-          event.payload.payload
+          event.payload.payloadAsString()
         }
         .runWith(Sink.seq)
 
       val grouped = result.futureValue.groupBy(identity)
       result.futureValue.distinct should have size TestStreamNrOfMessagesPerShard
       grouped should have size TestStreamNrOfMessagesPerShard
-      grouped.values.foreach(_ should have size TestStreamNumberOfShards)
-    }
-
-    "process all messages of a stream with 4 workers" in new withKinesisConfForApp("4worker") {
-      // Please note: since all sources are started simultaneously, all will assume there is no other worker.
-      // During register all except one will fail and not read any message until retry
-      // Depending on timing one or multiple sources will read all events
-      val batchSize = TestStreamNrOfMessagesPerShard
-      val source1   = Kinesis.source(consumerConf = consumerConf())
-      val source2   = Kinesis.source(consumerConf = consumerConf())
-      val source3   = Kinesis.source(consumerConf = consumerConf())
-      val source4   = Kinesis.source(consumerConf = consumerConf())
-      val result = source1
-        .merge(source2)
-        .merge(source3)
-        .merge(source4)
-        // Since only 2 clients can take batchSize messages, an overall take is needed here to end the stream
-        .take(TestStreamNrOfMessagesPerShard * TestStreamNumberOfShards)
-        .map { event =>
-          event.commit()
-          event.payload.payload
-        }
-        .runWith(Sink.seq)
-
-      val grouped = result.futureValue.groupBy(identity)
-      result.futureValue.distinct should have size TestStreamNrOfMessagesPerShard
-      grouped should have size TestStreamNrOfMessagesPerShard
-      grouped.values.foreach(_ should have size TestStreamNumberOfShards)
+      grouped.values.foreach(_.size.toLong shouldBe >= (TestStreamNumberOfShards))
     }
 
     "maintain the read position in the stream correctly" in new withKinesisConfForApp(
@@ -98,15 +71,15 @@ class KinesisSourceGraphIntegrationSpec
       // - dies after one batch
       // We expect to get all messages by n reads (which means, that the read position was stored correctly)
       val result =
-        for (_ <- 1
+        for (iteration <- 1
                .to((TestStreamNumberOfShards * TestStreamNrOfMessagesPerShard / batchSize).toInt))
           yield {
             Kinesis
-              .source(consumerConf = consumerConf())
-              .take(batchSize)
+              .source(consumerConf = consumerConf(batchSize = batchSize))
+              .takeWhile(_.payload.payloadAsString().toLong < batchSize * iteration, inclusive = true)
               .map { event =>
                 event.commit()
-                event.payload.payload
+                event.payload
               }
               .runWith(Sink.seq)
               .futureValue
@@ -117,18 +90,17 @@ class KinesisSourceGraphIntegrationSpec
       val grouped = allMessages.groupBy(identity)
       allMessages.distinct should have size TestStreamNrOfMessagesPerShard
       grouped should have size TestStreamNrOfMessagesPerShard
+      grouped.values.foreach(_.size.toLong shouldBe >= (TestStreamNumberOfShards))
     }
 
     "not commit the position, if the event is not committed" in new withKinesisConfForApp(
       "not_committed"
     ) {
-      val batchSize = TestStreamNrOfMessagesPerShard / 2 // 2 * NrOfShards batches needed
-
-      // This worker will read batchSize events and will not commit
+      // This worker will read all events and will not commit
       // We expect that the read position will not change
       val uncommitted = Kinesis
         .source(consumerConf())
-        .take(batchSize)
+        .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard, inclusive = true)
         .runWith(Sink.seq)
         .futureValue
 
@@ -136,19 +108,19 @@ class KinesisSourceGraphIntegrationSpec
       // This works only, if the first worker has not committed anything
       val committed = Kinesis
         .source(consumerConf = consumerConf())
-        .take(TestStreamNumberOfShards * TestStreamNrOfMessagesPerShard)
+        .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard, inclusive = true)
         .map { event =>
           event.commit()
-          event.payload.payload
+          event.payload.payloadAsString()
         }
         .runWith(Sink.seq)
         .futureValue
 
-      uncommitted should have size batchSize
+      uncommitted should have size TestStreamNrOfMessagesPerShard
       val grouped = committed.groupBy(identity)
       committed.distinct should have size TestStreamNrOfMessagesPerShard
       grouped should have size TestStreamNrOfMessagesPerShard
-      grouped.values.foreach(_ should have size TestStreamNumberOfShards)
+      grouped.values.foreach(_.size.toLong shouldBe >= (TestStreamNumberOfShards))
     }
   }
 }
