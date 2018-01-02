@@ -27,7 +27,7 @@ class ConsumerProcessingManagerIntegrationSpec
     with Eventually {
 
   override def TestStreamNrOfMessagesPerShard: Long    = 0
-  override def TestStreamNumberOfShards: Long = 2
+  override def TestStreamNumberOfShards: Long          = 2
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(60.seconds, 1.second)
 
   "A ConsumerProcessingManager on a stream with 2 shards" - {

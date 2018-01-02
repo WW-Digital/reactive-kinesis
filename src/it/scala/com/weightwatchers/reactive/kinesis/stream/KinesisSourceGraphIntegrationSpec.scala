@@ -26,7 +26,8 @@ class KinesisSourceGraphIntegrationSpec
     "process all messages of a stream with one worker" in new withKinesisConfForApp("1worker") {
       val result = Kinesis
         .source(consumerConf = consumerConf())
-        .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard, inclusive = true)
+        .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard,
+                   inclusive = true)
         .map { event =>
           event.commit()
           event.payload.payloadAsString()
@@ -36,7 +37,7 @@ class KinesisSourceGraphIntegrationSpec
       val grouped = result.futureValue.groupBy(identity)
       result.futureValue.distinct should have size TestStreamNrOfMessagesPerShard
       grouped should have size TestStreamNrOfMessagesPerShard
-      grouped.values.foreach(_.size.toLong shouldBe >= (TestStreamNumberOfShards))
+      grouped.values.foreach(_.size.toLong shouldBe >=(TestStreamNumberOfShards))
     }
 
     "process all messages of a stream with 2 workers" in new withKinesisConfForApp("2worker") {
@@ -48,7 +49,8 @@ class KinesisSourceGraphIntegrationSpec
       val source2   = Kinesis.source(consumerConf = consumerConf())
       val result = source1
         .merge(source2)
-        .takeWhile(_.payload.payloadAsString().toLong  < TestStreamNrOfMessagesPerShard, inclusive = true)
+        .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard,
+                   inclusive = true)
         .map { event =>
           event.commit()
           event.payload.payloadAsString()
@@ -58,7 +60,7 @@ class KinesisSourceGraphIntegrationSpec
       val grouped = result.futureValue.groupBy(identity)
       result.futureValue.distinct should have size TestStreamNrOfMessagesPerShard
       grouped should have size TestStreamNrOfMessagesPerShard
-      grouped.values.foreach(_.size.toLong shouldBe >= (TestStreamNumberOfShards))
+      grouped.values.foreach(_.size.toLong shouldBe >=(TestStreamNumberOfShards))
     }
 
     "maintain the read position in the stream correctly" in new withKinesisConfForApp(
@@ -76,7 +78,8 @@ class KinesisSourceGraphIntegrationSpec
           yield {
             Kinesis
               .source(consumerConf = consumerConf(batchSize = batchSize))
-              .takeWhile(_.payload.payloadAsString().toLong < batchSize * iteration, inclusive = true)
+              .takeWhile(_.payload.payloadAsString().toLong < batchSize * iteration,
+                         inclusive = true)
               .map { event =>
                 event.commit()
                 event.payload
@@ -90,7 +93,7 @@ class KinesisSourceGraphIntegrationSpec
       val grouped = allMessages.groupBy(identity)
       allMessages.distinct should have size TestStreamNrOfMessagesPerShard
       grouped should have size TestStreamNrOfMessagesPerShard
-      grouped.values.foreach(_.size.toLong shouldBe >= (TestStreamNumberOfShards))
+      grouped.values.foreach(_.size.toLong shouldBe >=(TestStreamNumberOfShards))
     }
 
     "not commit the position, if the event is not committed" in new withKinesisConfForApp(
@@ -100,7 +103,8 @@ class KinesisSourceGraphIntegrationSpec
       // We expect that the read position will not change
       val uncommitted = Kinesis
         .source(consumerConf())
-        .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard, inclusive = true)
+        .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard,
+                   inclusive = true)
         .runWith(Sink.seq)
         .futureValue
 
@@ -108,7 +112,8 @@ class KinesisSourceGraphIntegrationSpec
       // This works only, if the first worker has not committed anything
       val committed = Kinesis
         .source(consumerConf = consumerConf())
-        .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard, inclusive = true)
+        .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard,
+                   inclusive = true)
         .map { event =>
           event.commit()
           event.payload.payloadAsString()
@@ -120,7 +125,7 @@ class KinesisSourceGraphIntegrationSpec
       val grouped = committed.groupBy(identity)
       committed.distinct should have size TestStreamNrOfMessagesPerShard
       grouped should have size TestStreamNrOfMessagesPerShard
-      grouped.values.foreach(_.size.toLong shouldBe >= (TestStreamNumberOfShards))
+      grouped.values.foreach(_.size.toLong shouldBe >=(TestStreamNumberOfShards))
     }
   }
 }
