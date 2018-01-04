@@ -105,12 +105,14 @@ class KinesisSinkGraphStageSpec
     if (decider(event.producerEvent)) failMessage(sender, event) else ignoreMessage(sender, event)
   }
 
-  def ackMessage(sender: ActorRef, event: SendWithCallback): Unit =
-    sender ! SendSuccessful(event.messageId,
-                            new UserRecordResult(Collections.emptyList(), "123", "shard", true))
+  def ackMessage(sender: ActorRef, event: SendWithCallback): Unit = {
+    val recordResult = new UserRecordResult(Collections.emptyList(), "123", "shard", true)
+    sender ! SendSuccessful(event.messageId, recordResult)
+  }
 
-  def failMessage(sender: ActorRef, event: SendWithCallback): Unit =
+  def failMessage(sender: ActorRef, event: SendWithCallback): Unit = {
     sender ! SendFailed(event.messageId, new IllegalStateException("wrong!"))
+  }
 
   def ignoreMessage(sender: ActorRef, event: SendWithCallback): Unit = ()
 
