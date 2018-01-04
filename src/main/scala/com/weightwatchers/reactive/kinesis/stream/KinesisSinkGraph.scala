@@ -32,6 +32,14 @@ import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 
+/**
+  * A KinesisSinkGraph will attach to a kinesis stream with the provided configuration and constitute a Sink[ProducerEvent, Future[Done].
+  * This graph stage uses a producer actor to publish events with acknowledgements.
+  *
+  * @param producerActorProps the properties to create a producer actor where all events are send to.
+  * @param maxOutStanding the number of messages send to the producer which are not acknowledged, before signalling back pressure.
+  * @param actorSystem the actor system.
+  */
 class KinesisSinkGraph(producerActorProps: Props, maxOutStanding: Int, actorSystem: ActorSystem)
     extends GraphStageWithMaterializedValue[SinkShape[ProducerEvent], Future[Done]]
     with LazyLogging {
