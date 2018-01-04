@@ -115,8 +115,10 @@ object Kinesis extends LazyLogging {
   def sink(
       producerConf: ProducerConf
   )(implicit system: ActorSystem): Sink[ProducerEvent, Future[Done]] = {
-    val maxOutstanding = producerConf.throttlingConf.fold{
-      logger.info("Producer throttling not configured - set maxOutstanding to 1000. Configure with: kinesis.{producer}.akka.max-outstanding-requests=1000")
+    val maxOutstanding = producerConf.throttlingConf.fold {
+      logger.info(
+        "Producer throttling not configured - set maxOutstanding to 1000. Configure with: kinesis.{producer}.akka.max-outstanding-requests=1000"
+      )
       1000
     }(_.maxOutstandingRequests)
     sink(KinesisProducerActor.props(producerConf), maxOutstanding)
