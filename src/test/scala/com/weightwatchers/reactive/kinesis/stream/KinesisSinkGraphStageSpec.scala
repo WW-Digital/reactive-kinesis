@@ -37,7 +37,7 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class KinesisSinkGraphSpec
+class KinesisSinkGraphStageSpec
     extends TestKit(ActorSystem("source-graph-spec"))
     with FreeSpecLike
     with Matchers

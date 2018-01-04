@@ -137,9 +137,9 @@ private[kinesis] case class CommittableActorEvent[+A](event: ConsumerEvent,
   * @param createConsumer function that creates a consumer service from the graph stage actor reference.
   * @param actorSystem the actor system.
   */
-class KinesisSourceGraph(config: ConsumerConf,
-                         createConsumer: ActorRef => ConsumerService,
-                         actorSystem: ActorSystem)
+class KinesisSourceGraphStage(config: ConsumerConf,
+                              createConsumer: ActorRef => ConsumerService,
+                              actorSystem: ActorSystem)
     extends GraphStage[SourceShape[CommittableEvent[ConsumerEvent]]]
     with LazyLogging {
 

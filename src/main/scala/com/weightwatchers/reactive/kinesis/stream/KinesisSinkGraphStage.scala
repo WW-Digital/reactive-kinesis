@@ -40,7 +40,9 @@ import scala.concurrent.{Future, Promise}
   * @param maxOutStanding the number of messages send to the producer which are not acknowledged, before signalling back pressure.
   * @param actorSystem the actor system.
   */
-class KinesisSinkGraph(producerActorProps: Props, maxOutStanding: Int, actorSystem: ActorSystem)
+class KinesisSinkGraphStage(producerActorProps: Props,
+                            maxOutStanding: Int,
+                            actorSystem: ActorSystem)
     extends GraphStageWithMaterializedValue[SinkShape[ProducerEvent], Future[Done]]
     with LazyLogging {
 

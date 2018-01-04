@@ -11,7 +11,7 @@ import org.scalatest.{FreeSpec, Matchers}
 
 import scala.concurrent.duration._
 
-class KinesisSinkGraphIntegrationSpec
+class KinesisSinkGraphStageIntegrationSpec
     extends FreeSpec
     with KinesisSuite
     with KinesisConfiguration

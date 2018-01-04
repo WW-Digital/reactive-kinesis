@@ -44,7 +44,7 @@ object Kinesis extends LazyLogging {
   def source(
       consumerConf: ConsumerConf
   )(implicit system: ActorSystem): Source[CommittableEvent[ConsumerEvent], NotUsed] = {
-    Source.fromGraph(new KinesisSourceGraph(consumerConf, system))
+    Source.fromGraph(new KinesisSourceGraphStage(consumerConf, system))
   }
 
   /**
@@ -93,7 +93,7 @@ object Kinesis extends LazyLogging {
   def sink(props: Props, maxOutStanding: Int)(
       implicit system: ActorSystem
   ): Sink[ProducerEvent, Future[Done]] = {
-    Sink.fromGraph(new KinesisSinkGraph(props, maxOutStanding, system))
+    Sink.fromGraph(new KinesisSinkGraphStage(props, maxOutStanding, system))
   }
 
   /**
