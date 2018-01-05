@@ -201,7 +201,7 @@ trait KinesisSuite
                                Some(100.millis))
 
     def consumerConf(batchSize: Long = TestStreamNrOfMessagesPerShard): ConsumerConf = {
-      consumerConfFor(streamName = TestStreamName, appName = appName, maxRecords = batchSize.toInt)
+      consumerConfFor(streamName = TestStreamName, appName = appName, maxRecords = math.max(1, batchSize.toInt))
     }
 
     def producerConf(): ProducerConf = producerConfFor(TestStreamName, appName)
