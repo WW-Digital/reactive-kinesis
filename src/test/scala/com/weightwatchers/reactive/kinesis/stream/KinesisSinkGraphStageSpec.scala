@@ -73,6 +73,13 @@ class KinesisSinkGraphStageSpec
       result shouldBe exception
     }
 
+    "the stream fails, if the producer actor dies" in {
+      val sink     = Kinesis.sink(Props(new FailActor), 1)
+      val messages = 1.to(100).map(_.toString).map(num => ProducerEvent(num, num))
+      val result   = Source(messages).runWith(sink).failed.futureValue
+      result shouldBe a[IllegalStateException]
+    }
+
     "do not send more messages than maxOutstanding" in sinkWithProducer(
       ignoreAndFailOn(_.partitionKey.toInt > 5)
     ) { (sink, producer) =>
@@ -98,6 +105,10 @@ class KinesisSinkGraphStageSpec
         allMessages += send.messageId -> send.producerEvent
         sendFn(sender(), send)
     }
+  }
+
+  class FailActor extends Actor {
+    override def receive: Receive = throw new IllegalStateException("wrong!")
   }
 
   def ignoreAndFailOn(decider: ProducerEvent => Boolean)(sender: ActorRef,

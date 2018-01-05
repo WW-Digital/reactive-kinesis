@@ -18,7 +18,7 @@ package com.weightwatchers.reactive.kinesis.stream
 
 import akka.Done
 import akka.actor.Actor.Receive
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
+import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props, Terminated}
 import akka.stream.stage.{GraphStageLogic, GraphStageWithMaterializedValue, InHandler}
 import akka.stream.{Attributes, Inlet, SinkShape}
 import com.typesafe.scalalogging.LazyLogging
@@ -63,24 +63,28 @@ class KinesisSinkGraphStage(producerActorProps: Props,
       val outstandingMessages: mutable.AnyRefMap[String, ProducerEvent] = mutable.AnyRefMap.empty
 
       // The related stage actor.
-      implicit var graphStageActor: ActorRef = ActorRef.noSender
+      implicit var stageActorRef: ActorRef = actorSystem.deadLetters
 
       // The underlying kinesis producer actor.
-      var producerActor: ActorRef = ActorRef.noSender
+      var producerActor: ActorRef = actorSystem.deadLetters
 
       override def preStart(): Unit = {
         super.preStart()
         // this stage should keep going, even if upstream is finished
         setKeepGoing(true)
-        // store a reference to the stage actor
-        graphStageActor = getStageActor(receive).ref
         // start up the underlying producer actor
         producerActor = actorSystem.actorOf(producerActorProps)
+        // create the stage actor and store a reference
+        val stageActor = getStageActor(receive)
+        // monitor the producer actor
+        stageActor.watch(producerActor)
+        stageActorRef = stageActor.ref
         // start the process by signalling demand
         pull(in)
       }
 
       override def postStop(): Unit = {
+        logger.info("Stop Kinesis Sink")
         super.postStop()
         // stop the underlying producer actor
         producerActor ! PoisonPill
@@ -111,10 +115,10 @@ class KinesisSinkGraphStage(producerActorProps: Props,
           }
 
           override def onUpstreamFailure(ex: Throwable): Unit = {
-            logger.info(s"Upstream failed: ${ex.getMessage}")
-            super.onUpstreamFailure(ex)
+            logger.warn(s"Upstream failed: ${ex.getMessage}", ex)
             // signal the failure to the waiting side
             promise.tryFailure(ex)
+            super.onUpstreamFailure(ex)
           }
         }
       )
@@ -122,8 +126,8 @@ class KinesisSinkGraphStage(producerActorProps: Props,
       def receive: Receive = {
         case (_, SendSuccessful(messageId, recordResult)) =>
           outstandingMessages.remove(messageId).foreach { producerEvent =>
-            logger.info(
-              s"Send message: $producerEvent with result $recordResult. ${outstandingMessages.size} messages outstanding."
+            logger.debug(
+              s"Message acknowledged: $producerEvent with result $recordResult. ${outstandingMessages.size} messages outstanding."
             )
             // upstream is finished?
             if (isClosed(in)) {
@@ -138,6 +142,10 @@ class KinesisSinkGraphStage(producerActorProps: Props,
         case (_, SendFailed(messageId, reason)) =>
           logger.warn(s"Could not send message with id: $messageId", reason)
           failStage(reason)
+
+        case (_, Terminated(_)) =>
+          logger.warn("ProducerActor died unexpectedly.")
+          failStage(new IllegalStateException("ProducerActor died unexpectedly."))
       }
     }
 
