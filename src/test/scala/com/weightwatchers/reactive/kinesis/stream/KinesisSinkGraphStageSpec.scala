@@ -90,6 +90,10 @@ class KinesisSinkGraphStageSpec
       result.isCompleted shouldBe false
       producer.underlyingActor.allMessages should have size 5
     }
+
+    "A sink can be created from system config" in {
+      Kinesis.sink("test-producer")
+    }
   }
 
   class ForwardToProducerActor(ref: ActorRef) extends Actor {

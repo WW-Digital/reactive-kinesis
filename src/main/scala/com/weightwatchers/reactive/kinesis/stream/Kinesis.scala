@@ -20,6 +20,7 @@ import akka.{Done, NotUsed}
 import akka.actor.{ActorSystem, Props}
 import akka.stream.scaladsl.{Sink, Source}
 import com.amazonaws.auth.AWSCredentialsProvider
+import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.models.{ConsumerEvent, ProducerEvent}
@@ -85,12 +86,12 @@ object Kinesis extends LazyLogging {
     * The sink produces a materialized value `Future[Done]`, which is finished if all messages of the stream are send to the producer actor _and_ got acknowledged.
     * The future fails, if the sending an event fails or upstream has failed the stream.
     *
-    * @param props the props to create a producer actor.
+    * @param props the props to create a producer actor. This is a function to work around #48.
     * @param maxOutStanding the number of messages to send to the actor unacknowledged before back pressure is applied.
     * @param system the actor system.
     * @return A sink that accepts ProducerEvents.
     */
-  def sink(props: Props, maxOutStanding: Int)(
+  def sink(props: => Props, maxOutStanding: Int)(
       implicit system: ActorSystem
   ): Sink[ProducerEvent, Future[Done]] = {
     Sink.fromGraph(new KinesisSinkGraphStage(props, maxOutStanding, system))
@@ -136,6 +137,34 @@ object Kinesis extends LazyLogging {
     * The sink produces a materialized value `Future[Done]`, which is finished if all messages of the stream are send to the producer actor _and_ got acknowledged.
     * The future fails, if the sending an event fails or upstream has failed the stream.
     *
+    * @param kinesisConfig the configuration object that holds the producer config.
+    * @param producerName the name of the producer in the system configuration.
+    * @param credentialsProvider the AWS credentials provider to use to connect.
+    * @param system the actor system.
+    * @return A sink that accepts ProducerEvents.
+    */
+  def sink(kinesisConfig: Config,
+           producerName: String,
+           credentialsProvider: Option[AWSCredentialsProvider])(
+      implicit system: ActorSystem
+  ): Sink[ProducerEvent, Future[Done]] = {
+    sink(
+      ProducerConf(kinesisConfig, producerName, credentialsProvider)
+    )
+  }
+
+  /**
+    * Create a Sink that accepts ProducerEvents, which get published to Kinesis.
+    *
+    * The sink itself sends all events to an KinesisProducerActor which is configured from the system configuration for given producer name.
+    * Every message send needs to be acknowledged by the underlying producer actor.
+    *
+    * This sink signals back pressure, if more messages than configured in throttling conf are not acknowledged.
+    * If throttling is not configured, a default value (= 1000 messages) is applied.
+    *
+    * The sink produces a materialized value `Future[Done]`, which is finished if all messages of the stream are send to the producer actor _and_ got acknowledged.
+    * The future fails, if the sending an event fails or upstream has failed the stream.
+    *
     * A minimal application conf file should look like this:
     * {{{
     * kinesis {
@@ -159,8 +188,6 @@ object Kinesis extends LazyLogging {
            credentialsProvider: Option[AWSCredentialsProvider] = None)(
       implicit system: ActorSystem
   ): Sink[ProducerEvent, Future[Done]] = {
-    sink(
-      ProducerConf(system.settings.config.getConfig(inConfig), producerName, credentialsProvider)
-    )
+    sink(system.settings.config.getConfig(inConfig), producerName, credentialsProvider)
   }
 }
