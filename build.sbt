@@ -12,7 +12,7 @@ lazy val `reactive-kinesis` =
     .settings(
       libraryDependencies ++=
         library.jackson ++ library.amazon ++ library.lightbend ++
-          library.logback ++ library.joda ++ library.scalactic ++ library.testing
+          library.logback ++ library.testing
     )
 
 // *****************************************************************************
@@ -25,7 +25,6 @@ lazy val library =
     object Version {
       val scalaCheck = "1.13.5"
       val scalaTest = "3.0.3"
-      val kamon = "0.6.6"
       val jackson = "2.8.7"
       val akka = "2.5.7"
     }
@@ -61,23 +60,11 @@ lazy val library =
       "ch.qos.logback"             % "logback-classic"               % "1.1.11"            % Compile
     )
 
-    val joda = Seq(
-      "org.joda"                   % "joda-convert"                  % "1.2"              % Compile
-    )
-
-    val scalactic = Seq(
-      "org.scalactic"              %% "scalactic"                    % Version.scalaTest  % Compile)
-
     val testing = Seq(
       "org.scalatest"              %% "scalatest"                    % Version.scalaTest  % "it,test",
       "org.scalacheck"             %% "scalacheck"                   % Version.scalaCheck % "it,test",
       "com.typesafe.akka"          %% "akka-testkit"                 % Version.akka       % "it,test",
-      "org.mockito"                % "mockito-core"                  % "2.7.15"           % "it,test",
-      "io.kamon"                   %% "kamon-core"                   % Version.kamon      % "it,test",
-      "io.kamon"                   %% "kamon-akka-2.4"               % Version.kamon      % "it,test",
-      "io.kamon"                   %% "kamon-statsd"                 % Version.kamon      % "it,test",
-      "io.kamon"                   %% "kamon-log-reporter"           % Version.kamon      % "it,test",
-      "io.kamon"                   %% "kamon-system-metrics"         % Version.kamon      % "it,test"
+      "org.mockito"                % "mockito-core"                  % "2.7.15"           % "it,test"
     )
   }
 
