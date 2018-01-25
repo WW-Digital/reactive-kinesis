@@ -29,7 +29,6 @@ import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{
   SendWithCallback
 }
 
-import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 
 /**
@@ -58,9 +57,8 @@ class KinesisSinkGraphStage(producerActorProps: => Props,
   ): (GraphStageLogic, Future[Done]) = {
     val logic = new GraphStageLogic(shape) {
 
-      // Holds all outstanding messages by its message identifier.
-      // Note: the identifier is created here locally and does not make sense outside of this stage.
-      val outstandingMessages: mutable.AnyRefMap[String, ProducerEvent] = mutable.AnyRefMap.empty
+      // Counts all outstanding messages.
+      var outstandingMessageCount: Int = 0
 
       // The related stage actor.
       implicit var stageActorRef: ActorRef = actorSystem.deadLetters
@@ -89,10 +87,10 @@ class KinesisSinkGraphStage(producerActorProps: => Props,
         // stop the underlying producer actor
         producerActor ! PoisonPill
         // Finish the promise (it could already be finished in case of failure)
-        if (outstandingMessages.isEmpty) promise.trySuccess(Done)
+        if (outstandingMessageCount == 0) promise.trySuccess(Done)
         else
           promise.tryFailure(
-            new IllegalStateException(s"No acknowledge for ${outstandingMessages.size} events.")
+            new IllegalStateException(s"No acknowledge for $outstandingMessageCount events.")
           )
       }
 
@@ -101,17 +99,16 @@ class KinesisSinkGraphStage(producerActorProps: => Props,
         new InHandler {
           override def onPush(): Unit = {
             val element = grab(in)
-            val toSend  = SendWithCallback(element)
-            outstandingMessages += toSend.messageId -> element
-            producerActor ! toSend
-            if (outstandingMessages.size < maxOutstanding) pull(in)
+            outstandingMessageCount += 1
+            producerActor ! SendWithCallback(element)
+            if (outstandingMessageCount < maxOutstanding) pull(in)
           }
 
           override def onUpstreamFinish(): Unit = {
             logger.info("Upstream is finished!")
             // Only finish the stage if there are no outstanding messages
             // If there are outstanding messages, the receive handler will complete the stage.
-            if (outstandingMessages.isEmpty) completeStage()
+            if (outstandingMessageCount == 0) completeStage()
           }
 
           override def onUpstreamFailure(ex: Throwable): Unit = {
@@ -124,19 +121,18 @@ class KinesisSinkGraphStage(producerActorProps: => Props,
       )
 
       def receive: Receive = {
-        case (_, SendSuccessful(messageId, recordResult)) =>
-          outstandingMessages.remove(messageId).foreach { producerEvent =>
-            logger.debug(
-              s"Message acknowledged: $producerEvent with result $recordResult. ${outstandingMessages.size} messages outstanding."
-            )
-            // upstream is finished?
-            if (isClosed(in)) {
-              // only complete the stage if all outstanding messages are acknowledged
-              if (outstandingMessages.isEmpty) completeStage()
-            } else {
-              // signal demand
-              if (outstandingMessages.size < maxOutstanding) pull(in)
-            }
+        case (_, SendSuccessful(_, recordResult)) =>
+          outstandingMessageCount -= 1
+          logger.debug(
+            s"Message acknowledged: $recordResult. $outstandingMessageCount messages outstanding."
+          )
+          // upstream is finished?
+          if (isClosed(in)) {
+            // only complete the stage if all outstanding messages are acknowledged
+            if (outstandingMessageCount == 0) completeStage()
+          } else {
+            // signal demand
+            if (outstandingMessageCount < maxOutstanding) pull(in)
           }
 
         case (_, SendFailed(messageId, reason)) =>
