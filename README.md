@@ -489,16 +489,16 @@ callback onFailure {
 ### Akka Stream Sink
 
 An Akka `Sink` is provided which can be used to publish messages via streams. 
-Every message is send as `ProduserEvent` to the `Sink`, which defines the PartitionKey as well as the payload.
+Every message is sent as `ProduserEvent` to the `Sink`, which defines the PartitionKey as well as the payload.
 The `Sink` is created from a `ProducerConf` or directly with a `KinesisProducerActor`. See [Kinesis](https://github.com/WW-Digital/reactive-kinesis/blob/master/src/main/scala/com/weightwatchers/reactive/kinesis/stream/Kinesis.scala)  for the various options.
 
-The `Sink` expects an acknowledgement for every messages send to Kinesis. 
+The `Sink` expects an acknowledgement for every message sent to Kinesis. 
 An amount of unacknowledged messages can be configured, before back pressure is applied.
-See the throttling conf for defining this configuration value.
+This throttling is controlled by the kinesis.{producer}.akka.max-outstanding-requests configuration value.
 Please note: a default value (1000 messages) is applied, if throttling is not configured.
 
 The provided `Sink` produces a `Future[Done]` as materialized value.
-This future succeeds, if all messages from upstream are send to Kinesis and acknowledged.
+This future succeeds, if all messages from upstream are sent to Kinesis and acknowledged.
 It fails if a message could not be send to Kinesis or upstream fails.
 
 ```scala
