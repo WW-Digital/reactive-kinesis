@@ -42,7 +42,7 @@ import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise}
 
-class KinesisSourceGraphSpec
+class KinesisSourceGraphStageSpec
     extends TestKit(ActorSystem("source-graph-spec"))
     with FreeSpecLike
     with Matchers
@@ -154,7 +154,7 @@ class KinesisSourceGraphSpec
         action: ActorRef => Unit
     ): Source[CommittableEvent[ConsumerEvent], NotUsed] = {
       Source.fromGraph(
-        new KinesisSourceGraph(consumerConf, new TestConsumerService(action)(_), system)
+        new KinesisSourceGraphStage(consumerConf, new TestConsumerService(action)(_), system)
       )
     }
 

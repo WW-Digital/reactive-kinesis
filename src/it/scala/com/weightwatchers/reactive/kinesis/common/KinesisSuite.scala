@@ -43,6 +43,8 @@ trait KinesisConfiguration {
            |   testProducer {
            |      stream-name = "$streamName"
            |
+           |      akka.max-outstanding-requests = 10
+           |
            |      kpl {
            |         Region = us-east-1
            |
@@ -199,7 +201,9 @@ trait KinesisSuite
                                Some(100.millis))
 
     def consumerConf(batchSize: Long = TestStreamNrOfMessagesPerShard): ConsumerConf = {
-      consumerConfFor(streamName = TestStreamName, appName = appName, maxRecords = batchSize.toInt)
+      consumerConfFor(streamName = TestStreamName,
+                      appName = appName,
+                      maxRecords = math.max(1, batchSize.toInt))
     }
 
     def producerConf(): ProducerConf = producerConfFor(TestStreamName, appName)

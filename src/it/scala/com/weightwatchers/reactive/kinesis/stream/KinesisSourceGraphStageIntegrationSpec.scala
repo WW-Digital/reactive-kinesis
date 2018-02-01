@@ -10,7 +10,7 @@ import org.scalatest._
 
 import scala.concurrent.duration._
 
-class KinesisSourceGraphIntegrationSpec
+class KinesisSourceGraphStageIntegrationSpec
     extends FreeSpec
     with KinesisSuite
     with KinesisConfiguration
