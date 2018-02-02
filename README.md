@@ -331,7 +331,7 @@ A `KinesisConsumer` is used internally for the `Kinesis.source`. All rules descr
 ### Graceful Shutdown
 
 Currently the KinesisConsumer Shutdown works as follows:
-* Shutdown is called on the `KinesisConsumer` (either explicitly or via the jvm shutdown hook)
+* `stop()` is called on the `KinesisConsumer` (either explicitly or via the jvm shutdown hook)
 * This then calls `requestShutdown` on the KCL Worker, blocking until completion.
 * The KCL Worker propagates this down to the `ConsumerProcessingManager` (Which is the `IRecordProcessor`) - calling `shutdownRequested` on each instance (one per shard).
 * When `shutdownRequested` is called, this sends a `GracefulShutdown` message to the `ConsumerWorker` Actor, blocking until a response is received (Ask + Await).
