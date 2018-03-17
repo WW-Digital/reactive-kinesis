@@ -15,23 +15,28 @@ It's worth familiarising yourself with [Sequence numbers and Sub sequence number
         * [Notable Consumer Configuration Values](#usage-defining-a-config-file-in-the-client-application-notable-consumer-configuration-values)
         * [Notable Producer Configuration Values](#usage-defining-a-config-file-in-the-client-application-notable-producer-configuration-values)
     * [Usage: Consumer](#usage-usage-consumer)
-        * [Important considerations when implementing the Event Processor](#usage-usage-consumer-important-considerations-when-implementing-the-event-processor)
-        * [Checkpointing](#usage-usage-consumer-checkpointing)
+        * [Actor Based Consumer](#actor-based-consumer)
+            * [Important considerations when implementing the Event Processor](#usage-usage-consumer-important-considerations-when-implementing-the-event-processor)
+            * [Checkpointing](#usage-usage-consumer-checkpointing)
+        * [Akka Stream Source](#akka-stream-source)
         * [Graceful Shutdown](#usage-usage-consumer-graceful-shutdown)
     * [Usage: Producer](#usage-usage-producer)
         * [Actor Based Implementation](#usage-usage-producer-actor-based-implementation)
         * [Pure Scala based implementation (simple wrapper around KPL)](#usage-usage-producer-pure-scala-based-implementation-simple-wrapper-around-kpl)
+        * [Akka Stream Sink](#akka-stream-sink)
 * [Running the reliability test](#running-the-reliability-test)
     * [Delete & recreate kinesisstreams and dynamo table](#running-the-reliability-test-delete-recreate-kinesisstreams-and-dynamo-table)
     * [Running the producer-consumer test](#running-the-reliability-test-running-the-producer-consumer-test)
 * [FAQ](#faq)
 * [Contributor Guide](#contributor-guide)
     * [Code Formatting](#contributor-guide-code-formatting)
+    * [Integration Tests](#contributor-guide-integration-tests)
     * [Tag Requirements](#contributor-guide-tag-requirements)
         * [Version information](#contributor-guide-tag-requirements-version-information)
         * [Valid Release Tag Examples:](#contributor-guide-tag-requirements-valid-release-tag-examples)
         * [Invalid Release Tag Examples:](#contributor-guide-tag-requirements-invalid-release-tag-examples)
 * [Contribution policy](#contribution-policy)
+* [Changelog](#changelog)
 * [License](#license)
 
 
@@ -39,15 +44,25 @@ It's worth familiarising yourself with [Sequence numbers and Sub sequence number
 # Dependency Resolution
 SBT
 ```
-"com.weightwatchers" %% "reactive-kinesis" % 0.5.0
+"com.weightwatchers" %% "reactive-kinesis" % "0.5.5"
 ```
 
-Maven
+Maven 2.11
 ```
 <dependency>
   <groupId>com.weightwatchers</groupId>
   <artifactId>reactive-kinesis_2.11</artifactId>
-  <version>0.5.0</version>
+  <version>0.5.5</version>
+  <type>pom</type>
+</dependency>
+```
+
+Maven 2.12
+```
+<dependency>
+  <groupId>com.weightwatchers</groupId>
+  <artifactId>reactive-kinesis_2.12</artifactId>
+  <version>0.5.5</version>
   <type>pom</type>
 </dependency>
 ```
@@ -73,18 +88,18 @@ From http://docs.aws.amazon.com/streams/latest/dev/kinesis-record-processor-scal
 > exceeds the number of instances.
 
 For our purposes, this means *any service reading from Kinesis should expect to
-have one shard per instance, as a minimum*. Note that this is specifically for consuming events. 
+have one shard per instance, as a minimum*. Note that this is specifically for consuming events.
 Producers don't have the same shard restrictions.
 
 <a name="considerations-when-using-kinesis-in-a-distributed-environment-dynamodb-checkpoint-storage"></a>
 ## DynamoDB Checkpoint Storage
 
-Amazon's KCL uses DynamoDB to checkpoint progress through reading the stream.  When DynamoDB tables are provisioned automatically, for this purpose, they may have a relatively high write-throughput, which can incur additional cost.  
+Amazon's KCL uses DynamoDB to checkpoint progress through reading the stream.  When DynamoDB tables are provisioned automatically, for this purpose, they may have a relatively high write-throughput, which can incur additional cost.
 
-You should make sure that the DynamoDB table used for checkpointing your stream 
+You should make sure that the DynamoDB table used for checkpointing your stream
 
 1. Has a reasonable write throughput defined
-    
+
 2. Is cleaned up when you're done with it -- KCL will not automatically delete it for you
 
 The checkpointer will automatically throttle if the write throughput is not sufficient, look out for the following info log:
@@ -143,7 +158,7 @@ kinesis {
       # The name of the consumer stream, MUST be specified per consumer and MUST exist
       stream-name = "sample-consumer"
    }
-   
+
    some-other-consumer {
       stream-name = "another-sample-consumer"
    }
@@ -165,24 +180,24 @@ For example: `SampleService-sample-consumer`.
 <a name="usage-defining-a-config-file-in-the-client-application-notable-consumer-configuration-values"></a>
 ### Notable Consumer Configuration Values
 * `kinesis.<consumer-name>.akka.dispatcher` - Sets the dispatcher for the consumer, defaults to `kinesis.akka.default-dispatcher`
-* `kinesis.<consumer-name>.worker.batchTimeoutSeconds` - The timeout for processing a batch. 
+* `kinesis.<consumer-name>.worker.batchTimeoutSeconds` - The timeout for processing a batch.
 Note that any messages not processed within this time will be retried (according to the configuration). After retrying any
 unconfirmed messages will be considered failed.
 * `kinesis.<consumer-name>.worker.failedMessageRetries` - The number of times to retry failed messages within a batch, after the batch timeout.
-* `kinesis.<consumer-name>.worker.failureTolerancePercentage` - If, after retrying, messages are still unconfirmed. 
+* `kinesis.<consumer-name>.worker.failureTolerancePercentage` - If, after retrying, messages are still unconfirmed.
 We will either continue processing the next batch, or shutdown processing completely depending on this tolerance percentage.
 * `kinesis.<consumer-name>.checkpointer.backoffMillis` - When DynamoDB throttles us (due to hitting the write threshold)
-we wait for this amount of time. 
+we wait for this amount of time.
 * `kinesis.<consumer-name>.checkpointer.intervalMillis` - The interval between checkpoints. Setting this too high will cause lots of
- messages to be duplicated in event of a failed node. Setting it too low will result in throttling from DynamoDB. 
+ messages to be duplicated in event of a failed node. Setting it too low will result in throttling from DynamoDB.
 * `kinesis.<consumer-name>.kcl.initialPositionInStream` - Controls our strategy for pulling from Kinesis (LATEST, TRIM_HORIZON, ..)
 * `kinesis.<consumer-name>.kcl.maxRecords` - The maximum batch size.
- 
+
 <a name="usage-defining-a-config-file-in-the-client-application-notable-producer-configuration-values"></a>
 ### Notable Producer Configuration Values
 * `kinesis.<producer-name>.akka.dispatcher` - Sets the dispatcher for the producer, defaults to `kinesis.akka.default-dispatcher`
-* `kinesis.<producer-name>.akka.max-outstanding-requests` - Enables artificial throttling within the Producer. 
-This limits the number of futures in play at any one time. Each message creates a new future (internally in the KPL), 
+* `kinesis.<producer-name>.akka.max-outstanding-requests` - Enables artificial throttling within the Producer.
+This limits the number of futures in play at any one time. Each message creates a new future (internally in the KPL),
 which allows us to track the progress of sent messages when they go with the next batch.
 * `kinesis.<producer-name>.akka.throttling-retry-millis` - How soon to retry after hitting the above throttling cap.
 * `kinesis.<producer-name>.kpl.AggregationEnabled` - Enables [aggregation of messages](http://docs.aws.amazon.com/streams/latest/dev/kinesis-producer-adv-aggregation.html).
@@ -191,12 +206,16 @@ which allows us to track the progress of sent messages when they go with the nex
 
 <a name="usage-usage-consumer"></a>
 ## Usage: Consumer
+`reactive-kinesis` provides two different ways to consume messages from Kinesis: [Actor Based Consumer](#actor-based-consumer) and [Akka Stream Source](#akka-stream-source).
 
 ![Consumer Architecture](https://www.lucidchart.com/publicSegments/view/69b7b7d1-bc09-4dcc-ab1b-a0f7c6e1ffc6/image.png)
 
-Implementing the consumer requires a simple actor which is responsible for processing messages sent to it by the library. 
-We call this the `Event Processor`. 
-Upon creating an instance of the `KinesisConsumer`, internally one `ConsumerWorker` (this is different from the KCL Worker) is 
+<a name="actor-based-consumer"></a>
+### Actor Based Consumer
+
+Implementing the consumer requires a simple actor which is responsible for processing messages sent to it by the library.
+We call this the `Event Processor`.
+Upon creating an instance of the `KinesisConsumer`, internally one `ConsumerWorker` (this is different from the KCL Worker) is
 created per shard (shards are distributed amongst consumers automatically). This consumer worker is what sends messages to the
 `Event Processor`. Note that the `Event Processor` is shared amongst ALL shards, so it is important not to cache the sender of previous messages.
 It is perfectly valid to use a router to spread the work amongst many `Event Processor` actors.
@@ -235,7 +254,7 @@ object Consumer extends App {
   val system = akka.actor.ActorSystem.create("test-system")
   val config = ConfigFactory.load()
   val eventProcessor = system.actorOf(Props[TestEventProcessor], "test-processor")
-  val consumer = KinesisConsumer(ConsumerConf(config.getConfig("kinesis"), "some-consumer"), 
+  val consumer = KinesisConsumer(ConsumerConf(config.getConfig("kinesis"), "some-consumer"),
                                  eventProcessor, system)
   consumer.start()
 }
@@ -274,7 +293,7 @@ case class ConsumerShutdown(shardId: String)
 ```
 
 <a name="usage-usage-consumer-important-considerations-when-implementing-the-event-processor"></a>
-### Important considerations when implementing the Event Processor
+#### Important considerations when implementing the Event Processor
 * The Event Processor MUST handle [[ProcessEvent]] messages (for each message)
 * The Event Processor MUST respond with [[EventProcessed]] after processing of the [[ProcessEvent]]
 * The Event Processor may set `successful` to false to indicate the message can be skipped
@@ -282,14 +301,37 @@ case class ConsumerShutdown(shardId: String)
 * The Event Processor SHOULD handle [[ConsumerShutdown]] messages which siganl a graceful shutdown of the Consumer.
 
 <a name="usage-usage-consumer-checkpointing"></a>
-### Checkpointing
+#### Checkpointing
 The client will handle checkpointing asynchronously PER SHARD according to the configuration using a separate actor.
+
+<a name="akka-stream-source"></a>
+### Akka Stream Source
+
+An Akka `Source` is provided that can be used with streams. It is possible to create a source from a `ConsumerConf` or 
+directly from the consumer name that is defined in the configuration.
+Every message that is emitted to the stream is of type `CommitableEvent[ConsumerEvent]` and has to be committed 
+explicitly downstream with a call to `event.commit()`. It is possible to map to a different type of `CommittableEvent` 
+via the `map` and `mapAsync` functionality. 
+
+```scala
+import com.weightwatchers.reactive.kinesis.stream._
+
+Kinesis
+  .source("consumer-name")
+  .take(100)
+  .map(event => event.map(_.payloadAsString())) // read and map payload as string
+  .mapAsync(10)(event => event.mapAsync(Downloader.download(event.payload))) // handle an async message
+  .map(event => event.commit()) // mark the event as handled by calling commit
+  .runWith(Sink.seq) 
+```
+
+A `KinesisConsumer` is used internally for the `Kinesis.source`. All rules described here for the `KinesisConsumer` also apply for the stream source.
 
 <a name="usage-usage-consumer-graceful-shutdown"></a>
 ### Graceful Shutdown
 
 Currently the KinesisConsumer Shutdown works as follows:
-* Shutdown is called on the `KinesisConsumer` (either explicitly or via the jvm shutdown hook)
+* `stop()` is called on the `KinesisConsumer` (either explicitly or via the jvm shutdown hook)
 * This then calls `requestShutdown` on the KCL Worker, blocking until completion.
 * The KCL Worker propagates this down to the `ConsumerProcessingManager` (Which is the `IRecordProcessor`) - calling `shutdownRequested` on each instance (one per shard).
 * When `shutdownRequested` is called, this sends a `GracefulShutdown` message to the `ConsumerWorker` Actor, blocking until a response is received (Ask + Await).
@@ -410,22 +452,21 @@ kpa ! Send(producerEvent) //Send without a callback confirmation
 
 <a name="usage-usage-producer-pure-scala-based-implementation-simple-wrapper-around-kpl"></a>
 ### Pure Scala based implementation (simple wrapper around KPL)
-*Note that throttling will be unavailable using this method.*
+*Note that future throttling will be unavailable using this method.*
 
 ```scala
 import java.util.UUID
 import com.amazonaws.services.kinesis.producer.{UserRecordFailedException, UserRecordResult}
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducer
+import com.weightwatchers.reactive.kinesis.producer.ProducerConf
 import com.typesafe.config._
 import com.weightwatchers.reactive.kinesis.models._
-import com.weightwatchers.reactive.kinesis.producer.KinesisProducerKPL
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global //Not for production
 
 val kinesisConfig: Config = ConfigFactory.load().getConfig("kinesis")
-val producerConfig: Config = kinesisConfig.getConfig("some-producer")
-val streamName: String = producerConfig.getString("stream-name")
 
-val kpl = KinesisProducerKPL(kinesisConfig.getConfig("kpl"), streamName)
+val kpl = KinesisProducer(ProducerConf(kinesisConfig, "some-producer"))
 
 val producerEvent = ProducerEvent(UUID.randomUUID.toString, "{Some Payload}")
 
@@ -443,6 +484,55 @@ callback onFailure {
     println(s"Critical Failure! ${ex.getMessage}")
 }
 ```
+
+<a name="akka-stream-sink"></a>
+### Akka Stream Sink
+
+An Akka `Sink` is provided which can be used to publish messages via streams. 
+Every message is sent as `ProduserEvent` to the `Sink`, which defines the PartitionKey as well as the payload.
+The `Sink` is created from a `ProducerConf` or directly with a `KinesisProducerActor`. See [Kinesis](https://github.com/WW-Digital/reactive-kinesis/blob/master/src/main/scala/com/weightwatchers/reactive/kinesis/stream/Kinesis.scala)  for the various options.
+
+The `Sink` expects an acknowledgement for every message sent to Kinesis. 
+An amount of unacknowledged messages can be configured, before back pressure is applied.
+This throttling is controlled by the kinesis.{producer}.akka.max-outstanding-requests configuration value.
+Please note: a default value (1000 messages) is applied, if throttling is not configured.
+
+The provided `Sink` produces a `Future[Done]` as materialized value.
+This future succeeds, if all messages from upstream are sent to Kinesis and acknowledged.
+It fails if a message could not be send to Kinesis or upstream fails.
+
+```scala
+import akka.stream.scaladsl.Source
+import com.weightwatchers.reactive.kinesis.models._
+import com.weightwatchers.reactive.kinesis.stream._
+
+Source(1.to(100).map(_.toString))
+  .map(num => ProducerEvent(num, num))
+  .runWith(Kinesis.sink("producer-name"))
+  .onComplete {
+    case Success(_) => println("All messages are published successfully.")
+    case Failure(ex) => println(s"Failed to publish messages: ${ex.getMessage}")
+  }
+```
+
+A long running flow can be easily achieved using a `SourceQueue`.
+In this case the flow stays open as long as needed.
+New elements can be published via the materialized queue:
+
+```scala
+import akka.stream.scaladsl.Source
+import com.weightwatchers.reactive.kinesis.models._
+import com.weightwatchers.reactive.kinesis.stream._
+
+val sourceQueue = Source.queue[ProducerEvent](1000, OverflowStrategy.fail)
+  .toMat(Kinesis.sink("producer-name"))(Keep.left)
+  .run()
+
+sourceQueue.offer(ProducerEvent("foo", "bar"))
+sourceQueue.offer(ProducerEvent("foo", "baz"))
+```
+
+The `Sink` uses a `KinesisProducerActor` under the cover. All rules regarding this actor also apply for the `Sink`.  
 
 
 <a name="running-the-reliability-test"></a>
@@ -484,7 +574,7 @@ You'll see some stats logged regarding messages/sec processed, near that line.
 * How is DynamoDB used in relation to out checkpointing?
   * DynamoDB tables will be automatically created, however the write throughput must be configured appropriately using the AWS console or CLI. There is a cost associated with this, but note that setting it too low will cause checkpoint throttling. Configure `kinesis.<consumer-name>.checkpointer.intervalMillis` accordingly.
 * How is data sharded?
-  * Sharding relates to the distribution of messages across the shards for a given stream. Ideally you want an even distribution amongst our shards. However ordering is only guaranteed within a given shard, it is therefore important to group related messages by shard. For example if a specific user performs several operations, in which the order of execution matters, then ensuring they land on the same shard will guarantee the order is maintained. 
+  * Sharding relates to the distribution of messages across the shards for a given stream. Ideally you want an even distribution amongst our shards. However ordering is only guaranteed within a given shard, it is therefore important to group related messages by shard. For example if a specific user performs several operations, in which the order of execution matters, then ensuring they land on the same shard will guarantee the order is maintained.
   * For this, the `partition key` is used. Messages with the same partition key will land on the same shard. In the example above a userId may be a good `partition key`.
   * Note that if the number of partition keys exceeds the number of shards, some shards necessarily contain records with different partition keys. From a design standpoint, to ensure that all your shards are well utilized, the number of shards should be substantially less than the number of unique partition keys.
 * How long do we keep data?
@@ -500,7 +590,7 @@ You'll see some stats logged regarding messages/sec processed, near that line.
     * `LATEST` - Start reading just after the most recent record in the shard, so that you always read the most recent data in the shard.
 * How do sequence numbers work?
   * Sequence numbers for the same partition key generally increase over time, but **NOT** necessarily in a continuous sequence. The longer the time period between records, the bigger the gap between the sequence numbers.
-  * To uniquely identify a record on a shard, you need to use **BOTH** the `sequence number` and the `sub-sequence number`. This is because messages that are aggregated together have the same sequence number (they are treated as one messages by Kinesis). Therefore it is important to also use the sub-sequence number to distinguish between them. 
+  * To uniquely identify a record on a shard, you need to use **BOTH** the `sequence number` and the `sub-sequence number`. This is because messages that are aggregated together have the same sequence number (they are treated as one messages by Kinesis). Therefore it is important to also use the sub-sequence number to distinguish between them.
 
 
 <a name="contributor-guide"></a>
@@ -512,13 +602,19 @@ This project uses [scalafmt](http://scalameta.org/scalafmt/) and will automatica
 
 Please run `sbt scalafmt` before committing and pushing changes.
 
+<a name="contributor-guide-integration-tests"></a>
+## Integration tests
+As part of the travis build, integration tests will run against a Kinesis localstack instance. You can run these locally as follows:
+* `docker-compose -f localstack/docker-compose.yml up`
+* `sbt it:test`
+
 <a name="contributor-guide-tag-requirements"></a>
 ## Tag Requirements
 Uses tags and [sbt-git](https://github.com/sbt/sbt-git) to determine the current version.
 * Each merge into master will automatically build a snapshot and publish to [bintray OSS artifactory](https://www.jfrog.com/confluence/display/RTF/Deploying+Snapshots+to+oss.jfrog.org).
 * Tagging the master branch will automatically build and publish both Scala 2.11 & Scala 2.12 artifacts (to bintray and maven central).
 * Tags are in the format vX.X.X
- 
+
 <a name="contributor-guide-tag-requirements-version-information"></a>
 ### Version information
 * IF the current commit is tagged with "vX.Y.Z" (ie semantic-versioning), the version is "X.Y.Z"
@@ -538,8 +634,8 @@ v1.2.3-M1-SNAPSHOT
 v1.2.3-X1
 1.2.3
 
-If the current version on master is a snapshot (release tag + x commits), 
-then the artifact will be deployed to the [JFrog OSS repository](https://oss.jfrog.org/webapp/#/artifacts/browse/simple/General/oss-snapshot-local/com/weightwatchers): 
+If the current version on master is a snapshot (release tag + x commits),
+then the artifact will be deployed to the [JFrog OSS repository](https://oss.jfrog.org/webapp/#/artifacts/browse/simple/General/oss-snapshot-local/com/weightwatchers):
 
 <a name="contribution-policy"></a>
 # Contribution policy
@@ -550,6 +646,10 @@ the work to the project under the project's open source license. Whether or not 
 explicitly, by submitting any copyrighted material via pull request, email, or other means you
 agree to license the material under the project's open source license and warrant that you have the
 legal authority to do so.
+
+<a name="changelog"></a>
+# Changelog
+See the releases tab: https://github.com/WW-Digital/reactive-kinesis/releases
 
 <a name="license"></a>
 # License

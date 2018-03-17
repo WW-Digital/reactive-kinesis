@@ -12,7 +12,7 @@ lazy val `reactive-kinesis` =
     .settings(
       libraryDependencies ++=
         library.jackson ++ library.amazon ++ library.lightbend ++
-          library.logback ++ library.joda ++ library.scalactic ++ library.testing
+          library.logback ++ library.testing
     )
 
 // *****************************************************************************
@@ -25,9 +25,8 @@ lazy val library =
     object Version {
       val scalaCheck = "1.13.5"
       val scalaTest = "3.0.3"
-      val kamon = "0.6.6"
       val jackson = "2.8.7"
-      val akka = "2.5.1"
+      val akka = "2.5.7"
     }
 
     val jackson = Seq(
@@ -40,11 +39,11 @@ lazy val library =
       "com.fasterxml.uuid"         % "java-uuid-generator"           % "3.1.4"            % Compile)
 
     val amazon = Seq(
-      "com.amazonaws"              % "amazon-kinesis-client"         % "1.7.5"            % Compile
+      "com.amazonaws"              % "amazon-kinesis-client"         % "1.8.8"            % Compile
         excludeAll(
           ExclusionRule(organization = "com.fasterxml.jackson.core"),
           ExclusionRule(organization = "com.fasterxml.jackson.dataformat")),
-      "com.amazonaws"              % "amazon-kinesis-producer"       % "0.12.3"           % Compile
+      "com.amazonaws"              % "amazon-kinesis-producer"       % "0.12.8"           % Compile
         excludeAll(
           ExclusionRule(organization = "com.fasterxml.jackson.core"),
           ExclusionRule(organization = "com.fasterxml.jackson.dataformat"))
@@ -53,6 +52,7 @@ lazy val library =
     val lightbend = Seq(
       "com.typesafe"               % "config"                        % "1.3.1"            % Compile,
       "com.typesafe.akka"          %% "akka-actor"                   % Version.akka       % Compile,
+      "com.typesafe.akka"          %% "akka-stream"                  % Version.akka       % Compile,
       "com.typesafe.scala-logging" %% "scala-logging"                % "3.5.0"            % Compile
       )
 
@@ -60,23 +60,11 @@ lazy val library =
       "ch.qos.logback"             % "logback-classic"               % "1.1.11"            % Compile
     )
 
-    val joda = Seq(
-      "org.joda"                   % "joda-convert"                  % "1.2"              % Compile
-    )
-
-    val scalactic = Seq(
-      "org.scalactic"              %% "scalactic"                    % Version.scalaTest  % Compile)
-
     val testing = Seq(
-      "org.scalatest"              %% "scalatest"                    % Version.scalaTest  % Test,
-      "org.scalacheck"             %% "scalacheck"                   % Version.scalaCheck % Test,
-      "com.typesafe.akka"          %% "akka-testkit"                 % Version.akka       % Test,
-      "org.mockito"                % "mockito-core"                  % "2.7.15"           % Test,
-      "io.kamon"                   %% "kamon-core"                   % Version.kamon      % Test,
-      "io.kamon"                   %% "kamon-akka-2.4"               % Version.kamon      % Test,
-      "io.kamon"                   %% "kamon-statsd"                 % Version.kamon      % Test,
-      "io.kamon"                   %% "kamon-log-reporter"           % Version.kamon      % Test,
-      "io.kamon"                   %% "kamon-system-metrics"         % Version.kamon      % Test
+      "org.scalatest"              %% "scalatest"                    % Version.scalaTest  % "it,test",
+      "org.scalacheck"             %% "scalacheck"                   % Version.scalaCheck % "it,test",
+      "com.typesafe.akka"          %% "akka-testkit"                 % Version.akka       % "it,test",
+      "org.mockito"                % "mockito-core"                  % "2.7.15"           % "it,test"
     )
   }
 
@@ -131,7 +119,7 @@ lazy val commonSettings =
       "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
       "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
       "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-      "-Ywarn-numeric-widen"              // Warn when numerics are widened.
+      "-Ywarn-numeric-widen"               // Warn when numerics are widened.
     ),
     scalacOptions in (Compile, doc) ++= Seq(
       "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
@@ -146,7 +134,11 @@ lazy val commonSettings =
       val project = Project.extract(state).currentRef.project
       s"[$project]> "
     },
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    parallelExecution in IntegrationTest := false,
+    fork in IntegrationTest := true,
+    javaOptions in IntegrationTest += "-Dcom.amazonaws.sdk.disableCertChecking=true",
+    envVars in IntegrationTest += ("AWS_CBOR_DISABLE" -> "true")
   )
 
 /* This allows to derive an sbt version string from the git information.

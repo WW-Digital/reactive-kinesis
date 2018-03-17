@@ -16,6 +16,9 @@
 
 package com.weightwatchers.reactive.kinesis.models
 
+import java.nio.ByteBuffer
+import java.nio.charset.{Charset, StandardCharsets}
+
 import org.joda.time.DateTime
 
 /**
@@ -45,5 +48,15 @@ object CompoundSequenceNumber {
   * The actual event we're processing (contained within [[com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.ProcessEvent]]
   */
 case class ConsumerEvent(sequenceNumber: CompoundSequenceNumber,
-                         payload: String,
-                         timestamp: DateTime)
+                         payload: ByteBuffer,
+                         timestamp: DateTime) {
+
+  /**
+    * Convenience method to read the payload as string.
+    * Note: make sure the sender has created a string payload.
+    * @param charset the character set to interpret the byte array.
+    * @return the payload as string.
+    */
+  def payloadAsString(charset: Charset = StandardCharsets.UTF_8) =
+    new String(payload.array(), charset)
+}

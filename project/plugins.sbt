@@ -1,6 +1,4 @@
 
-addSbtPlugin("io.kamon" % "sbt-aspectj-runner" % "1.0.1")
-
 addSbtPlugin("com.dwijnand"      % "sbt-travisci"   % "1.1.0")
 addSbtPlugin("com.geirsson"      % "sbt-scalafmt"   % "0.6.8")
 addSbtPlugin("com.typesafe.sbt"  % "sbt-git"        % "0.9.2")

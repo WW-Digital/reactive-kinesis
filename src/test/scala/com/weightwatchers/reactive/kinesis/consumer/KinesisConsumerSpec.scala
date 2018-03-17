@@ -58,53 +58,56 @@ class KinesisConsumerSpec
     PatienceConfig(timeout = Span(3, Seconds), interval = Span(50, Millis))
 
   val kinesisConfig = ConfigFactory
-    .parseString("""
-      |kinesis {
-      |
-      |   application-name = "TestSpec"
-      |
-      |   testConsumer-1 {
-      |      stream-name = "test-kinesis-reliability"
-      |
-      |      worker {
-      |         batchTimeoutSeconds = 1234
-      |         gracefulShutdownHook = false
-      |         shutdownTimeoutSeconds = 2
-      |      }
-      |
-      |      checkpointer {
-      |         backoffMillis = 4321
-      |      }
-      |
-      |      kcl {
-      |         AWSCredentialsProvider = EnvironmentVariableCredentialsProvider
-      |         regionName = us-east-1
-      |         KinesisEndpoint = "CustomKinesisEndpoint"
-      |         DynamoDBEndpoint = "CustomDynamoDBEndpoint"
-      |         SkipShardSyncAtStartupIfLeasesExist = true
-      |         TableName = "TableName"
-      |      }
-      |   }
-      |
-      |   testConsumer-2 {
-      |      stream-name = "some-other-stream"
-      |
-      |      worker {
-      |         failedMessageRetries = 3
-      |         gracefulShutdownHook = false
-      |      }
-      |
-      |      checkpointer {
-      |         backoffMillis = 111
-      |      }
-      |
-      |      kcl {
-      |         AWSCredentialsProvider = DefaultAWSCredentialsProviderChain
-      |         regionName = us-east-2
-      |      }
-      |   }
-      |}
-    """.stripMargin)
+    .parseString(
+      """
+        |kinesis {
+        |
+        |   application-name = "TestSpec"
+        |
+        |   testConsumer-1 {
+        |      stream-name = "test-kinesis-reliability"
+        |
+        |      worker {
+        |         batchTimeoutSeconds = 1234
+        |         gracefulShutdownHook = false
+        |         shutdownTimeoutSeconds = 2
+        |      }
+        |
+        |      checkpointer {
+        |         backoffMillis = 4321
+        |      }
+        |
+        |      kcl {
+        |         AWSCredentialsProvider = EnvironmentVariableCredentialsProvider
+        |         regionName = us-east-1
+        |         KinesisEndpoint = "CustomKinesisEndpoint"
+        |         DynamoDBEndpoint = "CustomDynamoDBEndpoint"
+        |         SkipShardSyncAtStartupIfLeasesExist = true
+        |         TableName = "TableName"
+        |      }
+        |   }
+        |
+        |   testConsumer-2 {
+        |      stream-name = "some-other-stream"
+        |
+        |      worker {
+        |         failedMessageRetries = 3
+        |         gracefulShutdownHook = false
+        |      }
+        |
+        |      checkpointer {
+        |         backoffMillis = 111
+        |      }
+        |
+        |      kcl {
+        |         AWSCredentialsProvider = DefaultAWSCredentialsProviderChain
+        |         regionName = us-east-2
+        |      }
+        |   }
+        |
+        |}
+      """.stripMargin
+    )
     .getConfig("kinesis")
     .withFallback(defaultKinesisConfig)
 
@@ -120,7 +123,7 @@ class KinesisConsumerSpec
         .createProcessor() shouldBe a[ConsumerProcessingManager]
     }
 
-    def assertConsumer1(): Assertion = {
+    "Should parse the Config into a ConsumerConf for a single consumer" in {
       val consumerConf = ConsumerConf(kinesisConfig, "testConsumer-1")
 
       consumerConf.workerConf.batchTimeout should be(1234.seconds)
@@ -136,12 +139,12 @@ class KinesisConsumerSpec
         "TestSpec-test-kinesis-reliability"
       )
       consumerConf.kclConfiguration.getStreamName should be("test-kinesis-reliability")
-      consumerConf.kclConfiguration.getKinesisEndpoint should be("CustomKinesisEndpoint")   //validate an override property
-      consumerConf.kclConfiguration.getDynamoDBEndpoint should be("CustomDynamoDBEndpoint") //validate an override property
+      consumerConf.kclConfiguration.getKinesisEndpoint should be("CustomKinesisEndpoint")
+      consumerConf.kclConfiguration.getDynamoDBEndpoint should be("CustomDynamoDBEndpoint")
       consumerConf.kclConfiguration.getSkipShardSyncAtWorkerInitializationIfLeasesExist should be(
         true
-      )                                                                 //validate an override property
-      consumerConf.kclConfiguration.getTableName should be("TableName") //validate an override property
+      )
+      consumerConf.kclConfiguration.getTableName should be("TableName")
 
       val credentialsProvider = consumerConf.kclConfiguration.getKinesisCredentialsProvider
         .asInstanceOf[AWSCredentialsProviderChain]
@@ -156,13 +159,7 @@ class KinesisConsumerSpec
       consumerConf.kclConfiguration.getRegionName should be("us-east-1")
     }
 
-    "Should parse the Config into a ConsumerConf for a single consumer" in {
-      assertConsumer1()
-    }
-
     "Should parse the Config into multiple ConsumerConf objects for multiple consumers" in {
-      assertConsumer1()
-
       val consumerConf2 = ConsumerConf(kinesisConfig, "testConsumer-2")
 
       consumerConf2.workerConf.batchTimeout should be(10.seconds)
@@ -252,7 +249,7 @@ class KinesisConsumerSpec
       }
 
       Given("A Worker which throws an Exception")
-      val exception = new RuntimeException()
+      val exception = new RuntimeException("TEST")
       Mockito.when(worker.run()).thenThrow(exception)
 
       When("We start the Consumer")
@@ -266,7 +263,9 @@ class KinesisConsumerSpec
 
     "Should call requestShutdown on worker, when stop is called for consumer" in {
       val worker = mock[Worker]
-      Mockito.when(worker.requestShutdown()).thenReturn(mock[java.util.concurrent.Future[Void]])
+      Mockito
+        .when(worker.startGracefulShutdown())
+        .thenReturn(mock[java.util.concurrent.Future[java.lang.Boolean]])
 
       Given("A running consumer")
 
@@ -286,7 +285,7 @@ class KinesisConsumerSpec
         consumer.stop()
 
         Then("It should call request shutdown on worker once")
-        Mockito.verify(worker, Mockito.times(1)).requestShutdown()
+        Mockito.verify(worker, Mockito.times(1)).startGracefulShutdown()
       }
     }
 
@@ -294,7 +293,9 @@ class KinesisConsumerSpec
       val worker = mock[Worker]
 
       Given("A consumer with our mocked worker")
-      Mockito.when(worker.requestShutdown()).thenReturn(mock[java.util.concurrent.Future[Void]])
+      Mockito
+        .when(worker.startGracefulShutdown())
+        .thenReturn(mock[java.util.concurrent.Future[java.lang.Boolean]])
 
       val consumer = new KinesisConsumer(ConsumerConf(kinesisConfig, "testConsumer-1"),
                                          null, // scalastyle:ignore
@@ -313,7 +314,7 @@ class KinesisConsumerSpec
         consumer.stop()
 
         Then("It should only call request shutdown on worker once")
-        Mockito.verify(worker, Mockito.times(1)).requestShutdown()
+        Mockito.verify(worker, Mockito.times(1)).startGracefulShutdown()
       }
     }
   }

@@ -12,7 +12,7 @@ import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{
   SendSuccessful,
   SendWithCallback
 }
-import com.weightwatchers.reactive.kinesis.producer.{KinesisProducerActor, KinesisProducerKPL}
+import com.weightwatchers.reactive.kinesis.producer.{KinesisProducerActor, KinesisProducer}
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -49,6 +49,7 @@ object SimpleKinesisProducer {
   }
 }
 
+@deprecated("Here for reference", "v0.6.0")
 class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
 
   protected def kinesisConfig = kConfig
@@ -62,7 +63,7 @@ class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
   //We're creating the producer the hard way to get access to the underlying KPL
   val kpaProps           = KinesisProducerActor.props(kinesisConfig, "testProducer")
   val kpa                = context.actorOf(kpaProps)
-  val kinesisProducerKPL = kpaProps.args.head.asInstanceOf[KinesisProducerKPL]
+  val kinesisProducerKPL = kpaProps.args.head.asInstanceOf[KinesisProducer]
 
   /* producer without actor:
   val producerConfig = kinesisConfig.getConfig("testProducer")

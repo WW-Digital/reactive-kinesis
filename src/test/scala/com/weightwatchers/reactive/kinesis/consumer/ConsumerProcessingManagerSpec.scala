@@ -68,7 +68,7 @@ class ConsumerProcessingManagerSpec
     Await.result(system.whenTerminated, 5.seconds)
   }
 
-  "The KinesisRecordProcessingManager" - {
+  "The ConsumerProcessingManager" - {
     "Should set the shardId on init" in {
       val worker  = TestProbe()
       val kcl     = mock[Worker]
@@ -151,22 +151,25 @@ class ConsumerProcessingManagerSpec
 
       "When the response is a failed batch it should shutdown and stop processing" in new ProcessingSetup {
 
-        workerResponse.success(ProcessingComplete(false)) //complete with a failed batch
-
         whenReady(processResult) { _ =>
+          workerResponse.success(ProcessingComplete(false)) //complete with a failed batch
+
           processResult.isCompleted should be(true)
 
           manager.shuttingDown.get() should be(true)
 
           Mockito
             .verify(kcl, Mockito.times(1))
-            .requestShutdown() //we failed so shutdown should have been called
+            .startGracefulShutdown() //we failed so shutdown should have been called
         }
       }
 
       "When the response is a failed (exception) future it should shutdown and stop processing" in new ProcessingSetup {
 
-        workerResponse.failure(new NullPointerException("TEST")) //complete with an exception
+        val ex = new Exception("TEST")
+        ex.setStackTrace(Array.empty[StackTraceElement])
+
+        workerResponse.failure(ex) //complete with an exception
 
         whenReady(processResult) { _ =>
           processResult.isCompleted should be(true)
@@ -175,7 +178,7 @@ class ConsumerProcessingManagerSpec
 
           Mockito
             .verify(kcl, Mockito.times(1))
-            .requestShutdown() //we failed so shutdown should have been called
+            .startGracefulShutdown() //we failed so shutdown should have been called
         }
       }
     }
@@ -202,7 +205,7 @@ class ConsumerProcessingManagerSpec
       }
 
       //validate the probe received nothing
-      worker.expectNoMsg(1.second)
+      worker.expectNoMessage(1.second)
 
       processResult.isCompleted should be(true) //should be false until we complete the promise
     }
@@ -253,9 +256,8 @@ class ConsumerProcessingManagerSpec
   def toConsumerEvent(record: UserRecord): ConsumerEvent = {
     ConsumerEvent(
       CompoundSequenceNumber(record.getSequenceNumber, record.getSubSequenceNumber),
-      new String(record.getData.array(), java.nio.charset.StandardCharsets.UTF_8),
+      record.getData,
       new DateTime(record.getApproximateArrivalTimestamp, DateTimeZone.UTC)
     )
   }
-
 }

@@ -190,7 +190,8 @@ class KinesisConsumer(consumerConf: ConsumerConf,
                       consumerWorkerProps: Props,
                       system: ActorSystem,
                       context: ActorRefFactory)
-    extends LazyLogging {
+    extends ConsumerService
+    with LazyLogging {
 
   //The manager timeout needs to be just longer than the batch timeout * retries
   val managerBatchTimeout = Timeout(
@@ -283,7 +284,8 @@ class KinesisConsumer(consumerConf: ConsumerConf,
       val shutdownTimeoutUnit   = consumerConf.workerConf.shutdownTimeout.duration.unit
 
       Try {
-        kclWorker.requestShutdown
+        kclWorker
+          .startGracefulShutdown()
           .get(shutdownTimeoutLength, shutdownTimeoutUnit)
       } match {
         case Success(_) =>
