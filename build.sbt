@@ -24,9 +24,9 @@ lazy val library =
 
     object Version {
       val scalaCheck = "1.13.5"
-      val scalaTest = "3.0.3"
-      val jackson = "2.8.7"
-      val akka = "2.5.7"
+      val scalaTest = "3.0.5"
+      val jackson = "2.9.4"
+      val akka = "2.5.11"
     }
 
     val jackson = Seq(
@@ -35,11 +35,11 @@ lazy val library =
       "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor" % Version.jackson    % Compile,
       "com.fasterxml.jackson.core" % "jackson-databind"              % Version.jackson    % Compile,
       "com.fasterxml.jackson.core" % "jackson-core"                  % Version.jackson    % Compile,
-      "com.fasterxml.jackson.core" % "jackson-annotations"           % "2.8.0"            % Compile,
-      "com.fasterxml.uuid"         % "java-uuid-generator"           % "3.1.4"            % Compile)
+      "com.fasterxml.jackson.core" % "jackson-annotations"           % Version.jackson    % Compile,
+      "com.fasterxml.uuid"         % "java-uuid-generator"           % "3.1.5"            % Compile)
 
     val amazon = Seq(
-      "com.amazonaws"              % "amazon-kinesis-client"         % "1.8.8"            % Compile
+      "com.amazonaws"              % "amazon-kinesis-client"         % "1.9.0"            % Compile
         excludeAll(
           ExclusionRule(organization = "com.fasterxml.jackson.core"),
           ExclusionRule(organization = "com.fasterxml.jackson.dataformat")),
@@ -50,21 +50,21 @@ lazy val library =
     )
 
     val lightbend = Seq(
-      "com.typesafe"               % "config"                        % "1.3.1"            % Compile,
+      "com.typesafe"               % "config"                        % "1.3.3"            % Compile,
       "com.typesafe.akka"          %% "akka-actor"                   % Version.akka       % Compile,
       "com.typesafe.akka"          %% "akka-stream"                  % Version.akka       % Compile,
-      "com.typesafe.scala-logging" %% "scala-logging"                % "3.5.0"            % Compile
+      "com.typesafe.scala-logging" %% "scala-logging"                % "3.8.0"            % Compile
       )
 
     val logback = Seq(
-      "ch.qos.logback"             % "logback-classic"               % "1.1.11"            % Compile
+      "ch.qos.logback"             % "logback-classic"               % "1.2.3"            % Compile
     )
 
     val testing = Seq(
       "org.scalatest"              %% "scalatest"                    % Version.scalaTest  % "it,test",
       "org.scalacheck"             %% "scalacheck"                   % Version.scalaCheck % "it,test",
       "com.typesafe.akka"          %% "akka-testkit"                 % Version.akka       % "it,test",
-      "org.mockito"                % "mockito-core"                  % "2.7.15"           % "it,test"
+      "org.mockito"                % "mockito-core"                  % "2.16.0"           % "it,test"
     )
   }
 
