@@ -407,8 +407,7 @@ private[consumer] class ConsumerWorker(eventProcessor: ActorRef,
           switchToReadyState(latestSeq)
         } else {
           logger.warn(s"Worker for shard $latestShardId: Shutting down shard worker on this node")
-          eventProcessor ! ConsumerWorkerFailure(unconfirmedResponses,
-                                                 latestShardId.getOrElse("-"))
+          eventProcessor ! ConsumerWorkerFailure(unconfirmedResponses, latestShardId.getOrElse("-"))
           manager ! ProcessingComplete(successful = false)
           //Move back to ready, although we don't expect to process another batch - that's up to the manager
           switchToReadyState(responseCollector.latestConfirmedEventSeq)

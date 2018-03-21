@@ -215,6 +215,10 @@ class ConsumerConfSpec
         |         # Milliseconds after which the logger will log a warning message for the long running task
         |         # Default: not set
         |         logWarningForTaskAfterMillis = 100
+        |
+        |         # True if we should ignore child shards which have open parents
+        |         # Default: not set
+        |         ignoreUnexpectedChildShards = false
         |      }
         |
         |   }
