@@ -85,8 +85,13 @@ object ProducerConf {
                      parseThrottlingConfig(producerConfig))
   }
 
-  private def buildKPLConfig(kplConfig: Config,
-                             credentialsProvider: Option[AWSCredentialsProvider]) = {
+  /**
+    * This method has been made public to
+    * alleviate some of the pain of testing setup
+    *
+    * THIS IS NOT FOR THE PURPOSES OF PRODUCTION CODE!!!
+    * */
+  def buildKPLConfig(kplConfig: Config, credentialsProvider: Option[AWSCredentialsProvider]) = {
     // We directly load our properties into the KPL as a Java `Properties` object
     // See http://docs.aws.amazon.com/streams/latest/dev/kinesis-kpl-config.html
     import TypesafeConfigExtensions._
