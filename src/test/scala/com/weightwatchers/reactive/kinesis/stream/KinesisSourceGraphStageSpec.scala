@@ -1,5 +1,5 @@
 /*
- Copyright 2012-2013 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2017 WeightWatchers
  *
  * Licensed under the Amazon Software License (the "License").
  * You may not use this file except in compliance with the License.
