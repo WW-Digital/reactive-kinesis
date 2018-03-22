@@ -122,8 +122,7 @@ class KinesisSourceGraphStageSpec
     }
   }
 
-  class TestConsumerService(actorFn: ActorRef => Unit)(actorRef: ActorRef)
-      extends ConsumerService {
+  class TestConsumerService(actorFn: ActorRef => Unit)(actorRef: ActorRef) extends ConsumerService {
     val finished: Promise[Unit] = Promise[Unit]()
     override def stop(): Unit   = ()
     override def start(): Future[Unit] = {

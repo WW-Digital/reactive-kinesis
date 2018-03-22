@@ -94,9 +94,9 @@ trait CommittableEvent[+A] {
 /**
   * Actor based implementation of CommittableEvent.
   */
-private[kinesis] case class CommittableActorEvent[+A](event: ConsumerEvent,
-                                                      payload: A)(implicit sender: ActorRef)
-    extends CommittableEvent[A] {
+private[kinesis] case class CommittableActorEvent[+A](event: ConsumerEvent, payload: A)(
+    implicit sender: ActorRef
+) extends CommittableEvent[A] {
 
   override def sequenceNumber: CompoundSequenceNumber = event.sequenceNumber
 

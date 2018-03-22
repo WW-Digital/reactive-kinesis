@@ -60,11 +60,10 @@ class KinesisSinkGraphStageSpec
       producer.underlyingActor.allMessages.values should contain allElementsOf messages
     }
 
-    "the stream fails, if the producer can not send" in sinkWithProducer(failMessage) {
-      (sink, _) =>
-        val messages = 1.to(100).map(_.toString).map(num => ProducerEvent(num, num))
-        val result   = Source(messages).runWith(sink).failed.futureValue
-        result shouldBe a[IllegalStateException]
+    "the stream fails, if the producer can not send" in sinkWithProducer(failMessage) { (sink, _) =>
+      val messages = 1.to(100).map(_.toString).map(num => ProducerEvent(num, num))
+      val result   = Source(messages).runWith(sink).failed.futureValue
+      result shouldBe a[IllegalStateException]
     }
 
     "the stream fails, if upstream fails" in sinkWithProducer(ackMessage) { (sink, _) =>
