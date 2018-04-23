@@ -143,13 +143,6 @@ class KinesisSourceGraphStage(config: ConsumerConf,
     extends GraphStage[SourceShape[CommittableEvent[ConsumerEvent]]]
     with LazyLogging {
 
-  /**
-    * Ctor that uses the KinesisConsumer as ConsumerService implementation.
-    */
-  def this(config: ConsumerConf, actorSystem: ActorSystem) = {
-    this(config, KinesisConsumer(config, _, actorSystem), actorSystem)
-  }
-
   private[this] val out: Outlet[CommittableEvent[ConsumerEvent]]   = Outlet("KinesisSource.out")
   override val shape: SourceShape[CommittableEvent[ConsumerEvent]] = SourceShape.of(out)
 
