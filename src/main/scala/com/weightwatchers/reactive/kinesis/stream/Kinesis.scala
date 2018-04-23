@@ -144,7 +144,7 @@ object Kinesis extends LazyLogging {
   def source(
       consumerName: String,
       createConsumer: (ConsumerConf, ActorRef) => ConsumerService,
-      inConfig: String = "kinesis",
+      inConfig: String = "kinesis"
   )(implicit system: ActorSystem): Source[CommittableEvent[ConsumerEvent], NotUsed] = {
     val consumerConf = ConsumerConf(system.settings.config.getConfig(inConfig), consumerName)
     source(consumerConf, createConsumer(consumerConf, _))
@@ -166,9 +166,10 @@ object Kinesis extends LazyLogging {
     * @param system the actor system.
     * @return A sink that accepts ProducerEvents.
     */
-  def sink(props: => Props, maxOutStanding: Int)(
-      implicit system: ActorSystem
-  ): Sink[ProducerEvent, Future[Done]] = {
+  def sink(
+      props: => Props,
+      maxOutStanding: Int
+  )(implicit system: ActorSystem): Sink[ProducerEvent, Future[Done]] = {
     Sink.fromGraph(new KinesisSinkGraphStage(props, maxOutStanding, system))
   }
 
@@ -218,11 +219,11 @@ object Kinesis extends LazyLogging {
     * @param system the actor system.
     * @return A sink that accepts ProducerEvents.
     */
-  def sink(kinesisConfig: Config,
-           producerName: String,
-           credentialsProvider: Option[AWSCredentialsProvider])(
-      implicit system: ActorSystem
-  ): Sink[ProducerEvent, Future[Done]] = {
+  def sink(
+      kinesisConfig: Config,
+      producerName: String,
+      credentialsProvider: Option[AWSCredentialsProvider]
+  )(implicit system: ActorSystem): Sink[ProducerEvent, Future[Done]] = {
     sink(
       ProducerConf(kinesisConfig, producerName, credentialsProvider)
     )
@@ -258,11 +259,11 @@ object Kinesis extends LazyLogging {
     * @param system the actor system.
     * @return A sink that accepts ProducerEvents.
     */
-  def sink(producerName: String,
-           inConfig: String = "kinesis",
-           credentialsProvider: Option[AWSCredentialsProvider] = None)(
-      implicit system: ActorSystem
-  ): Sink[ProducerEvent, Future[Done]] = {
+  def sink(
+      producerName: String,
+      inConfig: String = "kinesis",
+      credentialsProvider: Option[AWSCredentialsProvider] = None
+  )(implicit system: ActorSystem): Sink[ProducerEvent, Future[Done]] = {
     sink(system.settings.config.getConfig(inConfig), producerName, credentialsProvider)
   }
 }
