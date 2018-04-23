@@ -110,14 +110,14 @@ object Kinesis extends LazyLogging {
     * See kinesis reference.conf for a list of all available config options.
     *
     * @param consumerName the name of the consumer in the application.conf.
-    * @param inConfig the name of the sub-config for kinesis.
     * @param createConsumer factory function to create ConsumerService from eventProcessor ActorRef.
+    * @param inConfig the name of the sub-config for kinesis.
     * @param system the actor system to use.
     * @return A source of KinesisEvent objects.
     */
   def source(consumerName: String,
-             inConfig: String = "kinesis",
-             createConsumer: (ConsumerConf, ActorRef) => ConsumerService
+             createConsumer: (ConsumerConf, ActorRef) => ConsumerService,
+             inConfig: String = "kinesis"
   )(implicit system: ActorSystem): Source[CommittableEvent[ConsumerEvent], NotUsed] = {
     val consumerConf = ConsumerConf(system.settings.config.getConfig(inConfig), consumerName)
     source(consumerConf, createConsumer(consumerConf, _))
