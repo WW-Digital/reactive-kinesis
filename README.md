@@ -325,7 +325,7 @@ Kinesis
   .runWith(Sink.seq) 
 ```
 
-Or you can explicitly path a lambda, to create the `KinesisConsumer`. 
+Or you can explicitly pass a lambda, to create the `KinesisConsumer`. 
 
 ```scala
 import akka.actor.{ActorRef, ActorSystem}
