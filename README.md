@@ -311,7 +311,7 @@ An Akka `Source` is provided that can be used with streams. It is possible to cr
 directly from the consumer name that is defined in the configuration.
 Every message that is emitted to the stream is of type `CommitableEvent[ConsumerEvent]` and has to be committed 
 explicitly downstream with a call to `event.commit()`. It is possible to map to a different type of `CommittableEvent` 
-via the `map` and `mapAsync` functionality. 
+via the `map` and `mapAsync` functionality. A `KinesisConsumer` is created internally for the `Kinesis.source`, when the factory method isn't defined.
 
 ```scala
 import com.weightwatchers.reactive.kinesis.stream._
@@ -325,7 +325,29 @@ Kinesis
   .runWith(Sink.seq) 
 ```
 
-A `KinesisConsumer` is used internally for the `Kinesis.source`. All rules described here for the `KinesisConsumer` also apply for the stream source.
+Or you can explicitly pass a lambda, to create the `KinesisConsumer`. 
+
+```scala
+import akka.actor.{ActorRef, ActorSystem}
+import akka.stream.scaladsl.Sink
+import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer
+import com.weightwatchers.reactive.kinesis.stream._
+
+val sys = ActorSystem("kinesis-consumer-system")
+
+Kinesis
+  .source(
+    "consumer-name",
+    (conf: KinesisConsumer.ConsumerConf, eventProcessor: ActorRef) => KinesisConsumer(conf, eventProcessor, sys)
+  )
+  .take(100)
+  .map(event => event.map(_.payloadAsString())) // read and map payload as string
+  .mapAsync(10)(event => event.mapAsync(Downloader.download(event.payload))) // handle an async message
+  .map(event => event.commit()) // mark the event as handled by calling commit
+  .runWith(Sink.seq)
+```
+
+All rules described here for the `KinesisConsumer` also apply for the stream source.
 
 <a name="usage-usage-consumer-graceful-shutdown"></a>
 ### Graceful Shutdown
