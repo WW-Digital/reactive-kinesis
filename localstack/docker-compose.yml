@@ -2,7 +2,7 @@ version: "2.3"
 
 services:
   localstack:
-    image: markglh/initialised-localstack:0.8.3
+    image: markglh/initialised-localstack:0.8.6
     volumes:
           - ./templates:/opt/bootstrap/templates
     #network_mode: "host"
