@@ -104,6 +104,8 @@ final case class KinesisProducerConfig(
 }
 
 object KinesisProducerConfig {
+  def apply() = default
+
   def default: KinesisProducerConfig = KinesisProducerConfig(
     additionalMetricDimensions = List(),
     credentialsProvider = None,

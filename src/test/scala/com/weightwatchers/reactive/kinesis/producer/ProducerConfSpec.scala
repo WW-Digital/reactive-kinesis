@@ -23,10 +23,12 @@ import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.amazonaws.auth.ContainerCredentialsProvider.ECSCredentialsEndpointProvider
 import com.amazonaws.auth.{
+  DefaultAWSCredentialsProviderChain,
   EC2ContainerCredentialsProviderWrapper,
   EnvironmentVariableCredentialsProvider
 }
 import com.amazonaws.regions.{Region, Regions}
+import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration
 import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration.ThreadingModel
 import com.amazonaws.services.kinesis.producer.protobuf.Config.AdditionalDimension
 import com.typesafe.config.ConfigFactory
@@ -387,6 +389,45 @@ class ProducerConfSpec
     }
   }
 
-}
+  "Default method should match provided defaults in KinesisProducerConfiguration" in {
+    val awsConfig        = KinesisProducerConfig().toAwsConfig
+    val defaultAwsConfig = new KinesisProducerConfiguration()
 
+    awsConfig.getCredentialsProvider.getClass.getName should be(
+      defaultAwsConfig.getCredentialsProvider.getClass.getName
+    )
+    awsConfig.getMetricsCredentialsProvider should be(
+      defaultAwsConfig.getMetricsCredentialsProvider
+    )
+    awsConfig.getAggregationMaxCount should be(defaultAwsConfig.getAggregationMaxCount)
+    awsConfig.getAggregationMaxSize should be(defaultAwsConfig.getAggregationMaxSize)
+    awsConfig.getCloudwatchEndpoint should be(defaultAwsConfig.getCloudwatchEndpoint)
+    awsConfig.getCloudwatchPort should be(defaultAwsConfig.getCloudwatchPort)
+    awsConfig.getCollectionMaxCount should be(defaultAwsConfig.getCollectionMaxCount)
+    awsConfig.getCollectionMaxSize should be(defaultAwsConfig.getCollectionMaxSize)
+    awsConfig.getConnectTimeout should be(defaultAwsConfig.getConnectTimeout)
+    awsConfig.getCredentialsRefreshDelay should be(defaultAwsConfig.getCredentialsRefreshDelay)
+    awsConfig.isEnableCoreDumps should be(defaultAwsConfig.isEnableCoreDumps)
+    awsConfig.isFailIfThrottled should be(defaultAwsConfig.isFailIfThrottled)
+    awsConfig.getKinesisEndpoint should be(defaultAwsConfig.getKinesisEndpoint)
+    awsConfig.getKinesisPort should be(defaultAwsConfig.getKinesisPort)
+    awsConfig.getLogLevel should be(defaultAwsConfig.getLogLevel)
+    awsConfig.getMaxConnections should be(defaultAwsConfig.getMaxConnections)
+    awsConfig.getMetricsGranularity should be(defaultAwsConfig.getMetricsGranularity)
+    awsConfig.getMetricsLevel should be(defaultAwsConfig.getMetricsLevel)
+    awsConfig.getMetricsNamespace should be(defaultAwsConfig.getMetricsNamespace)
+    awsConfig.getMetricsUploadDelay should be(defaultAwsConfig.getMetricsUploadDelay)
+    awsConfig.getMinConnections should be(defaultAwsConfig.getMinConnections)
+    awsConfig.getNativeExecutable should be(defaultAwsConfig.getNativeExecutable)
+    awsConfig.getRateLimit should be(defaultAwsConfig.getRateLimit)
+    awsConfig.getRecordMaxBufferedTime should be(defaultAwsConfig.getRecordMaxBufferedTime)
+    awsConfig.getRecordTtl should be(defaultAwsConfig.getRecordTtl)
+    awsConfig.getRegion should be(defaultAwsConfig.getRegion)
+    awsConfig.getRequestTimeout should be(defaultAwsConfig.getRequestTimeout)
+    awsConfig.getTempDirectory should be(defaultAwsConfig.getTempDirectory)
+    awsConfig.isVerifyCertificate should be(defaultAwsConfig.isVerifyCertificate)
+    awsConfig.getThreadingModel should be(defaultAwsConfig.getThreadingModel)
+    awsConfig.getThreadPoolSize should be(defaultAwsConfig.getThreadPoolSize)
+  }
+}
 //scalastyle:on
