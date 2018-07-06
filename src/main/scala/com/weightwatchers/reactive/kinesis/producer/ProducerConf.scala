@@ -85,6 +85,23 @@ object ProducerConf {
                      parseThrottlingConfig(producerConfig))
   }
 
+  /**
+    * Simple typed apply method
+    *
+    * @param kinesisConfig       The top level Kinesis Configuration, containing the specified producer
+    * @param streamName        The name of the Kinesis stream to consume
+    * @param dispatcher        Optional config path for the akka dispatcher
+    * @param throttlingConf    Optional configuration which defines whether and how often to throttle
+    * @return A [[ProducerConf]] case class used for constructing the [[KinesisProducerActor]]
+    */
+  def apply(kinesisConfig: KinesisProducerConfig,
+            streamName: String,
+            dispatcher: Option[String],
+            throttlingConf: Option[ThrottlingConf]): ProducerConf = {
+
+    new ProducerConf(streamName, kinesisConfig.toAwsConfig, dispatcher, throttlingConf)
+  }
+
   private def buildKPLConfig(kplConfig: Config,
                              credentialsProvider: Option[AWSCredentialsProvider]) = {
     // We directly load our properties into the KPL as a Java `Properties` object
