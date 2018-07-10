@@ -21,6 +21,7 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration
 import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration.ThreadingModel
 import com.amazonaws.services.kinesis.producer.protobuf.Config.AdditionalDimension
+import com.typesafe.config.{Config, ConfigFactory}
 
 /** Typed config class for the KPL */
 final case class KinesisProducerConfig(
@@ -104,43 +105,59 @@ final case class KinesisProducerConfig(
 }
 
 object KinesisProducerConfig {
-  def apply() = default
+  def apply(): KinesisProducerConfig                                     = default
+  def apply(config: KinesisProducerConfiguration): KinesisProducerConfig = fromAwsConfig(config)
+  def apply(config: Config): KinesisProducerConfig =
+    fromAwsConfig(ProducerConf.buildKPLConfig(config, None))
+  def apply(config: Config, credentialsProvider: AWSCredentialsProvider): KinesisProducerConfig =
+    fromAwsConfig(ProducerConf.buildKPLConfig(config, Some(credentialsProvider)))
 
-  def default: KinesisProducerConfig = KinesisProducerConfig(
-    additionalMetricDimensions = List(),
-    credentialsProvider = None,
-    metricsCredentialsProvider = None,
-    aggregationEnabled = true,
-    aggregationMaxCount = 4294967295L,
-    aggregationMaxSize = 51200,
-    cloudwatchEndpoint = None,
-    cloudwatchPort = 443,
-    collectionMaxCount = 500,
-    collectionMaxSize = 5242880,
-    connectTimeout = 6000,
-    credentialsRefreshDelay = 5000,
-    enableCoreDumps = false,
-    failIfThrottled = false,
-    kinesisEndpoint = None,
-    kinesisPort = 443,
-    logLevel = "info",
-    maxConnections = 24,
-    metricsGranularity = "shard",
-    metricsLevel = "detailed",
-    metricsNamespace = "KinesisProducerLibrary",
-    metricsUploadDelay = 60000,
-    minConnections = 1,
-    nativeExecutable = None,
-    rateLimit = 150,
-    recordMaxBufferedTime = 100,
-    recordTtl = 30000,
-    region = None,
-    requestTimeout = 6000,
-    tempDirectory = None,
-    verifyCertificate = true,
-    threadingModel = ThreadingModel.PER_REQUEST,
-    threadPoolSize = 0
-  )
+  // Sets default values as if no typesafe configuration was passed. This ensures that the default
+  // KinesisProducerConfiguration is used
+  def default: KinesisProducerConfig = {
+    val defaultConfig = ProducerConf.buildKPLConfig(ConfigFactory.empty(), None)
+    fromAwsConfig(defaultConfig)
+  }
+
+  private def fromAwsConfig(config: KinesisProducerConfiguration): KinesisProducerConfig =
+    KinesisProducerConfig(
+      additionalMetricDimensions = List(), // No way to retrieve this from a KinesisProducerConfiguration
+      credentialsProvider = Some(config.getCredentialsProvider),
+      metricsCredentialsProvider = Some(config.getMetricsCredentialsProvider),
+      aggregationEnabled = config.isAggregationEnabled,
+      aggregationMaxCount = config.getAggregationMaxCount,
+      aggregationMaxSize = config.getAggregationMaxSize,
+      cloudwatchEndpoint = Some(config.getCloudwatchEndpoint),
+      cloudwatchPort = config.getCloudwatchPort,
+      collectionMaxCount = config.getCollectionMaxCount,
+      collectionMaxSize = config.getCollectionMaxSize,
+      connectTimeout = config.getConnectTimeout,
+      credentialsRefreshDelay = config.getCredentialsRefreshDelay,
+      enableCoreDumps = config.isEnableCoreDumps,
+      failIfThrottled = config.isFailIfThrottled,
+      kinesisEndpoint = Some(config.getKinesisEndpoint),
+      kinesisPort = config.getKinesisPort,
+      logLevel = config.getLogLevel,
+      maxConnections = config.getMaxConnections,
+      metricsGranularity = config.getMetricsGranularity,
+      metricsLevel = config.getMetricsLevel,
+      metricsNamespace = config.getMetricsNamespace,
+      metricsUploadDelay = config.getMetricsUploadDelay,
+      minConnections = config.getMinConnections,
+      nativeExecutable = Some(config.getNativeExecutable),
+      rateLimit = config.getRateLimit,
+      recordMaxBufferedTime = config.getRecordMaxBufferedTime,
+      recordTtl = config.getRecordTtl,
+      region = config.getRegion match {
+        case x if x.isEmpty => None
+        case x              => Some(Regions.fromName(x))
+      },
+      requestTimeout = config.getRequestTimeout,
+      tempDirectory = Some(config.getTempDirectory),
+      verifyCertificate = config.isVerifyCertificate,
+      threadingModel = config.getThreadingModel,
+      threadPoolSize = config.getThreadPoolSize
+    )
 
   private def setAdditionalDimensions(
       conf: KinesisProducerConfiguration,

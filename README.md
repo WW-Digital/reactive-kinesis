@@ -14,6 +14,7 @@ It's worth familiarising yourself with [Sequence numbers and Sub sequence number
     * [Defining a config file in the client application](#usage-defining-a-config-file-in-the-client-application)
         * [Notable Consumer Configuration Values](#usage-defining-a-config-file-in-the-client-application-notable-consumer-configuration-values)
         * [Notable Producer Configuration Values](#usage-defining-a-config-file-in-the-client-application-notable-producer-configuration-values)
+        * [Typed Configuration - Producer](#typed-configuration---producer)
     * [Usage: Consumer](#usage-usage-consumer)
         * [Actor Based Consumer](#actor-based-consumer)
             * [Important considerations when implementing the Event Processor](#usage-usage-consumer-important-considerations-when-implementing-the-event-processor)
@@ -205,6 +206,37 @@ which allows us to track the progress of sent messages when they go with the nex
 * `kinesis.<producer-name>.kpl.RateLimit` - Limits the maximum allowed put rate for a shard, as a percentage of the backend limits.
 
 <a name="usage-usage-consumer"></a>
+
+### Typed Configuration - Producer
+If you don't want to depend on config files, there's a typed configuration class available: [KinesisProducerConfig](src/main/scala/com/weightwatchers/reactive/kinesis/producer/KinesisProducerConfig.scala)
+
+You can construct it in a few ways:
+
+```scala
+// With default values
+val defaultProducerConfig = KinesisProducerConfig()
+
+// With a provided KinesisProducerConfiguration from the Java KPL library
+val awsKinesisConfig: KinesisProducerConfiguration = ...
+val producerConfig = KinesisProducerConfig(awsKinesisConfig)
+
+// With a typesafe-config object
+val typesafeConfig: Config = ...
+val producerConfig = KinesisProducerConfig(typesafeConfig)
+
+// With a typesafe-config object and an AWSCredentialsProvider
+val typesafeConfig: Config = ...
+val credentialsProvider: AWSCredentialsProvider = ...
+val producerConfig = KinesisProducerConfig(typesafeConfig, credentialsProvider)
+``` 
+
+These can be used to create a ProducerConf and ultimately a KinesisProducer, like so:
+
+```scala
+val producerConfig: KinesisProducerConfig = ...
+val producerConf: ProducerConf = ProducerConf(producerConfig, "my-stream-name")
+```
+
 ## Usage: Consumer
 `reactive-kinesis` provides two different ways to consume messages from Kinesis: [Actor Based Consumer](#actor-based-consumer) and [Akka Stream Source](#akka-stream-source).
 
