@@ -96,8 +96,8 @@ object ProducerConf {
     */
   def apply(kinesisConfig: KinesisProducerConfig,
             streamName: String,
-            dispatcher: Option[String] = None,
-            throttlingConf: Option[ThrottlingConf] = None): ProducerConf = {
+            dispatcher: Option[String],
+            throttlingConf: Option[ThrottlingConf]): ProducerConf = {
 
     new ProducerConf(streamName, kinesisConfig.toAwsConfig, dispatcher, throttlingConf)
   }

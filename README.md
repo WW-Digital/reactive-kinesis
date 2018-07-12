@@ -234,7 +234,7 @@ These can be used to create a ProducerConf and ultimately a KinesisProducer, lik
 
 ```scala
 val producerConfig: KinesisProducerConfig = ...
-val producerConf: ProducerConf = ProducerConf(producerConfig, "my-stream-name")
+val producerConf: ProducerConf = ProducerConf(producerConfig, "my-stream-name", None, None)
 ```
 
 ## Usage: Consumer
