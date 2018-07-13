@@ -1,5 +1,7 @@
-sudo: false
+sudo: required
 language: scala
+services:
+  - docker
 scala:
 - 2.11.11
 - 2.12.5
@@ -40,4 +42,8 @@ env:
   - secure: KffThTeOg0ELt+iw5ZNtDW6x4/1iKIj1v91Yq6earF+YQquusROqt/MtdmyXRG9ho0c/xnB82BJHrBsvac6SwsPUZ/cRvQ0KML3bWyCMCL2B/SurhjxbahAWdgQGj67KO1n72q24cqyRMb9wCCOwy4p/7qomBYM+m8YRLc6YOxxj6DKriIiqOq8jFmt/nktpCUhXVURYvFxHtHQvLutaWWICwGZX1ibyloCmC3wWPMNOFc/1FBqLXNQTUTKuYOOC46TJ5janON1E2obDKZyGf/Q/ZEuNymcJYKi6/7XWzN24Ep194PLGj29J44Zpp9P36hnIiET8dQ1s2Dafo+alubqFEUaP4fV8XyYu5ZtTt5A0wxKEe/u7N4SdxzUZF/zBszCLRL2uJhQlfC7af6keCpIVoKLDi+9b6zpSVLDZmE1UmFuu8LLoMY2s2xRt6vHXTSiyPrIJaIFyaryxjhH+KmKNE0GW1jzVkPc6NpxjnVtF2E7LYogHWHzJLoMpBtTQoAeJlKvtbEmWrZXO9TGPFzu0fb+x/H0Ocre2QDSnjKobtMZs6S8zvD+STfmrZ8ZtZ0H0HNbGJW/rPkSZFLunOPXWxSZzNoWNrzg9LCoPtdkVsa7BYiAY9fM9xNX8SOx/kRZtw52el71jK8mDCV/lQjzjBwyo3AZl/jOx3cbWrAM=
   - secure: KClWy/cCpMSKyJmVNOt8Dmwfatgx/9KsffLcL/BlXUYsBkB3jwdr9SzFok1ArGd02FzrFQU739/wnSKpmsW1fEO64tlh+qJwW76+gFlqWmOjc6r7ENH2u6LGLfRYeD4r76CiEV9mnU5GVMUPJIfbxlP0zB7ukzSGZwbkJ4WBqlxmurRr70jWz2F3ytJM0r31rpqc+ypHi58vj0NPBO7bR6XI4kquW9cDpCCgj4CVVshpsxUB1N4RPzcGsxUPucigH71lJ0sZjnEjSB+E95/Ovbf7PuPYnY0N8S6hLEgTyh7xAcxNpMsFgd1GInb92hrXLujUZU5N2BeX7jnYVa90q55AZd+IQqmJU+/4tBBrgWvppMIiTbbU5pnDoNqHNWmfB4wtbxwNW4y4tQH+/wSVPhgGYOWfsj3nLNnyfcjRAClQzEWCoAbx7Tkgj1OmvrOqwwmiPz3dFMInawQ6RkisqwgjT/sAhNGa2i26Tpj5Sd8XAjxU61MAzsr8gpVdA6TJcSdHkHC2zZVn+64Cc9WHJ9I6WbRD0fR3pFeTbQv+0SOUWV1owqtdGLl6z0gdI5rLZIYO7SMeRPjTYf/5NV/WxF2LcJu06LHYpzURaGQHp6T5NH2eEZof1Dt5tqa2eQ7KfZyui3rz3WB0AQlJSPK9yL78BvZzNlCNWbv5wLiW6hQ=
 before_install:
+- sudo rm /usr/local/bin/docker-compose
+- curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+- chmod +x docker-compose
+- sudo mv docker-compose /usr/local/bin
 - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then openssl aes-256-cbc -K $encrypted_09ef3e55c311_key -iv $encrypted_09ef3e55c311_iv -in secrets.tar.enc -out secrets.tar -d; fi'
