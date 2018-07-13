@@ -21,12 +21,24 @@ import java.io.File
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
+import com.amazonaws.auth.ContainerCredentialsProvider.ECSCredentialsEndpointProvider
+import com.amazonaws.auth.{
+  DefaultAWSCredentialsProviderChain,
+  EC2ContainerCredentialsProviderWrapper,
+  EnvironmentVariableCredentialsProvider
+}
+import com.amazonaws.regions.{Region, Regions}
+import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration
+import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration.ThreadingModel
+import com.amazonaws.services.kinesis.producer.protobuf.Config.AdditionalDimension
 import com.typesafe.config.ConfigFactory
+import org.apache.http.client.CredentialsProvider
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.util.Random
 
 //scalastyle:off magic.number
 class ProducerConfSpec
@@ -253,9 +265,169 @@ class ProducerConfSpec
       }
 
     }
-
   }
 
-}
+  "The KinesisProducerConfig" - {
+    "Should convert properly to an AWS KinesisProducerConfiguration object" in {
+      def randomLong                              = Random.nextLong().abs
+      def randomLongInRange(start: Int, end: Int) = start + Random.nextInt((end - start) + 1).toLong
+      def randomString(chars: Int)                = Random.alphanumeric.take(chars).mkString("")
 
+      val testAdditionalDimensions = List(
+        AdditionalDimension
+          .newBuilder()
+          .setKey("key")
+          .setValue("value")
+          .setGranularity(List("global", "stream", "shard")(Random.nextInt(3)))
+          .build()
+      )
+
+      val testCredentialsProvider        = new EnvironmentVariableCredentialsProvider()
+      val testMetricsCredentialsProvider = new EC2ContainerCredentialsProviderWrapper()
+      val testAggregationEnabled         = Random.nextBoolean()
+      val testAggregationMaxCount        = randomLong
+      val testAggregationMaxSize         = randomLongInRange(64, 1048576)
+      val testCloudwatchEndpoint         = s"www.cloudwatch.com"
+      val testCloudwatchPort             = randomLongInRange(1, 65535)
+      val testCollectionMaxCount         = randomLongInRange(1, 500)
+      val testCollectionMaxSize          = randomLong
+      val testConnectTimeout             = randomLongInRange(100, 300000)
+      val testCredentialsRefreshDelay    = randomLongInRange(1, 300000)
+      val testEnableCoreDumps            = Random.nextBoolean()
+      val testFailIfThrottled            = Random.nextBoolean()
+      val testKinesisEndpoint            = s"www.kinesis.com"
+      val testKinesisPort                = randomLongInRange(1, 65535)
+      val testLogLevel                   = List("info", "warning", "error")(Random.nextInt(3))
+      val testMaxConnections             = randomLongInRange(1, 256)
+      val testMetricsGranularity         = List("global", "stream", "shard")(Random.nextInt(3))
+      val testMetricsLevel               = List("none", "summary", "detailed")(Random.nextInt(3))
+      val testMetricsNamespace           = randomString(5)
+      val testMetricsUploadDelay         = randomLongInRange(1, 60000)
+      val testMinConnections             = randomLongInRange(1, 16)
+      val testNativeExecutable           = s"executable.${randomString(3)}"
+      val testRateLimit                  = randomLong
+      val testRecordMaxBufferedTime      = randomLong
+      val testRecordTtl                  = randomLong
+      val testRegion = List(Regions.AP_NORTHEAST_1,
+                            Regions.AP_SOUTH_1,
+                            Regions.US_EAST_1,
+                            Regions.US_WEST_1)(Random.nextInt(4))
+      val testRequestTimeout    = randomLongInRange(100, 600000)
+      val testTempDirectory     = s"/${randomString(10)}"
+      val testVerifyCertificate = Random.nextBoolean()
+      val testThreadingModel =
+        List(ThreadingModel.PER_REQUEST, ThreadingModel.POOLED)(Random.nextInt(2))
+      val testThreadPoolSize = Random.nextInt.abs
+
+      val config = KinesisProducerConfig(
+        additionalMetricDimensions = testAdditionalDimensions,
+        credentialsProvider = Some(testCredentialsProvider),
+        metricsCredentialsProvider = Some(testMetricsCredentialsProvider),
+        aggregationEnabled = testAggregationEnabled,
+        aggregationMaxCount = testAggregationMaxCount,
+        aggregationMaxSize = testAggregationMaxSize,
+        cloudwatchEndpoint = Some(testCloudwatchEndpoint),
+        cloudwatchPort = testCloudwatchPort,
+        collectionMaxCount = testCollectionMaxCount,
+        collectionMaxSize = testCollectionMaxSize,
+        connectTimeout = testConnectTimeout,
+        credentialsRefreshDelay = testCredentialsRefreshDelay,
+        enableCoreDumps = testEnableCoreDumps,
+        failIfThrottled = testFailIfThrottled,
+        kinesisEndpoint = Some(testKinesisEndpoint),
+        kinesisPort = testKinesisPort,
+        logLevel = testLogLevel,
+        maxConnections = testMaxConnections,
+        metricsGranularity = testMetricsGranularity,
+        metricsLevel = testMetricsLevel,
+        metricsNamespace = testMetricsNamespace,
+        metricsUploadDelay = testMetricsUploadDelay,
+        minConnections = testMinConnections,
+        nativeExecutable = Some(testNativeExecutable),
+        rateLimit = testRateLimit,
+        recordMaxBufferedTime = testRecordMaxBufferedTime,
+        recordTtl = testRecordTtl,
+        region = Some(testRegion),
+        requestTimeout = testRequestTimeout,
+        tempDirectory = Some(testTempDirectory),
+        verifyCertificate = testVerifyCertificate,
+        threadingModel = testThreadingModel,
+        threadPoolSize = testThreadPoolSize
+      ).toAwsConfig
+
+      config.getCredentialsProvider should be(testCredentialsProvider)
+      config.getMetricsCredentialsProvider should be(testMetricsCredentialsProvider)
+      config.getAggregationMaxCount should be(testAggregationMaxCount)
+      config.getAggregationMaxSize should be(testAggregationMaxSize)
+      config.getCloudwatchEndpoint should be(testCloudwatchEndpoint)
+      config.getCloudwatchPort should be(testCloudwatchPort)
+      config.getCollectionMaxCount should be(testCollectionMaxCount)
+      config.getCollectionMaxSize should be(testCollectionMaxSize)
+      config.getConnectTimeout should be(testConnectTimeout)
+      config.getCredentialsRefreshDelay should be(testCredentialsRefreshDelay)
+      config.isEnableCoreDumps should be(testEnableCoreDumps)
+      config.isFailIfThrottled should be(testFailIfThrottled)
+      config.getKinesisEndpoint should be(testKinesisEndpoint)
+      config.getKinesisPort should be(testKinesisPort)
+      config.getLogLevel should be(testLogLevel)
+      config.getMaxConnections should be(testMaxConnections)
+      config.getMetricsGranularity should be(testMetricsGranularity)
+      config.getMetricsLevel should be(testMetricsLevel)
+      config.getMetricsNamespace should be(testMetricsNamespace)
+      config.getMetricsUploadDelay should be(testMetricsUploadDelay)
+      config.getMinConnections should be(testMinConnections)
+      config.getNativeExecutable should be(testNativeExecutable)
+      config.getRateLimit should be(testRateLimit)
+      config.getRecordMaxBufferedTime should be(testRecordMaxBufferedTime)
+      config.getRecordTtl should be(testRecordTtl)
+      config.getRegion should be(testRegion.getName)
+      config.getRequestTimeout should be(testRequestTimeout)
+      config.getTempDirectory should be(testTempDirectory)
+      config.isVerifyCertificate should be(testVerifyCertificate)
+      config.getThreadingModel should be(testThreadingModel)
+      config.getThreadPoolSize should be(testThreadPoolSize)
+    }
+  }
+
+  "Default method should match provided defaults in KinesisProducerConfiguration" in {
+    val awsConfig        = KinesisProducerConfig().toAwsConfig
+    val defaultAwsConfig = new KinesisProducerConfiguration()
+
+    awsConfig.getCredentialsProvider.getClass.getName should be(
+      defaultAwsConfig.getCredentialsProvider.getClass.getName
+    )
+    awsConfig.getMetricsCredentialsProvider should be(
+      defaultAwsConfig.getMetricsCredentialsProvider
+    )
+    awsConfig.getAggregationMaxCount should be(defaultAwsConfig.getAggregationMaxCount)
+    awsConfig.getAggregationMaxSize should be(defaultAwsConfig.getAggregationMaxSize)
+    awsConfig.getCloudwatchEndpoint should be(defaultAwsConfig.getCloudwatchEndpoint)
+    awsConfig.getCloudwatchPort should be(defaultAwsConfig.getCloudwatchPort)
+    awsConfig.getCollectionMaxCount should be(defaultAwsConfig.getCollectionMaxCount)
+    awsConfig.getCollectionMaxSize should be(defaultAwsConfig.getCollectionMaxSize)
+    awsConfig.getConnectTimeout should be(defaultAwsConfig.getConnectTimeout)
+    awsConfig.getCredentialsRefreshDelay should be(defaultAwsConfig.getCredentialsRefreshDelay)
+    awsConfig.isEnableCoreDumps should be(defaultAwsConfig.isEnableCoreDumps)
+    awsConfig.isFailIfThrottled should be(defaultAwsConfig.isFailIfThrottled)
+    awsConfig.getKinesisEndpoint should be(defaultAwsConfig.getKinesisEndpoint)
+    awsConfig.getKinesisPort should be(defaultAwsConfig.getKinesisPort)
+    awsConfig.getLogLevel should be(defaultAwsConfig.getLogLevel)
+    awsConfig.getMaxConnections should be(defaultAwsConfig.getMaxConnections)
+    awsConfig.getMetricsGranularity should be(defaultAwsConfig.getMetricsGranularity)
+    awsConfig.getMetricsLevel should be(defaultAwsConfig.getMetricsLevel)
+    awsConfig.getMetricsNamespace should be(defaultAwsConfig.getMetricsNamespace)
+    awsConfig.getMetricsUploadDelay should be(defaultAwsConfig.getMetricsUploadDelay)
+    awsConfig.getMinConnections should be(defaultAwsConfig.getMinConnections)
+    awsConfig.getNativeExecutable should be(defaultAwsConfig.getNativeExecutable)
+    awsConfig.getRateLimit should be(defaultAwsConfig.getRateLimit)
+    awsConfig.getRecordMaxBufferedTime should be(defaultAwsConfig.getRecordMaxBufferedTime)
+    awsConfig.getRecordTtl should be(defaultAwsConfig.getRecordTtl)
+    awsConfig.getRegion should be(defaultAwsConfig.getRegion)
+    awsConfig.getRequestTimeout should be(defaultAwsConfig.getRequestTimeout)
+    awsConfig.getTempDirectory should be(defaultAwsConfig.getTempDirectory)
+    awsConfig.isVerifyCertificate should be(defaultAwsConfig.isVerifyCertificate)
+    awsConfig.getThreadingModel should be(defaultAwsConfig.getThreadingModel)
+    awsConfig.getThreadPoolSize should be(defaultAwsConfig.getThreadPoolSize)
+  }
+}
 //scalastyle:on
