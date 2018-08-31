@@ -358,25 +358,39 @@ Kinesis
 ```
 
 Or you can explicitly pass a lambda, to create the `KinesisConsumer`. 
+You can save a reference to this `KinesisConsumer` and use it to manually
+shutdown your consumer when needed.
+
 
 ```scala
-import akka.actor.{ActorRef, ActorSystem}
-import akka.stream.scaladsl.Sink
-import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer
-import com.weightwatchers.reactive.kinesis.stream._
+  import akka.actor.ActorSystem
+  import akka.stream.scaladsl.Sink
+  import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer
+  import com.weightwatchers.reactive.kinesis.stream._
 
-val sys = ActorSystem("kinesis-consumer-system")
 
-Kinesis
-  .source(
-    "consumer-name",
-    (conf: KinesisConsumer.ConsumerConf, eventProcessor: ActorRef) => KinesisConsumer(conf, eventProcessor, sys)
-  )
-  .take(100)
-  .map(event => event.map(_.payloadAsString())) // read and map payload as string
-  .mapAsync(10)(event => event.mapAsync(Downloader.download(event.payload))) // handle an async message
-  .map(event => event.commit()) // mark the event as handled by calling commit
-  .runWith(Sink.seq)
+  implicit val sys = ActorSystem("kinesis-consumer-system")
+  implicit val materializer: Materializer = ActorMaterializer()
+  import sys.dispatcher
+
+  var consumer = Option.empty[KinesisConsumer]
+
+  Kinesis.source(
+    consumerName = "some-consumer",
+    createConsumer = (conf, ref) => {
+      val c = KinesisConsumer(conf, ref, sys)
+      consumer = Option(c)
+      c
+    })
+    .take(100)
+    .map(event => event.map(_.payloadAsString()))
+    .mapAsync(10)(event => event.mapAsync(Downloader.download(event.payload)))
+    .map(event => event.commit())
+    .runWith(Sink.seq)
+
+  consumer.foreach { c =>
+    c.stop()
+  }
 ```
 
 All rules described here for the `KinesisConsumer` also apply for the stream source.
