@@ -42,10 +42,10 @@ lazy val library =
     val amazon = Seq(
       // TODO: Upgrade this to 1.9.x when this issue is resolved and exposed in localstack:
       // https://github.com/mhart/kinesalite/issues/59
-      "com.amazonaws" % "amazon-kinesis-client" % "1.8.10" % Compile
+      "com.amazonaws" % "amazon-kinesis-client" % "1.9.1" % Compile
       excludeAll (ExclusionRule(organization = "com.fasterxml.jackson.core"),
       ExclusionRule(organization = "com.fasterxml.jackson.dataformat")),
-      "com.amazonaws" % "amazon-kinesis-producer" % "0.12.8" % Compile
+      "com.amazonaws" % "amazon-kinesis-producer" % "0.12.9" % Compile
       excludeAll (ExclusionRule(organization = "com.fasterxml.jackson.core"),
       ExclusionRule(organization = "com.fasterxml.jackson.dataformat"))
     )

@@ -219,6 +219,14 @@ class ConsumerConfSpec
         |         # True if we should ignore child shards which have open parents
         |         # Default: not set
         |         ignoreUnexpectedChildShards = false
+        |
+        |         # This is the default backoff time between 2 ListShards calls when throttled.
+        |         # Default: 1500
+        |         listShardsBackoffTimeInMillis = 1500
+        |
+        |         # This is the maximum number of times the KinesisProxy will retry to make ListShards calls on being throttled.
+        |         # Default: 50
+        |         maxListShardsRetryAttempts = 50
         |      }
         |
         |   }
