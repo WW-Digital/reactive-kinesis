@@ -16,13 +16,24 @@
 
 package com.weightwatchers.reactive.kinesis
 
+import java.io.File
+
+import com.amazonaws.services.kinesis.producer.{KinesisProducer => AWSKinesisProducer}
+import com.typesafe.config.ConfigFactory
+import com.weightwatchers.reactive.kinesis.common.{
+  KinesisSuite,
+  KinesisTestConsumer,
+  TestCredentials
+}
+import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
-import com.weightwatchers.reactive.kinesis.producer.KinesisProducer
+import com.weightwatchers.reactive.kinesis.producer.{KinesisProducer, ProducerConf}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 
+import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Random
 

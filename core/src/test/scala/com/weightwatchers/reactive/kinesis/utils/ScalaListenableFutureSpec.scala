@@ -17,6 +17,9 @@
 package com.weightwatchers.reactive.kinesis.utils
 
 import com.google.common.util.concurrent.SettableFuture
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 
 /**
   * Tests the implicit future conversions.

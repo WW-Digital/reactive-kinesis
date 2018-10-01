@@ -38,7 +38,7 @@ class KinesisProducerSpec extends FreeSpec with Matchers with MockitoSugar with 
   implicit val ece = scala.concurrent.ExecutionContext.global
 
   val defaultKinesisConfig =
-    ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
+    ConfigFactory.parseFile(new File("core/src/main/resources/reference.conf")).getConfig("kinesis")
 
   val kinesisConfig = ConfigFactory
     .parseString(

@@ -17,6 +17,8 @@
 package com.weightwatchers.reactive.kinesis.utils
 
 import com.typesafe.config.ConfigFactory
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 
 /**
   * Tests the implicit future conversions.

@@ -47,7 +47,7 @@ class ProducerConfSpec
     with BeforeAndAfterAll {
 
   val defaultKinesisConfig =
-    ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
+    ConfigFactory.parseFile(new File("core/src/main/resources/reference.conf")).getConfig("kinesis")
 
   val kinesisConfig = ConfigFactory
     .parseString(

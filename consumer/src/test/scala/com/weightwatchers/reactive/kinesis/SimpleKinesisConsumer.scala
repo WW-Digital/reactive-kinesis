@@ -32,7 +32,7 @@ import com.weightwatchers.reactive.kinesis.models.CompoundSequenceNumber
 import org.joda.time.{DateTime, DateTimeZone, Period}
 
 import scala.collection.mutable.ListBuffer
-import com.weightwatchers.eventing.system
+import com.weighwatchers.reactive.eventing.system
 
 object RunSimpleConsumer extends App {
   val consumer = system.actorOf(SimpleKinesisConsumer.props, "simple-consumer")
