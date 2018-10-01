@@ -12,7 +12,7 @@ val core =
     .settings(Defaults.itSettings: _*)
     .settings(
       libraryDependencies ++=
-        Dependencies.compile
+        Dependencies.compile ++ Dependencies.test
     )
 
 val consumer =
