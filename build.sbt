@@ -25,8 +25,8 @@ lazy val library =
     object Version {
       val scalaCheck = "1.13.5"
       val scalaTest  = "3.0.5"
-      val jackson    = "2.9.4"
-      val akka       = "2.5.11"
+      val jackson    = "2.9.8"
+      val akka       = "2.5.19"
     }
 
     val jackson = Seq(
@@ -40,12 +40,10 @@ lazy val library =
     )
 
     val amazon = Seq(
-      // TODO: Upgrade this to 1.9.x when this issue is resolved and exposed in localstack:
-      // https://github.com/mhart/kinesalite/issues/59
-      "com.amazonaws" % "amazon-kinesis-client" % "1.8.10" % Compile
+      "com.amazonaws" % "amazon-kinesis-client" % "1.9.3" % Compile
       excludeAll (ExclusionRule(organization = "com.fasterxml.jackson.core"),
       ExclusionRule(organization = "com.fasterxml.jackson.dataformat")),
-      "com.amazonaws" % "amazon-kinesis-producer" % "0.12.8" % Compile
+      "com.amazonaws" % "amazon-kinesis-producer" % "0.12.11" % Compile
       excludeAll (ExclusionRule(organization = "com.fasterxml.jackson.core"),
       ExclusionRule(organization = "com.fasterxml.jackson.dataformat"))
     )
@@ -54,7 +52,7 @@ lazy val library =
       "com.typesafe"               % "config"         % "1.3.3"      % Compile,
       "com.typesafe.akka"          %% "akka-actor"    % Version.akka % Compile,
       "com.typesafe.akka"          %% "akka-stream"   % Version.akka % Compile,
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0"      % Compile
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"      % Compile
     )
 
     val logback = Seq(
