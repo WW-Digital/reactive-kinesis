@@ -40,7 +40,7 @@ lazy val library =
     )
 
     val amazon = Seq(
-      // TODO: Upgrade this to 1.9.x when this issue is resolved and exposed in localstack:		       "com.amazonaws" % "amazon-kinesis-client" % "1.9.3" % Compile
+      // TODO: Upgrade this to 1.9.x when this issue is resolved and exposed in localstack:
       // https://github.com/mhart/kinesalite/issues/59
       // 1.9.3 breaks KinesisSourceGraphStageIntegrationSpec and ConsumerProcessingManagerIntegrationSpec
       "com.amazonaws" % "amazon-kinesis-client" % "1.8.10" % Compile
