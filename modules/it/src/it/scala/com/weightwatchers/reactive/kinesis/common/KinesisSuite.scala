@@ -1,6 +1,6 @@
 package com.weightwatchers.reactive.kinesis.common
 
-import java.io.File
+import java.io.{File, FileReader}
 import java.nio.ByteBuffer
 import java.nio.file.Paths
 
@@ -25,8 +25,13 @@ trait KinesisConfiguration {
 
 
 
-  val defaultKinesisConfig: Config =
-    ConfigFactory.parseFile(new File("modules/core/src/main/resources/reference.conf")).getConfig("kinesis")
+  val defaultKinesisConfig: Config = {
+    // works in terminal
+    ConfigFactory.parseFile(new File("../core/src/main/resources/reference.conf"))
+      // works in IDE - I forgot my Java here :-(
+      .withFallback(ConfigFactory.parseFile(new File("modules/core/src/main/resources/reference.conf")))
+      .getConfig("kinesis")
+  }
 
   private def kinesisConfig(streamName: String,
                             appName: String = "integration-test",
