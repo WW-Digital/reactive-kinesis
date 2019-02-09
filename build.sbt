@@ -41,7 +41,7 @@ val it =
   project
     .in(file("modules/it"))
     .settings(name := "it")
-    .dependsOn(core, producer % "compile->compile;test->test", consumer)
+    .dependsOn(core, producer, consumer)
     .enablePlugins(AutomateHeaderPlugin, GitVersioning, ScalafmtCorePlugin)
     .settings(settings)
     .configs(IntegrationTest)
