@@ -10,6 +10,7 @@ object Dependencies {
     val scalaTest  = "3.0.5"
     val jackson    = "2.9.4"
     val akka       = "2.5.11"
+    val mockito = "2.16.0"
   }
 
   private val jackson = Seq(
@@ -44,12 +45,16 @@ object Dependencies {
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Compile
   )
 
-  val test: Seq[ModuleID] = Seq(
-    "org.scalatest"     %% "scalatest"    % Version.scalaTest  % "it,test",
-    "org.scalacheck"    %% "scalacheck"   % Version.scalaCheck % "it,test",
-    "com.typesafe.akka" %% "akka-testkit" % Version.akka       % "it,test",
-    "org.mockito"       % "mockito-core"  % "2.16.0"           % "it,test"
+  private val testBase: Seq[ModuleID] = Seq(
+    "org.scalatest"     %% "scalatest"    % Version.scalaTest,
+    "org.scalacheck"    %% "scalacheck"   % Version.scalaCheck,
+    "com.typesafe.akka" %% "akka-testkit" % Version.akka,
+    "org.mockito"       % "mockito-core"  % Version.mockito
   )
+
+  val test: Seq[ModuleID] = testBase.map(_ % "test")
+
+  val itTest: Seq[ModuleID] = testBase.map(_ % "it,test")
 
   val compile: Seq[ModuleID] = jackson ++ amazon ++ lightbend ++ logback
 

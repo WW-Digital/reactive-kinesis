@@ -15,6 +15,7 @@
  */
 
 package com.weightwatchers.reactive
+
 import akka.actor.ActorSystem
 
 package object eventing {

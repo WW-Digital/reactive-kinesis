@@ -31,7 +31,7 @@ import scala.concurrent.Future
 /**
   * Main entry point for creating a Kinesis source and sink.
   */
-object Kinesis extends LazyLogging {
+object ConsumerStreamFactory extends LazyLogging {
 
   /**
     * Create a source, that provides KinesisEvents.

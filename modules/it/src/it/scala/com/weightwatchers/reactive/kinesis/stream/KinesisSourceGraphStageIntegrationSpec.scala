@@ -1,6 +1,7 @@
 package com.weightwatchers.reactive.kinesis.stream
 
 import akka.stream.scaladsl.Sink
+import com.weightwatchers.reactive.kinesis.common.{AkkaUnitTestLike, KinesisConfiguration, KinesisSuite}
 import org.scalatest._
 
 import scala.concurrent.duration._
@@ -19,7 +20,7 @@ class KinesisSourceGraphStageIntegrationSpec
   "A Kinesis Source" - {
 
     "process all messages of a stream with one worker" in new withKinesisConfForApp("1worker") {
-      val result = Kinesis
+      val result = ConsumerStreamFactory
         .source(consumerConf = consumerConf())
         .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard,
                    inclusive = true)
@@ -40,8 +41,8 @@ class KinesisSourceGraphStageIntegrationSpec
       // During register one will fail and not read any message until retry
       // Depending on timing one or both sources will read all events
       val batchSize = TestStreamNrOfMessagesPerShard
-      val source1   = Kinesis.source(consumerConf = consumerConf())
-      val source2   = Kinesis.source(consumerConf = consumerConf())
+      val source1   = ConsumerStreamFactory.source(consumerConf = consumerConf())
+      val source2   = ConsumerStreamFactory.source(consumerConf = consumerConf())
       val result = source1
         .merge(source2)
         .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard,
@@ -71,7 +72,7 @@ class KinesisSourceGraphStageIntegrationSpec
         for (iteration <- 1
                .to((TestStreamNumberOfShards * TestStreamNrOfMessagesPerShard / batchSize).toInt))
           yield {
-            Kinesis
+            ConsumerStreamFactory
               .source(consumerConf = consumerConf(batchSize = batchSize))
               .takeWhile(_.payload.payloadAsString().toLong < batchSize * iteration,
                          inclusive = true)
@@ -96,7 +97,7 @@ class KinesisSourceGraphStageIntegrationSpec
     ) {
       // This worker will read all events and will not commit
       // We expect that the read position will not change
-      val uncommitted = Kinesis
+      val uncommitted = ConsumerStreamFactory
         .source(consumerConf())
         .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard,
                    inclusive = true)
@@ -105,7 +106,7 @@ class KinesisSourceGraphStageIntegrationSpec
 
       // This worker will read all available events.
       // This works only, if the first worker has not committed anything
-      val committed = Kinesis
+      val committed = ConsumerStreamFactory
         .source(consumerConf = consumerConf())
         .takeWhile(_.payload.payloadAsString().toLong < TestStreamNrOfMessagesPerShard,
                    inclusive = true)

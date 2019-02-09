@@ -73,7 +73,7 @@ class KinesisSinkGraphStageSpec
     }
 
     "the stream fails, if the producer actor dies" in {
-      val sink     = Kinesis.sink(Props(new FailActor), 1)
+      val sink     = ProducerStreamFactory.sink(Props(new FailActor), 1)
       val messages = 1.to(100).map(_.toString).map(num => ProducerEvent(num, num))
       val result   = Source(messages).runWith(sink).failed.futureValue
       result shouldBe a[IllegalStateException]
@@ -91,7 +91,7 @@ class KinesisSinkGraphStageSpec
     }
 
     "A sink can be created from system config" in {
-      Kinesis.sink("test-producer")
+      ProducerStreamFactory.sink("test-producer")
     }
   }
 
@@ -134,7 +134,8 @@ class KinesisSinkGraphStageSpec
       sinkFn: (Sink[ProducerEvent, Future[Done]], TestActorRef[TestProducerActor]) => Unit
   ) = {
     val testActor = TestActorRef[TestProducerActor](Props(new TestProducerActor(sendFn)))
-    val sink      = Kinesis.sink(Props(new ForwardToProducerActor(testActor)), maxOutstanding)
+    val sink =
+      ProducerStreamFactory.sink(Props(new ForwardToProducerActor(testActor)), maxOutstanding)
     sinkFn(sink, testActor)
   }
 

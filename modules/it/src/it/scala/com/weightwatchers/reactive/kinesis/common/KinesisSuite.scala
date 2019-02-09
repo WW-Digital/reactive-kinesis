@@ -2,19 +2,17 @@ package com.weightwatchers.reactive.kinesis.common
 
 import java.io.File
 import java.nio.ByteBuffer
+import java.nio.file.Paths
 
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.dynamodbv2.{AmazonDynamoDB, AmazonDynamoDBClientBuilder}
-import com.amazonaws.services.kinesis.leases.impl.{
-  KinesisClientLease,
-  KinesisClientLeaseSerializer,
-  LeaseManager
-}
+import com.amazonaws.services.kinesis.leases.impl.{KinesisClientLease, KinesisClientLeaseSerializer, LeaseManager}
 import com.amazonaws.services.kinesis.model.PutRecordRequest
 import com.amazonaws.services.kinesis.{AmazonKinesisAsync, AmazonKinesisAsyncClientBuilder}
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.StrictLogging
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
+import com.weightwatchers.reactive.kinesis.producer.ProducerConf
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Suite}
 
 import scala.collection.JavaConverters._
@@ -25,8 +23,10 @@ import scala.concurrent.duration._
   */
 trait KinesisConfiguration {
 
+
+
   val defaultKinesisConfig: Config =
-    ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("com/weightwatchers/reactive/kinesis")
+    ConfigFactory.parseFile(new File("modules/core/src/main/resources/reference.conf")).getConfig("kinesis")
 
   private def kinesisConfig(streamName: String,
                             appName: String = "integration-test",
@@ -92,7 +92,7 @@ trait KinesisConfiguration {
            |}
       """.stripMargin
       )
-      .getConfig("com/weightwatchers/reactive/kinesis")
+      .getConfig("kinesis")
       .withFallback(defaultKinesisConfig)
 
   def consumerConfFromConfig(conf: Config, consumer: String = "testConsumer"): ConsumerConf = {
@@ -122,6 +122,12 @@ trait KinesisConfiguration {
       kclConfiguration =
         config.kclConfiguration.withKinesisClientConfig(clientConf.withMaxConnections(5))
     )
+  }
+
+  def producerConfFor(streamName: String, appName: String = "integration-test"): ProducerConf = {
+    ProducerConf(kinesisConfig(streamName, appName),
+      "testProducer",
+      Some(TestCredentials.Credentials))
   }
 
 }
@@ -199,6 +205,8 @@ trait KinesisSuite
         appName = appName,
         maxRecords = math.max(1, batchSize.toInt))
     }
+
+    def producerConf(): ProducerConf = producerConfFor(TestStreamName, appName)
 
     // proactively create the lease table for this application.
     // KCL does not handle this reliably, which makes the test brittle.

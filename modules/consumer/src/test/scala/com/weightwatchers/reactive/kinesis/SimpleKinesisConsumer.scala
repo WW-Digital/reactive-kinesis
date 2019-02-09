@@ -16,7 +16,7 @@
 
 package com.weightwatchers.reactive.kinesis
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import com.typesafe.config._
 import com.typesafe.scalalogging.LazyLogging
 import com.weightwatchers.reactive.kinesis.SimpleKinesisConsumer._
@@ -32,10 +32,10 @@ import com.weightwatchers.reactive.kinesis.models.CompoundSequenceNumber
 import org.joda.time.{DateTime, DateTimeZone, Period}
 
 import scala.collection.mutable.ListBuffer
-import com.weightwatchers.reactive.eventing.system
 
 object RunSimpleConsumer extends App {
-  val consumer = system.actorOf(SimpleKinesisConsumer.props, "simple-consumer")
+  implicit val system: ActorSystem = akka.actor.ActorSystem.create("test-system")
+  val consumer                     = system.actorOf(SimpleKinesisConsumer.props, "simple-consumer")
 }
 
 object SimpleKinesisConsumer {

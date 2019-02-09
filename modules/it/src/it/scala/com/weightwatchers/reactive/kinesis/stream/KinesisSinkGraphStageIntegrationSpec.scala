@@ -21,7 +21,7 @@ class KinesisSinkGraphStageIntegrationSpec
       val elements     = 1.to(messageCount).map(_.toString)
       Source(elements)
         .map(num => ProducerEvent(num, num))
-        .runWith(Kinesis.sink(producerConf()))
+        .runWith(ProducerStreamFactory.sink(producerConf()))
         .futureValue
       val list = testConsumer.retrieveRecords(TestStreamName, messageCount)
       list should contain allElementsOf elements
@@ -33,7 +33,7 @@ class KinesisSinkGraphStageIntegrationSpec
     ) {
       Source
         .failed(new IllegalStateException("Boom"))
-        .runWith(Kinesis.sink(producerConf()))
+        .runWith(ProducerStreamFactory.sink(producerConf()))
         .failed
         .futureValue shouldBe a[IllegalStateException]
     }

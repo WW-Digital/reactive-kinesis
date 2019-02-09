@@ -8,8 +8,6 @@ val core =
     .settings(name := "core")
     .enablePlugins(AutomateHeaderPlugin, GitVersioning, ScalafmtCorePlugin)
     .settings(settings)
-    .configs(IntegrationTest)
-    .settings(Defaults.itSettings: _*)
     .settings(
       libraryDependencies ++=
         Dependencies.compile ++ Dependencies.test
@@ -22,8 +20,6 @@ val consumer =
     .dependsOn(core)
     .enablePlugins(AutomateHeaderPlugin, GitVersioning, ScalafmtCorePlugin)
     .settings(settings)
-    .configs(IntegrationTest)
-    .settings(Defaults.itSettings: _*)
     .settings(
       libraryDependencies ++=
         Dependencies.compile ++ Dependencies.test
@@ -36,8 +32,6 @@ val producer =
     .dependsOn(core)
     .enablePlugins(AutomateHeaderPlugin, GitVersioning, ScalafmtCorePlugin)
     .settings(settings)
-    .configs(IntegrationTest)
-    .settings(Defaults.itSettings: _*)
     .settings(
       libraryDependencies ++=
         Dependencies.compile ++ Dependencies.test
@@ -47,14 +41,14 @@ val it =
   project
     .in(file("modules/it"))
     .settings(name := "it")
-    .dependsOn(core, producer, consumer)
+    .dependsOn(core, producer % "compile->compile;test->test", consumer)
     .enablePlugins(AutomateHeaderPlugin, GitVersioning, ScalafmtCorePlugin)
     .settings(settings)
     .configs(IntegrationTest)
     .settings(Defaults.itSettings: _*)
     .settings(
       libraryDependencies ++=
-        Dependencies.compile ++ Dependencies.test
+        Dependencies.compile ++ Dependencies.itTest
     )
 
 val `reactive-kinesis` =

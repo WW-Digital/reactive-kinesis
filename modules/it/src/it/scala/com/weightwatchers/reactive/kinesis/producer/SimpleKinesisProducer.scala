@@ -7,7 +7,6 @@ import com.typesafe.scalalogging.LazyLogging
 import com.weightwatchers.reactive.kinesis.producer.SimpleKinesisProducer._
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
 import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{Send, SendFailed, SendSuccessful, SendWithCallback}
-import com.weightwatchers.reactive.kinesis.producer.{KinesisProducer, KinesisProducerActor}
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -39,7 +38,7 @@ object SimpleKinesisProducer {
   case class ProduceWithBatch(upTo: Int)
 
   def props: Props = {
-    val config = ConfigFactory.load("sample.conf").getConfig("com/weightwatchers/reactive/kinesis")
+    val config = ConfigFactory.load("sample.conf").getConfig("kinesis")
     Props(classOf[SimpleKinesisProducer], config)
   }
 }

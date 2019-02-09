@@ -18,7 +18,6 @@ package com.weightwatchers.reactive.kinesis.producer
 
 import com.weightwatchers.reactive.kinesis.common.KinesisSuite
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
-import com.weightwatchers.reactive.kinesis.producer.KinesisProducer
 import org.scalatest.concurrent.Eventually
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.time.{Millis, Seconds, Span}
