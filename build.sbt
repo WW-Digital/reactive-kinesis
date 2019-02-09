@@ -4,7 +4,7 @@
 
 val core =
   project
-    .in(file("core"))
+    .in(file("modules/core"))
     .settings(name := "core")
     .enablePlugins(AutomateHeaderPlugin, GitVersioning, ScalafmtCorePlugin)
     .settings(settings)
@@ -17,7 +17,7 @@ val core =
 
 val consumer =
   project
-    .in(file("consumer"))
+    .in(file("modules/consumer"))
     .settings(name := "consumer")
     .dependsOn(core)
     .enablePlugins(AutomateHeaderPlugin, GitVersioning, ScalafmtCorePlugin)
@@ -31,9 +31,23 @@ val consumer =
 
 val producer =
   project
-    .in(file("producer"))
+    .in(file("modules/producer"))
     .settings(name := "producer")
     .dependsOn(core)
+    .enablePlugins(AutomateHeaderPlugin, GitVersioning, ScalafmtCorePlugin)
+    .settings(settings)
+    .configs(IntegrationTest)
+    .settings(Defaults.itSettings: _*)
+    .settings(
+      libraryDependencies ++=
+        Dependencies.compile ++ Dependencies.test
+    )
+
+val it =
+  project
+    .in(file("modules/it"))
+    .settings(name := "it")
+    .dependsOn(core, producer, consumer)
     .enablePlugins(AutomateHeaderPlugin, GitVersioning, ScalafmtCorePlugin)
     .settings(settings)
     .configs(IntegrationTest)
