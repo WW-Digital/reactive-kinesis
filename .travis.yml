@@ -4,7 +4,7 @@ services:
   - docker
 scala:
 - 2.11.11
-- 2.12.5
+- 2.12.8
 jdk:
 - oraclejdk8
 cache:
