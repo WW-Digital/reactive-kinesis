@@ -222,10 +222,10 @@ class ConsumerConfSpec
         |         # Default: 1500
         |         listShardsBackoffTimeInMillis = 1500
         |
+        |
         |         # The number of times the Proxy will retry listShards call when throttled.
         |         # Default: 50
         |         maxListShardsRetryAttempts = 50
-        |
         |
         |         # True if we should ignore child shards which have open parents
         |         # Default: not set
