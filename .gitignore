@@ -38,3 +38,4 @@ snapshots
 .credentials
 .artifactory
 secrets.tar
+/.metals/
