@@ -10,7 +10,7 @@ val core =
     .settings(settings)
     .settings(
       libraryDependencies ++=
-        Dependencies.compile ++ Dependencies.test
+        Dependencies.compile ++ Dependencies.test ++ Dependencies.libsThatUsedToComeFromAmazon
     )
 
 val consumer =
@@ -22,7 +22,7 @@ val consumer =
     .settings(settings)
     .settings(
       libraryDependencies ++=
-        Dependencies.compile ++ Dependencies.test
+        Dependencies.compile ++ Dependencies.test ++ Dependencies.amazonKcl
     )
 
 val producer =
@@ -34,7 +34,7 @@ val producer =
     .settings(settings)
     .settings(
       libraryDependencies ++=
-        Dependencies.compile ++ Dependencies.test
+        Dependencies.compile ++ Dependencies.test ++ Dependencies.amazonKpl
     )
 
 val it =
