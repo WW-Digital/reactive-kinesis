@@ -29,7 +29,7 @@ import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
 import com.weightwatchers.reactive.kinesis.producer.{KinesisProducer, ProducerConf}
 import org.scalatest.concurrent.Eventually
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 

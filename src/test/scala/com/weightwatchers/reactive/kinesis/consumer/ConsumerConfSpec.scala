@@ -25,7 +25,7 @@ import com.typesafe.config.ConfigFactory
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.time.{Millis, Seconds, Span}
 
 import scala.concurrent.duration.DurationInt
@@ -301,7 +301,7 @@ class ConsumerConfSpec
       val configKeys = kclLibConfiguration.getClass.getDeclaredMethods
         .filter(_.getName.startsWith("with"))
         .map(_.getName.drop(4))
-        .map(field => field.head.toLower + field.tail)
+        .map(field => s"${field.head.toLower}${field.tail}")
         .filterNot(
           field => fieldsToSkip.contains(field.toLowerCase)
         )

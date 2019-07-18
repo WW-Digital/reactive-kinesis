@@ -12,7 +12,7 @@ lazy val `reactive-kinesis` =
     .settings(
       libraryDependencies ++=
         library.jackson ++ library.amazon ++ library.lightbend ++
-        library.logback ++ library.testing
+        library.logback ++ library.testing ++ library.compat
     )
 
 // *****************************************************************************
@@ -23,10 +23,10 @@ lazy val library =
   new {
 
     object Version {
-      val scalaCheck = "1.13.5"
-      val scalaTest  = "3.0.5"
+      val scalaCheck = "1.14.0"
+      val scalaTest  = "3.0.8"
       val jackson    = "2.9.8"
-      val akka       = "2.5.19"
+      val akka       = "2.5.23"
     }
 
     val jackson = Seq(
@@ -55,7 +55,7 @@ lazy val library =
       "com.typesafe"               % "config"         % "1.3.3"      % Compile,
       "com.typesafe.akka"          %% "akka-actor"    % Version.akka % Compile,
       "com.typesafe.akka"          %% "akka-stream"   % Version.akka % Compile,
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"      % Compile
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"      % Compile
     )
 
     val logback = Seq(
@@ -67,6 +67,10 @@ lazy val library =
       "org.scalacheck"    %% "scalacheck"   % Version.scalaCheck % "it,test",
       "com.typesafe.akka" %% "akka-testkit" % Version.akka       % "it,test",
       "org.mockito"       % "mockito-core"  % "2.16.0"           % "it,test"
+    )
+
+    val compat = Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.1"
     )
   }
 
@@ -98,9 +102,7 @@ lazy val commonSettings =
       "-unchecked", // Enable additional warnings where generated code depends on assumptions.
       "-Xcheckinit", // Wrap field accessors to throw an exception on uninitialized access.
       "-Xfatal-warnings", // Fail the compilation if there are any warnings.
-      "-Xfuture", // Turn on future language features.
       "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
-      "-Xlint:by-name-right-associative", // By-name parameter of right associative operator.
       "-Xlint:delayedinit-select", // Selecting member of DelayedInit.
       "-Xlint:doc-detached", // A Scaladoc comment appears to be detached from its element.
       "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
@@ -114,16 +116,21 @@ lazy val commonSettings =
       "-Xlint:private-shadow", // A private field (or class parameter) shadows a superclass field.
       "-Xlint:stars-align", // Pattern sequence wildcard must align with sequence component.
       "-Xlint:type-parameter-shadow", // A local type parameter shadows a type already in scope.
-      "-Xlint:unsound-match", // Pattern match may not be typesafe.
-      "-Yno-adapted-args", // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-      "-Ypartial-unification", // Enable partial unification in type constructor inference
       "-Ywarn-dead-code", // Warn when dead code is identified.
-      "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.
-      "-Ywarn-infer-any", // Warn when a type argument is inferred to be `Any`.
-      "-Ywarn-nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
-      "-Ywarn-nullary-unit", // Warn when nullary methods return Unit.
       "-Ywarn-numeric-widen" // Warn when numerics are widened.
-    ),
+    ) ++ (if (scalaVersion.value.startsWith("2.13")) Seq()
+          else
+            Seq(
+              "-Xlint:by-name-right-associative", // By-name parameter of right associative operator.
+              "-Xlint:unsound-match", // Pattern match may not be typesafe.
+              "-Ypartial-unification", // Enable partial unification in type constructor inference
+              "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.
+              "-Ywarn-infer-any", // Warn when a type argument is inferred to be `Any`.
+              "-Ywarn-nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
+              "-Ywarn-nullary-unit", // Warn when nullary methods return Unit.
+              "-Xfuture", // Turn on future language features.
+              "-Yno-adapted-args" // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
+            )),
     scalacOptions in (Compile, doc) ++= Seq(
       "-no-link-warnings" // Suppresses problems with Scaladoc @throws links
     ),

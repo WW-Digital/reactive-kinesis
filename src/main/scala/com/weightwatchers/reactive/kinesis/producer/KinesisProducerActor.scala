@@ -172,7 +172,7 @@ class KinesisProducerActor(producer: KinesisProducer, throttlingConfig: Option[T
         .recover {
           case ex: UserRecordFailedException =>
             //TODO is this too much log output on error? I'm assuming this will be rare!
-            import scala.collection.JavaConverters._
+            import scala.jdk.CollectionConverters._
             val errorList = ex.getResult.getAttempts.asScala.map(attempt => s"""
                  |Delay after prev attempt: ${attempt.getDelay} ms,
                  |Duration: ${attempt.getDuration} ms, Code: ${attempt.getErrorCode},

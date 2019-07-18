@@ -18,7 +18,7 @@ import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.producer.ProducerConf
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Suite}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 
 /**
@@ -234,7 +234,7 @@ trait KinesisSuite
     val manager = new LeaseManager[KinesisClientLease](s"$applicationName-$TestStreamName",
                                                        dynamoClient,
                                                        new KinesisClientLeaseSerializer())
-    manager.createLeaseTableIfNotExists(1l, 1l)
+    manager.createLeaseTableIfNotExists(1L, 1L)
     while (!manager.leaseTableExists()) Thread.sleep(100)
   }
 
@@ -281,8 +281,6 @@ trait KinesisSuite
   }
 
   protected def createTestData(testDataCount: Int): Unit = {
-    import scala.collection.JavaConverters._
-
     kinesisClient
       .describeStream(TestStreamName)
       .getStreamDescription

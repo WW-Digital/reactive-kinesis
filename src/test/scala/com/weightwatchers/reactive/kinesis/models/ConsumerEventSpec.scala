@@ -21,10 +21,10 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 import org.joda.time.DateTime
 import org.scalacheck.Gen
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FreeSpec, Matchers}
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class ConsumerEventSpec extends FreeSpec with Matchers with GeneratorDrivenPropertyChecks {
+class ConsumerEventSpec extends FreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   "A ConsumerEvent" - {
     "can be read as string" in {

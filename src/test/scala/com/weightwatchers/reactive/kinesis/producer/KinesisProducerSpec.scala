@@ -27,7 +27,7 @@ import com.typesafe.config.ConfigFactory
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
 import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 
 import scala.concurrent.Future

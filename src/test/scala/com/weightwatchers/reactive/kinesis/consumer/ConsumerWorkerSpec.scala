@@ -31,7 +31,7 @@ import com.weightwatchers.reactive.kinesis.consumer.CheckpointWorker.{
 import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker._
 import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
 import org.joda.time.DateTime
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, GivenWhenThen, Matchers}
 
 import scala.concurrent.Await
