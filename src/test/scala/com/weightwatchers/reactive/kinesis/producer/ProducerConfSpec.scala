@@ -33,7 +33,7 @@ import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration.Thre
 import com.amazonaws.services.kinesis.producer.protobuf.Config.AdditionalDimension
 import com.typesafe.config.ConfigFactory
 import org.apache.http.client.CredentialsProvider
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
 
 import scala.concurrent.Await
@@ -253,7 +253,9 @@ class ProducerConfSpec
 
       configKeys foreach { configKey =>
         val field =
-          kplLibConfiguration.getClass.getDeclaredField(configKey.head.toLower + configKey.tail)
+          kplLibConfiguration.getClass.getDeclaredField(
+            s"${configKey.head.toLower}${configKey.tail}"
+          )
         field.setAccessible(true)
 
         withClue(

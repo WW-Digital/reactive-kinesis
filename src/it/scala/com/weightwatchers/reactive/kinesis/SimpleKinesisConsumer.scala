@@ -165,7 +165,7 @@ class SimpleKinesisConsumer(kinesisConfig: Config) extends Actor with LazyLoggin
 
   //scalastyle:on
 
-  private def isHealthy(expectedNum: Int, section: Seq[Int]): Boolean = {
+  private def isHealthy(expectedNum: Int, section: Iterable[Int]): Boolean = {
     val expectedRange: Iterator[Int]      = Range(totalVerified, totalVerified + expectedNum).iterator
     val actualSortedResult: Iterator[Int] = section.iterator
     def compare(actual: Iterator[Int], expected: Iterator[Int]): Boolean = {

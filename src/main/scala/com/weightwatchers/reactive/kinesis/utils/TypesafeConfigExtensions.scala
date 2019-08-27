@@ -20,7 +20,7 @@ import java.util.Properties
 
 import com.typesafe.config.Config
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * Extensions added to Typesafe config class.

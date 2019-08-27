@@ -17,7 +17,7 @@
 package com.weightwatchers.reactive.kinesis.utils
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 
 /**

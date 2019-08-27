@@ -10,7 +10,7 @@ import com.amazonaws.services.kinesis.model._
 import com.amazonaws.services.kinesis.{AmazonKinesisAsyncClient, _}
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.FiniteDuration
 
 object KinesisTestConsumer {

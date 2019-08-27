@@ -25,7 +25,7 @@ import com.weightwatchers.reactive.kinesis.consumer.CheckpointWorker._
 import com.weightwatchers.reactive.kinesis.models.CompoundSequenceNumber
 import com.weightwatchers.reactive.kinesis.consumer.CheckpointWorker.ReadyToCheckpoint
 import org.mockito.Mockito
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
 
 import scala.concurrent.Await

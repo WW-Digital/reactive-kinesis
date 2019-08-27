@@ -20,6 +20,7 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.util.Date
 
+import scala.jdk.CollectionConverters._
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestActor.AutoPilot
 import akka.testkit.{ImplicitSender, TestActor, TestDuration, TestKit, TestProbe}
@@ -39,12 +40,10 @@ import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, Consu
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
+import org.scalatestplus.mockito.MockitoSugar
 
-import scala.collection.JavaConverters._
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{DurationDouble, FiniteDuration}
 import scala.concurrent.{Await, Future, Promise}
@@ -119,12 +118,12 @@ class ConsumerProcessingManagerSpec
 
         //validate the probe received the Seq of ConsumerEvents
         val expectedMsg = ProcessEvents(
-          ArrayBuffer(toConsumerEvent(record1),
-                      toConsumerEvent(record2),
-                      toConsumerEvent(record3),
-                      toConsumerEvent(record4),
-                      toConsumerEvent(record5),
-                      toConsumerEvent(record6)),
+          Seq(toConsumerEvent(record1),
+              toConsumerEvent(record2),
+              toConsumerEvent(record3),
+              toConsumerEvent(record4),
+              toConsumerEvent(record5),
+              toConsumerEvent(record6)),
           checkpointer,
           shardId
         )
