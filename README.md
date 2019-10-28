@@ -518,7 +518,7 @@ else
     do nothing.
 ```
 
-https://www.lucidchart.com/invitations/accept/6522abde-92bd-4b60-ba74-76881b7f807b
+![Kinesis retries diagram scheme](https://www.lucidchart.com/publicSegments/view/e9674455-b544-4634-a29c-7066c32ddc45/image.png)
 
 <a name="usage-usage-producer-actor-based-implementation-from-outside-of-an-actor"></a>
 #### From outside of an Actor
