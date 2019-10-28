@@ -125,7 +125,7 @@ class KinesisSinkGraphStageSpec
   }
 
   def failMessage(sender: ActorRef, event: SendWithCallback): Unit = {
-    sender ! SendFailed(event.messageId, new IllegalStateException("wrong!"))
+    sender ! SendFailed(event.producerEvent, event.messageId, new IllegalStateException("wrong!"))
   }
 
   def ignoreMessage(sender: ActorRef, event: SendWithCallback): Unit = ()

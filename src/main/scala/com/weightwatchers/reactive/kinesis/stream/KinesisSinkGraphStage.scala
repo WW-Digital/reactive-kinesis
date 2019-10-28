@@ -135,8 +135,11 @@ class KinesisSinkGraphStage(producerActorProps: => Props,
             if (outstandingMessageCount < maxOutstanding) pull(in)
           }
 
-        case (_, SendFailed(messageId, reason)) =>
-          logger.warn(s"Could not send message with id: $messageId", reason)
+        case (_, SendFailed(event, messageId, reason)) =>
+          logger.warn(
+            s"Could not send message with id $messageId and partitionKey ${event.partitionKey}",
+            reason
+          )
           failStage(reason)
 
         case (_, Terminated(_)) =>

@@ -448,12 +448,13 @@ case class Send(producerEvent: ProducerEvent)
 case class SendSuccessful(messageId: String, userRecordResult: UserRecordResult)
 
 /**
-  * Sent to the sender in event of a failed completion.
-  *
-  * @param messageId The id of the event that failed.
-  * @param reason    The exception causing the failure. Likely to be of type [[UserRecordFailedException]]
-  */
-case class SendFailed(messageId: String, reason: Throwable)
+    * Sent to the sender in event of a failed completion.
+    *
+    * @param event     The current event that failed.
+    * @param messageId The id of the event that failed.
+    * @param reason    The exception causing the failure.
+    */
+case class SendFailed(event: ProducerEvent, messageId: String, reason: Throwable)
 ```
 
 
@@ -490,8 +491,8 @@ class SomeActor(kinesisConfig: Config) extends Actor {
     case SendSuccessful(messageId, _) =>
       println(s"Successfully sent $messageId")
 
-    case SendFailed(messageId, reason) =>
-      println(s"Failed to send $messageId, cause: ${reason.getMessage}")
+    case SendFailed(event, messageId, reason) =>
+      println(s"Failed to send event ${event.partitionKey} with $messageId, cause: ${reason.getMessage}")
   }
 }
 ```
@@ -509,7 +510,7 @@ Kinesis Retry model with service DB:
 ```
 if sendSuccessful
     continue
-if sendFiled
+if sendFailed
     save event in db
 if backgroundJob.connect(stream).isSuccessful
     go to step1
