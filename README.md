@@ -496,6 +496,30 @@ class SomeActor(kinesisConfig: Config) extends Actor {
 }
 ```
 
+#### Scheme for kinesis retries in services
+
+Kinesis Retry model with service DB:
+<ul>
+<li>The service itself manage their kinesis failures.</li>
+<li>Practical, develop only in service.</li>
+<li>Save time for learning and integration with other technology.</li>
+</ul>
+ Algorithm steps to publish event to stream:
+
+```
+if sendSuccessful
+    continue
+if sendFiled
+    save event in db
+if backgroundJob.connect(stream).isSuccessful
+    go to step1
+    delete event from DB 
+else
+    do nothing.
+```
+
+https://www.lucidchart.com/invitations/accept/6522abde-92bd-4b60-ba74-76881b7f807b
+
 <a name="usage-usage-producer-actor-based-implementation-from-outside-of-an-actor"></a>
 #### From outside of an Actor
 
