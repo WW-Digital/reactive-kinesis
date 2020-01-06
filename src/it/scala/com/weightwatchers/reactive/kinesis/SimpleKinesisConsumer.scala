@@ -16,6 +16,7 @@ import com.weightwatchers.reactive.kinesis.models.CompoundSequenceNumber
 import org.joda.time.{DateTime, DateTimeZone, Period}
 
 import scala.collection.mutable.ListBuffer
+import scala.collection.Seq
 import com.weightwatchers.eventing.system
 
 object RunSimpleConsumer extends App {

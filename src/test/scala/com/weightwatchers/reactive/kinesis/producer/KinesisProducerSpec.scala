@@ -16,24 +16,21 @@
 
 package com.weightwatchers.reactive.kinesis.producer
 
-import java.io.File
-
 import com.amazonaws.services.kinesis.producer.{
   UserRecordResult,
   KinesisProducer => AWSKinesisProducer
 }
 import com.google.common.util.concurrent.SettableFuture
 import com.typesafe.config.ConfigFactory
+import com.weightwatchers.reactive.kinesis.UnitTest
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
+import java.io.File
 import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
-
 import scala.concurrent.Future
 
 //scalastyle:off magic.number
-class KinesisProducerSpec extends FreeSpec with Matchers with MockitoSugar with BeforeAndAfterAll {
+class KinesisProducerSpec extends UnitTest {
 
   implicit val ece = scala.concurrent.ExecutionContext.global
 

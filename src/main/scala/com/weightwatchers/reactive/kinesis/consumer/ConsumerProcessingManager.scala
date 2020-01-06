@@ -38,10 +38,10 @@ import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{
 import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
 import org.joda.time.{DateTime, DateTimeZone}
 
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
-import scala.jdk.CollectionConverters._
 
 /**
   * Manages the processing of messages for a SPECIFIC SHARD.
@@ -100,7 +100,7 @@ private[consumer] class ConsumerProcessingManager(
       // Process records and perform all exception handling.
       val allRecordsProcessedFut: Future[ProcessingComplete] =
         (consumerWorker ? ProcessEvents(
-          processRecordsInput.getRecords.asScala.map(toConsumerEvent).toSeq,
+          processRecordsInput.getRecords.asScala.map(toConsumerEvent),
           processRecordsInput.getCheckpointer,
           kinesisShardId
         )).mapTo[ProcessingComplete]

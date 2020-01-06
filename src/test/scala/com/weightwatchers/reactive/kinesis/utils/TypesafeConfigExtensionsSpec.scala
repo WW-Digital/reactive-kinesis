@@ -17,17 +17,12 @@
 package com.weightwatchers.reactive.kinesis.utils
 
 import com.typesafe.config.ConfigFactory
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
+import com.weightwatchers.reactive.kinesis.UnitTest
 
 /**
   * Tests the implicit future conversions.
   */
-class TypesafeConfigExtensionsSpec
-    extends FreeSpec
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll {
+class TypesafeConfigExtensionsSpec extends UnitTest {
 
   val kplConfig = ConfigFactory.parseString("""
       |kpl {

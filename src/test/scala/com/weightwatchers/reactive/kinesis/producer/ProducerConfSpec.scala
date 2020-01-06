@@ -16,38 +16,24 @@
 
 package com.weightwatchers.reactive.kinesis.producer
 
-import java.io.File
-
-import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
-import com.amazonaws.auth.ContainerCredentialsProvider.ECSCredentialsEndpointProvider
 import com.amazonaws.auth.{
-  DefaultAWSCredentialsProviderChain,
   EC2ContainerCredentialsProviderWrapper,
   EnvironmentVariableCredentialsProvider
 }
-import com.amazonaws.regions.{Region, Regions}
+import com.amazonaws.regions.Regions
 import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration
 import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration.ThreadingModel
 import com.amazonaws.services.kinesis.producer.protobuf.Config.AdditionalDimension
 import com.typesafe.config.ConfigFactory
-import org.apache.http.client.CredentialsProvider
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
-
+import com.weightwatchers.reactive.kinesis.{AkkaTest, UnitTest}
+import java.io.File
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Random
 
 //scalastyle:off magic.number
-class ProducerConfSpec
-    extends TestKit(ActorSystem("producer-spec"))
-    with ImplicitSender
-    with FreeSpecLike
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll {
+class ProducerConfSpec extends UnitTest with AkkaTest {
 
   val defaultKinesisConfig =
     ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
@@ -214,11 +200,6 @@ class ProducerConfSpec
     .withFallback(defaultKinesisConfig)
 
   implicit val timeout = Timeout(5.seconds)
-
-  override def afterAll(): Unit = {
-    system.terminate()
-    Await.result(system.whenTerminated, timeout.duration)
-  }
 
   "The ProducerConf" - {
 

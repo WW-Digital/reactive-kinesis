@@ -16,30 +16,16 @@
 
 package com.weightwatchers.reactive.kinesis.consumer
 
-import java.io.File
-
-import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
-import org.scalatest._
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatestplus.mockito.MockitoSugar
+import com.weightwatchers.reactive.kinesis.{AkkaTest, UnitTest}
+import java.io.File
 import org.scalatest.time.{Millis, Seconds, Span}
-
 import scala.concurrent.duration.DurationInt
 
 //scalastyle:off magic.number
-class ConsumerConfSpec
-    extends TestKit(ActorSystem("consumer-conf-spec"))
-    with ImplicitSender
-    with FreeSpecLike
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll
-    with GivenWhenThen
-    with ScalaFutures {
+class ConsumerConfSpec extends UnitTest with AkkaTest {
 
   val defaultKinesisConfig =
     ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")
@@ -158,7 +144,7 @@ class ConsumerConfSpec
         |
         |         # Default: no timeout
         |         timeoutInSeconds = 10
-        |         
+        |
         |
         |         # The amount of milliseconds to wait before graceful shutdown forcefully terminates.
         |         # Default: 5000
@@ -176,41 +162,41 @@ class ConsumerConfSpec
         |         # max number of threads in the getRecords thread pool
         |         # Default: Optional value, default not set
         |         maxGetRecordsThreadPool = 1
-        |         
+        |
         |         #
         |         # Pre-fetching config
         |         #
-        |         
+        |
         |         # Pre-fetching will retrieve and queue additional records from Kinesis while the
         |         # application is processing existing records.
         |         # Pre-fetching can be enabled by setting dataFetchingStrategy to PREFETCH_CACHED. Once
-        |         # enabled an additional fetching thread will be started to retrieve records from Kinesis. 
+        |         # enabled an additional fetching thread will be started to retrieve records from Kinesis.
         |         # Retrieved records will be held in a queue until the application is ready to process them.
-        |         
+        |
         |         # Which data fetching strategy to use (DEFAULT, PREFETCH_CACHED)
         |         # Default: DEFAULT
         |         dataFetchingStrategy = DEFAULT
-        |         
+        |
         |         #
         |         # Pre-fetching supports the following configuration values:
         |         #
-        |         
+        |
         |         # The maximum number of process records input that can be queued
         |         # Default: 3
         |         maxPendingProcessRecordsInput = 3
-        |         
+        |
         |         # The maximum number of bytes that can be queued
         |         # Default 8388608 (8 * 1024 * 1024 / 8Mb)
         |         maxCacheByteSize = 8388608
-        |         
+        |
         |         # The maximum number of records that can be queued
         |         # Default: 30000
         |         maxRecordsCount = 30000
-        |         
+        |
         |         # The amount of time to wait between calls to Kinesis
         |         # Default: 1500
         |         idleMillisBetweenCalls = 1500
-        |         
+        |
         |         #
         |         # End of Pre-fetching config
         |         #
@@ -231,8 +217,10 @@ class ConsumerConfSpec
         |         # True if we should ignore child shards which have open parents
         |         # Default: not set
         |         ignoreUnexpectedChildShards = false
-        |      }
         |
+        |         # One of PROVISIONED or PAY_PER_REQUEST
+        |         billingMode = PROVISIONED
+        |      }
         |   }
         |}
       """.stripMargin

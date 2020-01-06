@@ -16,36 +16,23 @@
 
 package com.weightwatchers.reactive.kinesis.producer
 
-import akka.actor.{ActorSystem, PoisonPill}
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
+import akka.actor.PoisonPill
+import akka.testkit.{TestActorRef, TestProbe}
 import akka.util.Timeout
 import com.amazonaws.services.kinesis.producer.{UserRecordFailedException, UserRecordResult}
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
 import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor._
+import com.weightwatchers.reactive.kinesis.{AkkaTest, UnitTest}
 import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
-
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 //scalastyle:off magic.number
-class KinesisProducerActorSpec
-    extends TestKit(ActorSystem("producer-spec"))
-    with ImplicitSender
-    with FreeSpecLike
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll {
+class KinesisProducerActorSpec extends UnitTest with AkkaTest {
 
   implicit val timeout = Timeout(5.seconds)
 
   import system.dispatcher
-
-  override def afterAll(): Unit = {
-    system.terminate()
-    Await.result(system.whenTerminated, timeout.duration)
-  }
 
   "The KinesisProducerActor" - {
 

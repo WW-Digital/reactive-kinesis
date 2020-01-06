@@ -1,21 +1,14 @@
 package com.weightwatchers.reactive.kinesis.stream
 
 import akka.stream.scaladsl.Sink
-import com.weightwatchers.reactive.kinesis.common.{
-  AkkaUnitTestLike,
-  KinesisConfiguration,
-  KinesisSuite
-}
-import org.scalatest._
-
+import com.weightwatchers.reactive.kinesis.common.{AkkaUnitTestLike, IntegrationTest, KinesisConfiguration, KinesisSuite}
 import scala.concurrent.duration._
 
 class KinesisSourceGraphStageIntegrationSpec
-    extends FreeSpec
+    extends IntegrationTest
     with KinesisSuite
     with KinesisConfiguration
-    with AkkaUnitTestLike
-    with Matchers {
+    with AkkaUnitTestLike {
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(60.seconds, 1.second)
 

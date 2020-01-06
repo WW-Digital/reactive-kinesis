@@ -134,10 +134,10 @@ private[consumer] class CheckpointWorker(backOffTime: FiniteDuration,
     cancelTimers()
     // continually remind the ConsumerWorker we're ready!
     checkpointNotificationTimer = Some(
-      context.system.scheduler.schedule(notificationDelay,
-                                        notificationDelay,
-                                        context.parent,
-                                        ReadyToCheckpoint)(context.dispatcher)
+      context.system.scheduler.scheduleWithFixedDelay(notificationDelay,
+                                                      notificationDelay,
+                                                      context.parent,
+                                                      ReadyToCheckpoint)(context.dispatcher)
     )
 
     def readyState: Receive = LoggingReceive {

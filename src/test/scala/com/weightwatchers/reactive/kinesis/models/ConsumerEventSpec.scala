@@ -16,15 +16,14 @@
 
 package com.weightwatchers.reactive.kinesis.models
 
+import com.weightwatchers.reactive.kinesis.UnitTest
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
-
 import org.joda.time.DateTime
 import org.scalacheck.Gen
-import org.scalatest.{FreeSpec, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class ConsumerEventSpec extends FreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class ConsumerEventSpec extends UnitTest with ScalaCheckDrivenPropertyChecks {
 
   "A ConsumerEvent" - {
     "can be read as string" in {

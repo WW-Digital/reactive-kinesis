@@ -16,16 +16,12 @@
 
 package com.weightwatchers.reactive.kinesis.stream
 
-import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
-import java.util.Date
-
+import akka.actor.ActorRef
 import akka.actor.Status.Failure
-import akka.{Done, NotUsed}
-import akka.actor.{ActorRef, ActorSystem}
-import akka.stream.{ActorMaterializer, BufferOverflowException, Materializer, ThrottleMode}
 import akka.stream.scaladsl.{Sink, Source}
-import akka.testkit.{ImplicitSender, TestKit}
+import akka.stream.{BufferOverflowException, ThrottleMode}
+import akka.testkit.TestProbe
+import akka.{Done, NotUsed}
 import com.typesafe.config.ConfigFactory
 import com.weightwatchers.reactive.kinesis.consumer.ConsumerService
 import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{
@@ -34,26 +30,22 @@ import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{
 }
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
+import com.weightwatchers.reactive.kinesis.{AkkaTest, UnitTest}
+import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
+import java.util.Date
 import org.joda.time.DateTime
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
-
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Future, Promise}
 
-class KinesisSourceGraphStageSpec
-    extends TestKit(ActorSystem("source-graph-spec"))
-    with FreeSpecLike
-    with Matchers
-    with BeforeAndAfterAll
-    with ScalaFutures
-    with ImplicitSender {
+class KinesisSourceGraphStageSpec extends UnitTest with AkkaTest {
 
-  implicit val materializer: Materializer = ActorMaterializer()
-  implicit val ec                         = system.dispatcher
+  implicit val ec = system.dispatcher
   implicit val defaultPatience =
     PatienceConfig(timeout = Span(3, Seconds), interval = Span(50, Millis))
+  // create implicit sender
+  implicit val self = TestProbe().ref
 
   "KinesisSourceGraph" - {
 
@@ -164,10 +156,5 @@ class KinesisSourceGraphStageSpec
                       ByteBuffer.wrap(payload.getBytes(StandardCharsets.UTF_8)),
                       DateTime.now())
       )
-  }
-
-  override def afterAll(): Unit = {
-    system.terminate()
-    Await.result(system.whenTerminated, 5.seconds)
   }
 }

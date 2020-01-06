@@ -16,11 +16,7 @@
 
 package com.weightwatchers.reactive.kinesis.consumer
 
-import java.io.File
-import java.util
-
-import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.amazonaws.auth.{
   AWSCredentialsProviderChain,
@@ -30,26 +26,17 @@ import com.amazonaws.auth.{
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker
 import com.typesafe.config.ConfigFactory
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
+import com.weightwatchers.reactive.kinesis.{AkkaTest, UnitTest}
+import java.io.File
+import java.util
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest._
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.time.{Millis, Seconds, Span}
-
 import scala.concurrent.duration.DurationInt
 
 //scalastyle:off magic.number
-class KinesisConsumerSpec
-    extends TestKit(ActorSystem("consumer-spec"))
-    with ImplicitSender
-    with FreeSpecLike
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll
-    with GivenWhenThen
-    with ScalaFutures {
+class KinesisConsumerSpec extends UnitTest with AkkaTest {
 
   val defaultKinesisConfig =
     ConfigFactory.parseFile(new File("src/main/resources/reference.conf")).getConfig("kinesis")

@@ -2,29 +2,18 @@ package com.weightwatchers.reactive.kinesis.consumer
 
 import akka.actor.{ActorRef, Props}
 import akka.testkit.TestProbe
-import com.amazonaws.services.kinesis.clientlibrary.interfaces.v2.{
-  IRecordProcessor,
-  IRecordProcessorFactory
-}
-import com.weightwatchers.reactive.kinesis.common.{
-  AkkaUnitTestLike,
-  KinesisConfiguration,
-  KinesisSuite
-}
+import com.amazonaws.services.kinesis.clientlibrary.interfaces.v2.{IRecordProcessor, IRecordProcessorFactory}
+import com.weightwatchers.reactive.kinesis.common.{AkkaUnitTestLike, IntegrationTest, KinesisConfiguration, KinesisSuite}
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
-import org.scalatest.concurrent.Eventually
-import org.scalatest.{FreeSpec, Matchers}
-
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
 
 class ConsumerProcessingManagerIntegrationSpec
-    extends FreeSpec
+    extends IntegrationTest
     with KinesisSuite
     with KinesisConfiguration
     with AkkaUnitTestLike
-    with Matchers
-    with Eventually {
+ {
 
   override def TestStreamNrOfMessagesPerShard: Long    = 0
   override def TestStreamNumberOfShards: Long          = 2

@@ -16,28 +16,19 @@
 
 package com.weightwatchers.reactive.kinesis.consumer
 
-import akka.actor.{Actor, ActorRef, ActorSystem}
-import akka.testkit.{TestActorRef, TestDuration, TestKit, TestProbe}
+import akka.actor.{Actor, ActorRef}
+import akka.testkit.{TestActorRef, TestDuration, TestProbe}
 import com.amazonaws.services.kinesis.clientlibrary.exceptions.ThrottlingException
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorCheckpointer
 import com.typesafe.config.ConfigFactory
-import com.weightwatchers.reactive.kinesis.consumer.CheckpointWorker._
+import com.weightwatchers.reactive.kinesis.consumer.CheckpointWorker.{ReadyToCheckpoint, _}
 import com.weightwatchers.reactive.kinesis.models.CompoundSequenceNumber
-import com.weightwatchers.reactive.kinesis.consumer.CheckpointWorker.ReadyToCheckpoint
+import com.weightwatchers.reactive.kinesis.{AkkaTest, UnitTest}
 import org.mockito.Mockito
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
-
-import scala.concurrent.Await
 import scala.concurrent.duration._
 
 //scalastyle:off magic.number
-class CheckpointWorkerSpec
-    extends TestKit(ActorSystem("checkpoint-worker-spec"))
-    with FreeSpecLike
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll {
+class CheckpointWorkerSpec extends UnitTest with AkkaTest {
 
   val config = ConfigFactory.parseString("""
       |kinesis {
@@ -76,11 +67,6 @@ class CheckpointWorkerSpec
   val checkpointResultTimeout: FiniteDuration       = 2000.millis
   val checkpointNotificationTimeout: FiniteDuration = 1500.millis
   val checkpointBackoffTimeout: FiniteDuration      = parsedCheckpointerConf.backoff.dilated
-
-  override def afterAll(): Unit = {
-    system.terminate()
-    Await.result(system.whenTerminated, 5.seconds)
-  }
 
   "The CheckpointWorker" - {
 

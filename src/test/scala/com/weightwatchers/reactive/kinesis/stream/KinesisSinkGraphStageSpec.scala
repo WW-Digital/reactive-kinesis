@@ -16,13 +16,10 @@
 
 package com.weightwatchers.reactive.kinesis.stream
 
-import java.util.Collections
-
 import akka.Done
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import akka.stream.scaladsl.{Sink, Source}
-import akka.stream.{ActorMaterializer, Materializer}
-import akka.testkit.{TestActorRef, TestKit}
+import akka.testkit.TestActorRef
 import com.amazonaws.services.kinesis.producer.UserRecordResult
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
 import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{
@@ -30,24 +27,16 @@ import com.weightwatchers.reactive.kinesis.producer.KinesisProducerActor.{
   SendSuccessful,
   SendWithCallback
 }
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
-import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
-
+import com.weightwatchers.reactive.kinesis.{AkkaTest, UnitTest}
+import java.util.Collections
 import scala.collection.mutable
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
-class KinesisSinkGraphStageSpec
-    extends TestKit(ActorSystem("source-graph-spec"))
-    with FreeSpecLike
-    with Matchers
-    with BeforeAndAfterAll
-    with ScalaFutures
-    with Eventually {
+class KinesisSinkGraphStageSpec extends UnitTest with AkkaTest {
 
-  implicit val materializer: Materializer = ActorMaterializer()
-  implicit val ec                         = system.dispatcher
-  implicit val defaultPatience            = PatienceConfig(5.seconds, interval = 50.millis)
+  implicit val ec              = system.dispatcher
+  implicit val defaultPatience = PatienceConfig(5.seconds, interval = 50.millis)
 
   "KinesisSinkGraph" - {
 
@@ -136,10 +125,5 @@ class KinesisSinkGraphStageSpec
     val testActor = TestActorRef[TestProducerActor](Props(new TestProducerActor(sendFn)))
     val sink      = Kinesis.sink(Props(new ForwardToProducerActor(testActor)), maxOutstanding)
     sinkFn(sink, testActor)
-  }
-
-  override def afterAll(): Unit = {
-    system.terminate()
-    Await.result(system.whenTerminated, 5.seconds)
   }
 }

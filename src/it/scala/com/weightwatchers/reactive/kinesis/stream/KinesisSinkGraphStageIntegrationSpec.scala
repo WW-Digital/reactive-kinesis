@@ -1,22 +1,16 @@
 package com.weightwatchers.reactive.kinesis.stream
 
 import akka.stream.scaladsl.Source
-import com.weightwatchers.reactive.kinesis.common.{
-  AkkaUnitTestLike,
-  KinesisConfiguration,
-  KinesisSuite
-}
+import com.weightwatchers.reactive.kinesis.common.{AkkaUnitTestLike, IntegrationTest, KinesisConfiguration, KinesisSuite}
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
-import org.scalatest.{FreeSpec, Matchers}
-
 import scala.concurrent.duration._
 
 class KinesisSinkGraphStageIntegrationSpec
-    extends FreeSpec
+    extends IntegrationTest
     with KinesisSuite
     with KinesisConfiguration
     with AkkaUnitTestLike
-    with Matchers {
+{
 
   "KinesisSinkGraph" - {
 

@@ -16,14 +16,9 @@
 
 package com.weightwatchers.reactive.kinesis.consumer
 
-import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
-import java.util.Date
-
-import scala.jdk.CollectionConverters._
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorRef
+import akka.testkit.{TestActor, TestDuration, TestProbe}
 import akka.testkit.TestActor.AutoPilot
-import akka.testkit.{ImplicitSender, TestActor, TestDuration, TestKit, TestProbe}
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorCheckpointer
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker
 import com.amazonaws.services.kinesis.clientlibrary.types.{
@@ -37,35 +32,25 @@ import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{
   ProcessingComplete
 }
 import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
+import com.weightwatchers.reactive.kinesis.{AkkaTest, UnitTest}
+import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
+import java.util.Date
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.Mockito
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, Matchers}
-import org.scalatestplus.mockito.MockitoSugar
-
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{DurationDouble, FiniteDuration}
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Future, Promise}
+import scala.jdk.CollectionConverters._
 
-class ConsumerProcessingManagerSpec
-    extends TestKit(ActorSystem("checkpoint-worker-spec"))
-    with ImplicitSender
-    with FreeSpecLike
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll
-    with ScalaFutures {
+class ConsumerProcessingManagerSpec extends UnitTest with AkkaTest {
 
   val batchTimeout: FiniteDuration = 2.seconds.dilated
 
   implicit val defaultPatience =
     PatienceConfig(timeout = Span(3, Seconds), interval = Span(50, Millis)) // scalastyle:off
-
-  override def afterAll(): Unit = {
-    system.terminate()
-    Await.result(system.whenTerminated, 5.seconds)
-  }
 
   "The ConsumerProcessingManager" - {
     "Should set the shardId on init" in {

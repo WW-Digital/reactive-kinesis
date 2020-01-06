@@ -17,18 +17,13 @@
 package com.weightwatchers.reactive.kinesis.utils
 
 import com.google.common.util.concurrent.SettableFuture
+import com.weightwatchers.reactive.kinesis.UnitTest
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
 
 /**
   * Tests the implicit future conversions.
   */
-class ScalaListenableFutureSpec
-    extends FreeSpec
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll {
+class ScalaListenableFutureSpec extends UnitTest {
 
   implicit val ece = scala.concurrent.ExecutionContext.global
 

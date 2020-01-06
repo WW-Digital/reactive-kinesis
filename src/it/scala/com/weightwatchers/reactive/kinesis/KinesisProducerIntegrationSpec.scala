@@ -16,35 +16,15 @@
 
 package com.weightwatchers.reactive.kinesis
 
-import java.io.File
-
-import com.amazonaws.services.kinesis.producer.{KinesisProducer => AWSKinesisProducer}
-import com.typesafe.config.ConfigFactory
-import com.weightwatchers.reactive.kinesis.common.{
-  KinesisSuite,
-  KinesisTestConsumer,
-  TestCredentials
-}
-import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
+import com.weightwatchers.reactive.kinesis.common.{IntegrationTest, KinesisSuite}
 import com.weightwatchers.reactive.kinesis.models.ProducerEvent
-import com.weightwatchers.reactive.kinesis.producer.{KinesisProducer, ProducerConf}
-import org.scalatest.concurrent.Eventually
-import org.scalatestplus.mockito.MockitoSugar
+import com.weightwatchers.reactive.kinesis.producer.KinesisProducer
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
-
-import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Random
 
 //scalastyle:off magic.number
-class KinesisProducerIntegrationSpec
-    extends FreeSpec
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll
-    with Eventually
-    with KinesisSuite {
+class KinesisProducerIntegrationSpec extends IntegrationTest with KinesisSuite {
 
   implicit val ece = scala.concurrent.ExecutionContext.global
 

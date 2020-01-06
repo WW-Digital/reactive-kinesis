@@ -2,14 +2,10 @@ package com.weightwatchers.reactive.kinesis.common
 
 import java.io.File
 import java.nio.ByteBuffer
-
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
+import com.amazonaws.services.dynamodbv2.model.BillingMode
 import com.amazonaws.services.dynamodbv2.{AmazonDynamoDB, AmazonDynamoDBClientBuilder}
-import com.amazonaws.services.kinesis.leases.impl.{
-  KinesisClientLease,
-  KinesisClientLeaseSerializer,
-  LeaseManager
-}
+import com.amazonaws.services.kinesis.leases.impl.{KinesisClientLease, KinesisClientLeaseSerializer, LeaseManager}
 import com.amazonaws.services.kinesis.model.PutRecordRequest
 import com.amazonaws.services.kinesis.{AmazonKinesisAsync, AmazonKinesisAsyncClientBuilder}
 import com.typesafe.config.{Config, ConfigFactory}
@@ -17,7 +13,6 @@ import com.typesafe.scalalogging.StrictLogging
 import com.weightwatchers.reactive.kinesis.consumer.KinesisConsumer.ConsumerConf
 import com.weightwatchers.reactive.kinesis.producer.ProducerConf
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Suite}
-
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 
@@ -233,7 +228,8 @@ trait KinesisSuite
   private def createLeaseTable(applicationName: String): Unit = {
     val manager = new LeaseManager[KinesisClientLease](s"$applicationName-$TestStreamName",
                                                        dynamoClient,
-                                                       new KinesisClientLeaseSerializer())
+                                                       new KinesisClientLeaseSerializer(),
+                                                       BillingMode.PROVISIONED)
     manager.createLeaseTableIfNotExists(1L, 1L)
     while (!manager.leaseTableExists()) Thread.sleep(100)
   }
@@ -281,6 +277,8 @@ trait KinesisSuite
   }
 
   protected def createTestData(testDataCount: Int): Unit = {
+    import scala.jdk.CollectionConverters._
+
     kinesisClient
       .describeStream(TestStreamName)
       .getStreamDescription

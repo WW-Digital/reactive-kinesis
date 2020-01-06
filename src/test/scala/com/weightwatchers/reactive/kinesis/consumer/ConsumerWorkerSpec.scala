@@ -16,12 +16,11 @@
 
 package com.weightwatchers.reactive.kinesis.consumer
 
-import java.nio.ByteBuffer
-
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.TestActor.AutoPilot
 import akka.testkit.{ImplicitSender, TestActor, TestDuration, TestKit, TestProbe}
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorCheckpointer
+import com.weightwatchers.reactive.kinesis.{AkkaTest, UnitTest}
 import com.weightwatchers.reactive.kinesis.consumer.CheckpointWorker.{
   Checkpoint,
   CheckpointResult,
@@ -30,26 +29,12 @@ import com.weightwatchers.reactive.kinesis.consumer.CheckpointWorker.{
 }
 import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker._
 import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
+import java.nio.ByteBuffer
 import org.joda.time.DateTime
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FreeSpecLike, GivenWhenThen, Matchers}
-
 import scala.concurrent.Await
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
-class ConsumerWorkerSpec
-    extends TestKit(ActorSystem("consumer-worker-spec"))
-    with ImplicitSender
-    with FreeSpecLike
-    with Matchers
-    with MockitoSugar
-    with BeforeAndAfterAll
-    with GivenWhenThen {
-
-  override def afterAll(): Unit = {
-    system.terminate()
-    Await.result(system.whenTerminated, 5.seconds)
-  }
+class ConsumerWorkerSpec extends UnitTest with AkkaTest {
 
   "The ConsumerWorker" - {
 

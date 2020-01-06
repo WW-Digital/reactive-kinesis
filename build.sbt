@@ -23,54 +23,63 @@ lazy val library =
   new {
 
     object Version {
-      val scalaCheck = "1.14.0"
-      val scalaTest  = "3.0.8"
-      val jackson    = "2.9.8"
-      val akka       = "2.5.23"
+      val scalaCheck            = "1.14.3"
+      val scalaTest             = "3.1.0"
+      val jackson               = "2.10.1"
+      val akka                  = "2.6.1"
+      val fasterxml             = "3.2.0"
+      val kcl                   = "1.13.1"
+      val kpl                   = "0.14.0"
+      val typesafeConfig        = "1.3.3"
+      val logbackClassic        = "1.2.3"
+      val scalatestMockito      = "3.1.0.0"
+      val scalatestScalaCheck   = "3.1.0.1"
+      val scalaLogging          = "3.9.2"
+      val mockito               = "2.16.0"
+      val scalaCollectionCompat = "2.1.1"
     }
 
     val jackson = Seq(
       //We need jackson versions to be consistent, KCL&KPL pull in slightly older versions which often get evicted
       //See: https://github.com/aws/aws-sdk-java/issues/999
-      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor" % Version.jackson % Compile,
-      "com.fasterxml.jackson.core"       % "jackson-databind"        % Version.jackson % Compile,
-      "com.fasterxml.jackson.core"       % "jackson-core"            % Version.jackson % Compile,
-      "com.fasterxml.jackson.core"       % "jackson-annotations"     % Version.jackson % Compile,
-      "com.fasterxml.uuid"               % "java-uuid-generator"     % "3.1.5"         % Compile
+      "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor" % Version.jackson   % Compile,
+      "com.fasterxml.jackson.core"       % "jackson-databind"        % Version.jackson   % Compile,
+      "com.fasterxml.jackson.core"       % "jackson-core"            % Version.jackson   % Compile,
+      "com.fasterxml.jackson.core"       % "jackson-annotations"     % Version.jackson   % Compile,
+      "com.fasterxml.uuid"               % "java-uuid-generator"     % Version.fasterxml % Compile
     )
 
     val amazon = Seq(
-      // TODO: Upgrade this to 1.9.x when this issue is resolved and exposed in localstack:
-      // https://github.com/mhart/kinesalite/issues/59
-      // 1.9.3 breaks KinesisSourceGraphStageIntegrationSpec and ConsumerProcessingManagerIntegrationSpec
-      "com.amazonaws" % "amazon-kinesis-client" % "1.11.1" % Compile
+      "com.amazonaws" % "amazon-kinesis-client" % Version.kcl % Compile
       excludeAll (ExclusionRule(organization = "com.fasterxml.jackson.core"),
       ExclusionRule(organization = "com.fasterxml.jackson.dataformat")),
-      "com.amazonaws" % "amazon-kinesis-producer" % "0.12.11" % Compile
+      "com.amazonaws" % "amazon-kinesis-producer" % Version.kpl % Compile
       excludeAll (ExclusionRule(organization = "com.fasterxml.jackson.core"),
       ExclusionRule(organization = "com.fasterxml.jackson.dataformat"))
     )
 
     val lightbend = Seq(
-      "com.typesafe"               % "config"         % "1.3.3"      % Compile,
-      "com.typesafe.akka"          %% "akka-actor"    % Version.akka % Compile,
-      "com.typesafe.akka"          %% "akka-stream"   % Version.akka % Compile,
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"      % Compile
+      "com.typesafe"               % "config"         % Version.typesafeConfig % Compile,
+      "com.typesafe.akka"          %% "akka-actor"    % Version.akka           % Compile,
+      "com.typesafe.akka"          %% "akka-stream"   % Version.akka           % Compile,
+      "com.typesafe.scala-logging" %% "scala-logging" % Version.scalaLogging   % Compile
     )
 
     val logback = Seq(
-      "ch.qos.logback" % "logback-classic" % "1.2.3" % Compile
+      "ch.qos.logback" % "logback-classic" % Version.logbackClassic % Compile
     )
 
     val testing = Seq(
-      "org.scalatest"     %% "scalatest"    % Version.scalaTest  % "it,test",
-      "org.scalacheck"    %% "scalacheck"   % Version.scalaCheck % "it,test",
-      "com.typesafe.akka" %% "akka-testkit" % Version.akka       % "it,test",
-      "org.mockito"       % "mockito-core"  % "2.16.0"           % "it,test"
+      "org.scalatest"     %% "scalatest"       % Version.scalaTest           % "it,test",
+      "org.scalatestplus" %% "mockito-1-10"    % Version.scalatestMockito    % "it,test",
+      "org.scalatestplus" %% "scalacheck-1-14" % Version.scalatestScalaCheck % "it,test",
+      "org.scalacheck"    %% "scalacheck"      % Version.scalaCheck          % "it,test",
+      "com.typesafe.akka" %% "akka-testkit"    % Version.akka                % "it,test",
+      "org.mockito"       % "mockito-core"     % Version.mockito             % "it,test"
     )
 
     val compat = Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.1"
+      "org.scala-lang.modules" %% "scala-collection-compat" % Version.scalaCollectionCompat
     )
   }
 
@@ -85,7 +94,7 @@ versioningSettings
 
 lazy val commonSettings =
   Seq(
-    //version := "0.1.14", //automatically calculated by sbt-git
+    // version := "0.6.12", //automatically calculated by sbt-git
     //scalaVersion := "2.11.11", // taken from .travis.yml via sbt-travisci
     organization := "com.weightwatchers",
     mappings.in(Compile, packageBin) += baseDirectory.in(ThisBuild).value / "LICENSE" -> "LICENSE",
@@ -136,7 +145,6 @@ lazy val commonSettings =
     ),
     scalacOptions in (Compile, console) ~= (_.filterNot(
       Set(
-        "-Ywarn-unused:imports",
         "-Xfatal-warnings"
       )
     )),
@@ -180,8 +188,6 @@ lazy val versioningSettings =
       case _                           => None
     }
   )
-
-import sbt.Keys.parallelExecution
 
 lazy val headerSettings =
   Seq(

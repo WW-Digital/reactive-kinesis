@@ -44,6 +44,7 @@ import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker._
 import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
 import scala.language.postfixOps
 
+import scala.collection.Seq
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.Success
 
@@ -225,7 +226,7 @@ private[consumer] class ConsumerWorker(eventProcessor: ActorRef,
                                     None) {
 
     private val batchSequenceNumbers: collection.mutable.SortedSet[CompoundSequenceNumber] =
-      collection.mutable.SortedSet(expectedResponses.map(_.sequenceNumber): _*)(
+      collection.mutable.SortedSet.from(expectedResponses.map(_.sequenceNumber))(
         CompoundSequenceNumber.orderingBySeqAndSubSeq.reverse
       )
 
