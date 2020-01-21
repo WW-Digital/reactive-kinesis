@@ -294,9 +294,11 @@ class KinesisConsumer(consumerConf: ConsumerConf,
           )
         case Failure(ex) =>
           logger.error(
-            s"*** Shutdown failed for Kinesis Consumer for Stream ${consumerConf.kclConfiguration.getStreamName} ***",
+            s"*** Shutdown failed for Kinesis Consumer for Stream ${consumerConf.kclConfiguration.getStreamName}. Shutdown immediately. ***",
             ex
           )
+          // since shutting down gracefully failed, make sure all resources are released.
+          kclWorker.shutdown()
       }
     } else {
 
