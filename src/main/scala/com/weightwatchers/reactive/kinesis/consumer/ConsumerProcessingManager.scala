@@ -26,7 +26,7 @@ import com.amazonaws.services.kinesis.clientlibrary.interfaces.v2.{
   IRecordProcessor,
   IShutdownNotificationAware
 }
-import com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker
+import com.amazonaws.services.kinesis.clientlibrary.lib.worker.{ShutdownReason, Worker}
 import com.amazonaws.services.kinesis.clientlibrary.types._
 import com.amazonaws.services.kinesis.model.Record
 import com.typesafe.scalalogging.LazyLogging
@@ -37,7 +37,6 @@ import com.weightwatchers.reactive.kinesis.consumer.ConsumerWorker.{
 }
 import com.weightwatchers.reactive.kinesis.models.{CompoundSequenceNumber, ConsumerEvent}
 import org.joda.time.{DateTime, DateTimeZone}
-
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -129,9 +128,15 @@ private[consumer] class ConsumerProcessingManager(
   }
 
   override def shutdown(shutdownInput: ShutdownInput): Unit = {
-    logger.info(
-      s"Shutdown record processor for shard: $kinesisShardId. Reason: ${shutdownInput.getShutdownReason}"
-    )
+    if (shutdownInput.getShutdownReason == ShutdownReason.TERMINATE) {
+      logger.info(
+        s"Shutdown record processor for shard: $kinesisShardId. Reason: ${shutdownInput.getShutdownReason}. Forcing checkpoint."
+      )
+      shutdownInput.getCheckpointer.checkpoint()
+    } else
+      logger.info(
+        s"Shutdown record processor for shard: $kinesisShardId. Reason: ${shutdownInput.getShutdownReason}"
+      )
     shutdown(shutdownInput.getCheckpointer)
   }
 
