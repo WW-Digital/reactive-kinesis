@@ -146,9 +146,9 @@ class SimpleKinesisProducer(kConfig: Config) extends Actor with LazyLogging {
       logger.trace(s"Successfully sent $messageId")
       outstandingMessages -= messageId
 
-    case SendFailed(messageId, reason) =>
+    case SendFailed(event, messageId, reason) =>
       val failedPayload = outstandingMessages(messageId)
-      logger.info(s"""Failed to send ProducerEvent($messageId, $failedPayload""".stripMargin)
+      logger.info(s"""Failed to send ProducerEvent(${event.partitionKey}, $messageId) for $failedPayload""".stripMargin)
       outstandingMessages -= messageId
       failedMessages += (messageId, failedPayload)
   }

@@ -448,12 +448,13 @@ case class Send(producerEvent: ProducerEvent)
 case class SendSuccessful(messageId: String, userRecordResult: UserRecordResult)
 
 /**
-  * Sent to the sender in event of a failed completion.
-  *
-  * @param messageId The id of the event that failed.
-  * @param reason    The exception causing the failure. Likely to be of type [[UserRecordFailedException]]
-  */
-case class SendFailed(messageId: String, reason: Throwable)
+    * Sent to the sender in event of a failed completion.
+    *
+    * @param event     The current event that failed.
+    * @param messageId The id of the event that failed.
+    * @param reason    The exception causing the failure.
+    */
+case class SendFailed(event: ProducerEvent, messageId: String, reason: Throwable)
 ```
 
 
@@ -490,11 +491,35 @@ class SomeActor(kinesisConfig: Config) extends Actor {
     case SendSuccessful(messageId, _) =>
       println(s"Successfully sent $messageId")
 
-    case SendFailed(messageId, reason) =>
-      println(s"Failed to send $messageId, cause: ${reason.getMessage}")
+    case SendFailed(event, messageId, reason) =>
+      println(s"Failed to send event ${event.partitionKey} with $messageId, cause: ${reason.getMessage}")
   }
 }
 ```
+
+#### Scheme for kinesis retries in services
+
+Kinesis Retry model with service DB:
+<ul>
+<li>The service itself manage their kinesis failures.</li>
+<li>Practical, develop only in service.</li>
+<li>Save time for learning and integration with other technology.</li>
+</ul>
+ Algorithm steps to publish event to stream:
+
+```
+if sendSuccessful
+    continue
+if sendFailed
+    save event in db
+if backgroundJob.connect(stream).isSuccessful
+    go to step1
+    delete event from DB 
+else
+    do nothing.
+```
+
+![Kinesis retries diagram scheme](https://www.lucidchart.com/publicSegments/view/e9674455-b544-4634-a29c-7066c32ddc45/image.png)
 
 <a name="usage-usage-producer-actor-based-implementation-from-outside-of-an-actor"></a>
 #### From outside of an Actor

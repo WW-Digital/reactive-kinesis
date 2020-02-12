@@ -56,11 +56,12 @@ object KinesisProducerActor {
   /**
     * Sent to the sender in event of a failed completion.
     *
+    * @param event     The current event that failed.
     * @param messageId The id of the event that failed.
     * @param reason    The exception causing the failure.
     *                  Likely to be of type [[com.amazonaws.services.kinesis.producer.UserRecordFailedException]]
     */
-  case class SendFailed(messageId: String, reason: Throwable)
+  case class SendFailed(event: ProducerEvent, messageId: String, reason: Throwable)
 
   private case object UnThrottle
 
@@ -182,10 +183,13 @@ class KinesisProducerActor(producer: KinesisProducer, throttlingConfig: Option[T
               s"Record failed to put, partitionKey=${event.partitionKey}, payload=${event.payload}, attempts:$errorList",
               ex
             )
-            SendFailed(messageId, ex)
+            SendFailed(event, messageId, ex)
           case ex =>
-            logger.warn(s"Failed to send message to kinesis with: $event", ex)
-            SendFailed(messageId, ex)
+            logger.warn(
+              s"Failed to send message to kinesis with partitionKey ${event.partitionKey} and messageId $messageId",
+              ex
+            )
+            SendFailed(event, messageId, ex)
         }
         .pipeTo(sender)
     }

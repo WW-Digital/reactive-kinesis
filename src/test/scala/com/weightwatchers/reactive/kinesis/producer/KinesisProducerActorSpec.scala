@@ -114,7 +114,7 @@ class KinesisProducerActorSpec
       producerActor.tell(msg, probe.ref)
 
       //Then we should receive a SendSuccessful response
-      probe.expectMsg(SendFailed(msg.messageId, ex))
+      probe.expectMsg(SendFailed(event, msg.messageId, ex))
       verify(producer, times(1)).addUserRecord(event)
     }
 
