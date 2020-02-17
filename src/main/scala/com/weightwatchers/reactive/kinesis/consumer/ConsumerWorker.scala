@@ -483,7 +483,7 @@ private[consumer] class ConsumerWorker(eventProcessor: ActorRef,
               finaliseShutdown(outerSender, false)
           }
         case None =>
-          logger.warn(s"Worker for shard $latestShardId: Skipped checkpointing on shutdown")
+          logger.info(s"Worker for shard $latestShardId: Skipped checkpointing on shutdown")
           finaliseShutdown(outerSender, false)
       }
 
