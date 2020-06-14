@@ -15,7 +15,7 @@ organization := "com.weightwatchers"
 pomIncludeRepository := { _ =>
   false
 } //remove optional dependencies from our pom
-licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html"))
+licenses += ("Amazon Software License", url("https://aws.amazon.com/asl/"))
 homepage := Some(url("http://www.weightwatchers.com"))
 scmInfo := Some(
   ScmInfo(url("https://github.com/WW-Digital/reactive-kinesis"),

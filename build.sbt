@@ -176,9 +176,11 @@ lazy val versioningSettings =
 
 import sbt.Keys.parallelExecution
 
+import scala.io.Source
+
 lazy val headerSettings =
   Seq(
-    headerLicense := Some(HeaderLicense.ALv2("2017", "WeightWatchers"))
+    headerLicense := Some(HeaderLicense.Custom(Source.fromFile("LICENSE").mkString))
   )
 
 coverageExcludedPackages := "reference.conf"
